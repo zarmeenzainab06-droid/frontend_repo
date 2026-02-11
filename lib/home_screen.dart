@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
             const Icon(Icons.check_circle, size: 80, color: Color(0xFF42f062)),
             const SizedBox(height: 16),
             const Text(
-              'Welcome to Healthy Wealthy!',
+              'Welcome to Healthy Wealthy Diet Planner!',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
