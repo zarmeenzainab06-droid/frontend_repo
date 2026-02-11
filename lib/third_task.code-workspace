@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../../../../backend"
+		},
+		{
+			"path": "../../../../../backend/node.js/backend/node_modules"
+		}
+	],
+	"settings": {}
+}
