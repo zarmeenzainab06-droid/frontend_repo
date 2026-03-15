@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/onboarding_data.dart';
+import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -46,10 +47,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Navigate to next screen (e.g., Login or Home)
-      // TODO: Replace this with your actual next screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Navigate to Login/Home screen')),
+      // Navigate to Login screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
       );
     }
   }
