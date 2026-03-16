@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'onboarding_screen.dart';
+import '../routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -15,10 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     // Navigate to onboarding after 3 seconds
     Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
+      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
     });
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/onboarding_data.dart';
 import 'login_screen.dart';
+import '../routes/app_routes.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -48,10 +49,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
     } else {
       // Navigate to Login screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
-      );
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
     }
   }
 
