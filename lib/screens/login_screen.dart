@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:get/get.dart';
 import 'register_screen.dart';
 import 'dashboard_screen.dart';
+import '../routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -28,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:3000/api/login'),
+        Uri.parse('http://localhost:3000/login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': _emailController.text,
@@ -42,12 +44,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                DashboardScreen(userName: data['user']['name']),
-          ),
+        final userName = (data['user']?['name'] ?? '').toString();
+        Get.offNamed(
+          AppRoutes.dashboard,
+          arguments: {'userName': userName},
         );
       } else {
         final error = json.decode(response.body);

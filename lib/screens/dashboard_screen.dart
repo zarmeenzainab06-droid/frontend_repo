@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String userName;
 
-  DashboardScreen({required this.userName});
+  DashboardScreen({Key? key, String? userName})
+      : userName = userName ?? ((Get.arguments?['userName'] ?? '') as String),
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {

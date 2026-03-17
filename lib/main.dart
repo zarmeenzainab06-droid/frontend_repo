@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'routes/app_routes.dart';
 
 void main() {
@@ -8,7 +9,7 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Healthy Wealthy Diet Planner',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       initialRoute: AppRoutes.splash,
-      routes: AppRoutes.getRoutes(),
+      getPages: AppRoutes.pages,
     );
   }
 }

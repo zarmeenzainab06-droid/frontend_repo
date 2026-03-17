@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'login_screen.dart';
-import 'dashboard_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -42,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:3000/api/register'),
+        Uri.parse('http://localhost:3000/signup'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'name': _nameController.text,
@@ -62,13 +61,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
 
       if (response.statusCode == 201) {
-        final data = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Signup successful. Please login')),
+        );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) =>
-                DashboardScreen(userName: _nameController.text),
-          ),
+          MaterialPageRoute(builder: (context) => LoginScreen()),
         );
       } else {
         final error = json.decode(response.body);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/login_screen.dart';
@@ -12,13 +13,11 @@ class AppRoutes {
   static const String register = '/register';
   static const String dashboard = '/dashboard';
 
-  static Map<String, WidgetBuilder> getRoutes() {
-    return {
-      splash: (context) => SplashScreen(),
-      onboarding: (context) => OnboardingScreen(),
-      login: (context) => LoginScreen(),
-      register: (context) => RegisterScreen(),
-      // dashboard needs parameters, so we'll use it differently
-    };
-  }
+  static final List<GetPage<dynamic>> pages = [
+    GetPage(name: splash, page: () => SplashScreen()),
+    GetPage(name: onboarding, page: () => OnboardingScreen()),
+    GetPage(name: login, page: () => LoginScreen()),
+    GetPage(name: register, page: () => RegisterScreen()),
+    GetPage(name: dashboard, page: () => DashboardScreen()),
+  ];
 }
