@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'register_screen.dart';
 import 'dashboard_screen.dart';
 import '../routes/app_routes.dart';
+import '../core/services/auth_service.dart';
+import 'package:get_storage/get_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -15,53 +17,33 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  GetStorage box = GetStorage();
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Please fill all fields')));
+      Get.snackbar("Error", "Email and Password are required");
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://localhost:3000/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        }),
-      );
+    final result = await AuthService.login(
+      _emailController.text,
+      _passwordController.text,
+    );
 
-      setState(() {
-        _isLoading = false;
-      });
+    setState(() => _isLoading = false);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final userName = (data['user']?['name'] ?? '').toString();
-        Get.offNamed(
-          AppRoutes.dashboard,
-          arguments: {'userName': userName},
-        );
-      } else {
-        final error = json.decode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error['message'] ?? 'Login failed')),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error connecting to server')));
+    if (result['success']) {
+      final userName = result['data']['user']['name'];
+
+      // ✅ store login state
+      box.write('isLoggedIn', true);
+      box.write('userName', userName);
+
+      Get.offAllNamed('/dashboard');
+    } else {
+      Get.snackbar("Error", result['message']);
     }
   }
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/onboarding_data.dart';
+import '../core/models/onboarding_data.dart';
 import 'login_screen.dart';
 import '../routes/app_routes.dart';
 
