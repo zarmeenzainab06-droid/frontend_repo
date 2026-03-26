@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart'; // ADD THIS
 import 'routes/app_routes.dart';
 
-void main() {
+void main() async {
+  await GetStorage.init(); // ✅ INITIALIZE STORAGE
   runApp(MyApp());
 }
 
@@ -10,7 +12,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      // Make sure it's GetMaterialApp, not MaterialApp
       title: 'Healthy Wealthy Diet Planner',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
