@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'login_screen.dart';
+import 'package:get/get.dart';
+import '../core/services/auth_service.dart';
+import '../routes/app_routes.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -22,65 +22,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
 
   Future<void> _register() async {
-    // Validation
     if (_nameController.text.isEmpty ||
         _ageController.text.isEmpty ||
         _heightController.text.isEmpty ||
         _weightController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Please fill all fields')));
+      Get.snackbar("Error", "Please fill all fields");
       return;
     }
 
-    setState(() {
-      _isLoading = true;
+    setState(() => _isLoading = true);
+
+    final result = await AuthService.register({
+      'name': _nameController.text,
+      'age': int.parse(_ageController.text),
+      'height': int.parse(_heightController.text),
+      'weight': int.parse(_weightController.text),
+      'gender': _selectedGender,
+      'is_diabetic': _isDiabetic,
+      'has_bp': _hasBP,
+      'email': _emailController.text,
+      'password': _passwordController.text,
     });
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://localhost:3000/signup'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'name': _nameController.text,
-          'age': int.parse(_ageController.text),
-          'height': int.parse(_heightController.text),
-          'weight': int.parse(_weightController.text),
-          'gender': _selectedGender,
-          'is_diabetic': _isDiabetic,
-          'has_bp': _hasBP,
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        }),
-      );
+    setState(() => _isLoading = false);
 
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signup successful. Please login')),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
-        );
-      } else {
-        final error = json.decode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error['message'] ?? 'Registration failed')),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error connecting to server: $e')));
+    if (result['success']) {
+      Get.snackbar("Success", "Registration successful! Please login");
+      Get.offNamed(AppRoutes.login);
+    } else {
+      Get.snackbar("Error", result['message']);
     }
   }
 
@@ -348,7 +320,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context);
+                      Get.back();
                     },
                     child: Text(
                       'Login',

@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
       box.write('isLoggedIn', true);
       box.write('userName', userName);
 
-      Get.offAllNamed('/dashboard');
+      Get.offAllNamed('/dashboard', arguments: {'userName': userName});
     } else {
       Get.snackbar("Error", result['message']);
     }

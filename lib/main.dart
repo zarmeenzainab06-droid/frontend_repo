@@ -10,6 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      // Make sure it's GetMaterialApp, not MaterialApp
       title: 'Healthy Wealthy Diet Planner',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
