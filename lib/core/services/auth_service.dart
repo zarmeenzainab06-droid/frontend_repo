@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AuthService {
-  static const String baseUrl = "http://127.0.0.1:3000"; // Changed for Chrome
+  static const String baseUrl = "https://wholesaleapp.sandbox.pk/api"; // Changed for Chrome
 
   static Future<Map<String, dynamic>> login(
     String email,
@@ -16,15 +16,15 @@ class AuthService {
       );
 
       final data = json.decode(response.body);
-      print('Login response: $data');
+      // print('Login response: $data');
 
-      if (response.statusCode == 200 && data['success'] == true) {
+      if (response.statusCode == 200 && data['message'] == 'Login successful') {
         return {'success': true, 'data': data};
       } else {
         return {'success': false, 'message': data['message'] ?? 'Login failed'};
       }
     } catch (e) {
-      print('Login error: $e');
+      // print('Login error: $e');
       return {'success': false, 'message': 'Server error: $e'};
     }
   }
@@ -33,7 +33,7 @@ class AuthService {
     Map<String, dynamic> body,
   ) async {
     try {
-      print('Sending registration data: $body');
+      // print('Sending registration data: $body');
 
       final response = await http.post(
         Uri.parse('$baseUrl/signup'), // Changed to /signup ✅
@@ -42,7 +42,7 @@ class AuthService {
       );
 
       final data = json.decode(response.body);
-      print('Register response: $data');
+      // print('Register response: $data');
 
       if (response.statusCode == 201 && data['success'] == true) {
         return {'success': true};
@@ -53,7 +53,7 @@ class AuthService {
         };
       }
     } catch (e) {
-      print('Register error: $e');
+      // print('Register error: $e');
       return {'success': false, 'message': 'Server error: $e'};
     }
   }

@@ -38,9 +38,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result['success']) {
       final userName = result['data']['user']['name'];
 
+      print(result['data']['token']);
       // ✅ store login state
       box.write('isLoggedIn', true);
       box.write('userName', userName);
+      box.write('token', result['data']['token']);
 
       Get.offAllNamed('/dashboard', arguments: {'userName': userName});
     } else {
