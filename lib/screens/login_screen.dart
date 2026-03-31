@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'register_screen.dart';
-import 'dashboard_screen.dart';
+import 'dashboard/dashboard_screen.dart';
 import '../routes/app_routes.dart';
 import '../core/services/auth_service.dart';
 import 'package:get_storage/get_storage.dart';
@@ -12,7 +12,6 @@ class LoginScreen extends StatefulWidget {
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
-
 
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
@@ -44,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
       box.write('userName', userName);
       box.write('token', result['data']['token']);
 
-      Get.offAllNamed('/dashboard', arguments: {'userName': userName});
+      Get.offAllNamed('/dashboard');
     } else {
       Get.snackbar("Error", result['message']);
     }
