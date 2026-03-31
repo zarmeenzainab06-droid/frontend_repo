@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/services/meal_service.dart';
 
 class AddMealScreen extends StatefulWidget {
   @override
@@ -8,6 +9,32 @@ class AddMealScreen extends StatefulWidget {
 class _AddMealScreenState extends State<AddMealScreen> {
   String _selectedMealType = 'Snacks';
   TextEditingController _searchController = TextEditingController();
+
+  Future<void> _submitMeal(String name, String calories) async {
+    if (name.isEmpty || calories.isEmpty) return;
+
+    int cal = int.tryParse(calories) ?? 0;
+
+    // Optimistic UI update (optional but smart)
+    setState(() {
+      _allFoods.add({
+        'name': name,
+        'serving': 'Custom',
+        'calories': cal,
+        'category': _selectedMealType,
+      });
+    });
+
+    try {
+      await MealService.addMeal(
+        name: name,
+        calories: cal,
+        category: _selectedMealType,
+      );
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
 
   // Hardcoded Pakistani foods database
   final List<Map<String, dynamic>> _allFoods = [
@@ -293,7 +320,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Show food list is already visible below
+                    _openAddMealSheet(context);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF5DB075),
@@ -434,6 +461,97 @@ class _AddMealScreenState extends State<AddMealScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _openAddMealSheet(BuildContext context) {
+    TextEditingController nameController = TextEditingController();
+    TextEditingController caloriesController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Container(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                SizedBox(height: 20),
+
+                Text(
+                  "Add Meal",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+
+                SizedBox(height: 20),
+
+                // Meal Name
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: "Meal Name",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 15),
+
+                // Calories
+                TextField(
+                  controller: caloriesController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: "Calories",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+
+                      await _submitMeal(
+                        nameController.text,
+                        caloriesController.text,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF5DB075),
+                    ),
+                    child: Text("Add Meal"),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
