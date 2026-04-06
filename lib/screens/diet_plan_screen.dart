@@ -10,194 +10,198 @@ class _DietPlanScreenState extends State<DietPlanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Green Header
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.fromLTRB(20, 50, 20, 20),
-          decoration: BoxDecoration(
-            color: Color(0xFF5DB075),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Green Header
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(20, 50, 20, 20),
+            decoration: BoxDecoration(
+              color: Color(0xFF5DB075),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
             ),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.arrow_back, color: Colors.white),
-                  SizedBox(width: 15),
-                  Text(
-                    'Your Diet Plan',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Personalized for your health',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-              SizedBox(height: 20),
-
-              // Tab Selector
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedTab = 'Daily Plan'),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _selectedTab == 'Daily Plan'
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Daily Plan',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: _selectedTab == 'Daily Plan'
-                                ? Color(0xFF5DB075)
-                                : Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () =>
-                          setState(() => _selectedTab = 'Weekly Overview'),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _selectedTab == 'Weekly Overview'
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Weekly Overview',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: _selectedTab == 'Weekly Overview'
-                                ? Color(0xFF5DB075)
-                                : Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Calorie Summary Cards
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryCard(
-                      'Total Daily Plan',
-                      '1665',
-                      'Calories',
-                    ),
-                  ),
-                  SizedBox(width: 15),
-                  Expanded(
-                    child: _buildSummaryCard('Your Goal', '2000', 'Calories'),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-
-              // Health Recommendations
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Color(0xFFF0F8F4),
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: Color(0xFF5DB075).withOpacity(0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              children: [
+                Row(
                   children: [
+                    Icon(Icons.arrow_back, color: Colors.white),
+                    SizedBox(width: 15),
                     Text(
-                      'Health Recommendations',
+                      'Your Diet Plan',
                       style: TextStyle(
-                        fontSize: 16,
+                        color: Colors.white,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 10),
-                    _buildRecommendation(
-                      '• Limit rice and refined carbohydrates',
-                    ),
-                    _buildRecommendation('• Focus on fiber-rich foods'),
-                    _buildRecommendation('• Monitor sugar levels regularly'),
                   ],
                 ),
-              ),
-              SizedBox(height: 25),
+                SizedBox(height: 8),
+                Text(
+                  'Personalized for your health',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                SizedBox(height: 20),
 
-              // Meal Plan
-              _buildMealSection('🌅 Breakfast (8:00 AM)', [
-                {'name': 'Whole wheat roti (2)', 'calories': 150},
-                {'name': 'Boiled egg', 'calories': 70},
-                {'name': 'Green tea', 'calories': 2},
-              ]),
-              SizedBox(height: 20),
-
-              _buildMealSection('☕ Mid-Morning Snack (11:00 AM)', [
-                {'name': 'Apple', 'calories': 95},
-                {'name': 'Handful of almonds', 'calories': 160},
-              ]),
-              SizedBox(height: 20),
-
-              _buildMealSection('🍛 Lunch (1:30 PM)', [
-                {'name': 'Brown rice (1 cup)', 'calories': 215},
-                {
-                  'name': 'Aloo gosht (portion)',
-                  'calories': 215,
-                  'warning': true,
-                },
-                {'name': 'Chicken karahi', 'calories': 280},
-                {'name': 'Mixed vegetable salad', 'calories': 60},
-              ]),
-              SizedBox(height: 20),
-
-              _buildMealSection('🥤 Evening Snack (5:00 PM)', [
-                {'name': 'Cucumber raita', 'calories': 80},
-                {'name': 'Roasted chickpeas', 'calories': 120},
-              ]),
-              SizedBox(height: 20),
-
-              _buildMealSection('🍽️ Dinner (8:00 PM)', [
-                {'name': 'Grilled fish', 'calories': 180},
-                {'name': 'Daal (lentils)', 'calories': 200},
-                {'name': 'Spinach salad', 'calories': 60},
-              ]),
-            ],
+                // Tab Selector
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () =>
+                            setState(() => _selectedTab = 'Daily Plan'),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _selectedTab == 'Daily Plan'
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Daily Plan',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _selectedTab == 'Daily Plan'
+                                  ? Color(0xFF5DB075)
+                                  : Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () =>
+                            setState(() => _selectedTab = 'Weekly Overview'),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _selectedTab == 'Weekly Overview'
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Weekly Overview',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _selectedTab == 'Weekly Overview'
+                                  ? Color(0xFF5DB075)
+                                  : Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+
+          Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Calorie Summary Cards
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildSummaryCard(
+                        'Total Daily Plan',
+                        '1665',
+                        'Calories',
+                      ),
+                    ),
+                    SizedBox(width: 15),
+                    Expanded(
+                      child: _buildSummaryCard('Your Goal', '2000', 'Calories'),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+
+                // Health Recommendations
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF0F8F4),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: Color(0xFF5DB075).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Health Recommendations',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      _buildRecommendation(
+                        '• Limit rice and refined carbohydrates',
+                      ),
+                      _buildRecommendation('• Focus on fiber-rich foods'),
+                      _buildRecommendation('• Monitor sugar levels regularly'),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 25),
+
+                _buildMealSection('🌅 Breakfast (8:00 AM)', [
+                  {'name': 'Whole wheat roti (2)', 'calories': 150},
+                  {'name': 'Boiled egg', 'calories': 70},
+                  {'name': 'Green tea', 'calories': 2},
+                ]),
+                SizedBox(height: 20),
+
+                _buildMealSection('☕ Mid-Morning Snack (11:00 AM)', [
+                  {'name': 'Apple', 'calories': 95},
+                  {'name': 'Handful of almonds', 'calories': 160},
+                ]),
+                SizedBox(height: 20),
+
+                _buildMealSection('🍛 Lunch (1:30 PM)', [
+                  {'name': 'Brown rice (1 cup)', 'calories': 215},
+                  {
+                    'name': 'Aloo gosht (portion)',
+                    'calories': 215,
+                    'warning': true,
+                  },
+                  {'name': 'Chicken karahi', 'calories': 280},
+                  {'name': 'Mixed vegetable salad', 'calories': 60},
+                ]),
+                SizedBox(height: 20),
+
+                _buildMealSection('🥤 Evening Snack (5:00 PM)', [
+                  {'name': 'Cucumber raita', 'calories': 80},
+                  {'name': 'Roasted chickpeas', 'calories': 120},
+                ]),
+                SizedBox(height: 20),
+
+                _buildMealSection('🍽️ Dinner (8:00 PM)', [
+                  {'name': 'Grilled fish', 'calories': 180},
+                  {'name': 'Daal (lentils)', 'calories': 200},
+                  {'name': 'Spinach salad', 'calories': 60},
+                ]),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

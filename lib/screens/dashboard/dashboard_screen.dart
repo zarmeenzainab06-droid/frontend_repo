@@ -55,12 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens.asMap().entries.map((entry) {
-          return SingleChildScrollView(
-            controller: _scrollControllers[entry.key],
-            child: entry.value,
-          );
-        }).toList(),
+        children: _screens, // ✅ just pass screens directly
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,

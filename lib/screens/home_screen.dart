@@ -9,288 +9,293 @@ class HomeScreen extends StatelessWidget {
     final user = box.read('user');
     final userName = user != null ? user['name'] : 'User';
 
-    return Column(
-      children: [
-        // Green Header
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.fromLTRB(20, 50, 20, 30),
-          decoration: BoxDecoration(
-            color: Color(0xFF5DB075),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Green Header
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(20, 50, 20, 30),
+            decoration: BoxDecoration(
+              color: Color(0xFF5DB075),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome back,',
-                        style: TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        userName,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, color: Color(0xFF5DB075)),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Diabetic Care',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Daily Calorie Goal Card
-              Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Daily Calorie Goal',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        Text(
-                          '1150 left',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF5DB075),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '850',
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          ' / 2000',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(
-                        value: 0.425,
-                        minHeight: 8,
-                        backgroundColor: Colors.grey.shade200,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF5DB075),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 20),
-
-              // Water Intake Card
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF4A90E2), Color(0xFF5DA8F5)],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Water Intake',
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                        SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Text(
-                              '6 / 8',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            ...List.generate(
-                              8,
-                              (index) => Padding(
-                                padding: EdgeInsets.only(right: 4),
-                                child: Icon(
-                                  Icons.water_drop,
-                                  color: index < 6
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.3),
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                          ],
+                          'Welcome back,',
+                          style: TextStyle(color: Colors.white70, fontSize: 16),
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'glasses',
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                          userName,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
-                    Icon(Icons.add_circle, color: Colors.white, size: 32),
+                    CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.person, color: Color(0xFF5DB075)),
+                    ),
                   ],
                 ),
-              ),
-              SizedBox(height: 30),
-
-              // Recommended Meals Section
-              Text(
-                'Recommended Meals',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 15),
-
-              // Meal Cards
-              _buildMealCard(
-                'Roti with Daal',
-                'Breakfast',
-                '350 kcal',
-                'assets/roti_daal.jpg',
-              ),
-              SizedBox(height: 15),
-              _buildMealCard(
-                'Chicken Biryani',
-                'Lunch',
-                '550 kcal',
-                'assets/biryani.jpg',
-              ),
-              SizedBox(height: 15),
-              _buildMealCard(
-                'Vegetable Salad',
-                'Dinner',
-                '200 kcal',
-                'assets/salad.jpg',
-                isSafe: true,
-              ),
-              SizedBox(height: 30),
-
-              // Quick Actions
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildQuickAction(
-                      Icons.add,
-                      'Add Meal',
-                      'Track your food',
-                      Color(0xFF5DB075),
+                SizedBox(height: 20),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Diabetic Care',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(width: 15),
-                  Expanded(
-                    child: _buildQuickAction(
-                      Icons.restaurant_menu,
-                      'Diet Plan',
-                      'View your plan',
-                      Color(0xFFFF9966),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 15),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildQuickAction(
-                      Icons.warning_amber,
-                      'Restricted',
-                      'Foods to avoid',
-                      Colors.red.shade400,
-                    ),
-                  ),
-                  SizedBox(width: 15),
-                  Expanded(
-                    child: _buildQuickAction(
-                      Icons.admin_panel_settings,
-                      'Admin',
-                      'Manage users',
-                      Colors.purple.shade400,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+
+          Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Daily Calorie Goal Card
+                Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Daily Calorie Goal',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          Text(
+                            '1150 left',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF5DB075),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '850',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            ' / 2000',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: 0.425,
+                          minHeight: 8,
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF5DB075),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 20),
+
+                // Water Intake Card
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF4A90E2), Color(0xFF5DA8F5)],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Water Intake',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text(
+                                '6 / 8',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              ...List.generate(
+                                8,
+                                (index) => Padding(
+                                  padding: EdgeInsets.only(right: 4),
+                                  child: Icon(
+                                    Icons.water_drop,
+                                    color: index < 6
+                                        ? Colors.white
+                                        : Colors.white.withOpacity(0.3),
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'glasses',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Icon(Icons.add_circle, color: Colors.white, size: 32),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 30),
+
+                Text(
+                  'Recommended Meals',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 15),
+
+                _buildMealCard(
+                  'Roti with Daal',
+                  'Breakfast',
+                  '350 kcal',
+                  'assets/roti_daal.jpg',
+                ),
+                SizedBox(height: 15),
+                _buildMealCard(
+                  'Chicken Biryani',
+                  'Lunch',
+                  '550 kcal',
+                  'assets/biryani.jpg',
+                ),
+                SizedBox(height: 15),
+                _buildMealCard(
+                  'Vegetable Salad',
+                  'Dinner',
+                  '200 kcal',
+                  'assets/salad.jpg',
+                  isSafe: true,
+                ),
+                SizedBox(height: 30),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildQuickAction(
+                        Icons.add,
+                        'Add Meal',
+                        'Track your food',
+                        Color(0xFF5DB075),
+                      ),
+                    ),
+                    SizedBox(width: 15),
+                    Expanded(
+                      child: _buildQuickAction(
+                        Icons.restaurant_menu,
+                        'Diet Plan',
+                        'View your plan',
+                        Color(0xFFFF9966),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildQuickAction(
+                        Icons.warning_amber,
+                        'Restricted',
+                        'Foods to avoid',
+                        Colors.red.shade400,
+                      ),
+                    ),
+                    SizedBox(width: 15),
+                    Expanded(
+                      child: _buildQuickAction(
+                        Icons.admin_panel_settings,
+                        'Admin',
+                        'Manage users',
+                        Colors.purple.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

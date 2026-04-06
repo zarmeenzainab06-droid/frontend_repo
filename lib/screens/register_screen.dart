@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../core/services/auth_service.dart';
 import '../routes/app_routes.dart';
+import 'package:get_storage/get_storage.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -22,6 +23,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
 
   Future<void> _register() async {
+    // Debug prints
+    print("=== REGISTRATION DEBUG ===");
+    print("Name: '${_nameController.text}'");
+    print("Age: '${_ageController.text}'");
+    print("Height: '${_heightController.text}'");
+    print("Weight: '${_weightController.text}'");
+    print("Email: '${_emailController.text}'");
+    print("Password: '${_passwordController.text}'");
+    print("Gender: $_selectedGender");
+    print("Diabetic: $_isDiabetic");
+    print("BP: $_hasBP");
+
     if (_nameController.text.isEmpty ||
         _ageController.text.isEmpty ||
         _heightController.text.isEmpty ||
@@ -29,12 +42,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty) {
       Get.snackbar("Error", "Please fill all fields");
+      print("❌ Validation failed - some fields are empty");
       return;
     }
 
+    print("✅ Validation passed, calling AuthService.register...");
+
     setState(() => _isLoading = true);
 
-    final result = await AuthService.register({
+    final body = {
       'name': _nameController.text,
       'age': int.parse(_ageController.text),
       'height': int.parse(_heightController.text),
@@ -44,13 +60,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
       'has_bp': _hasBP,
       'email': _emailController.text,
       'password': _passwordController.text,
-    });
+    };
+
+    print("📦 Sending body: $body");
+
+    final result = await AuthService.register(body);
+
+    print("📨 Response: $result");
 
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      Get.snackbar("Success", "Registration successful! Please login");
-      Get.offNamed(AppRoutes.login);
+      // Create a user object to save
+      final userData = {
+        'id': result['user_id'],
+        'name': body['name'],
+        'age': body['age'],
+        'height': body['height'],
+        'weight': body['weight'],
+        'gender': body['gender'],
+        'is_diabetic': body['is_diabetic'],
+        'has_bp': body['has_bp'],
+        'email': body['email'],
+      };
+
+      // Save user data to storage
+      final box = GetStorage();
+      box.write('user', userData);
+      box.write('isLoggedIn', true);
+
+      print("✅ User data saved: $userData");
+      print("✅ IsLoggedIn: ${box.read('isLoggedIn')}");
+      print("✅ Navigating to: ${AppRoutes.dashboard}");
+
+      Get.snackbar("Success", "Account created successfully!");
+      Get.offAllNamed(AppRoutes.dashboard); // ✅ Go to dashboard
     } else {
       Get.snackbar("Error", result['message']);
     }

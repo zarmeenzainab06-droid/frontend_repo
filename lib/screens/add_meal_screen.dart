@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/services/meal_service.dart';
+import 'package:get/get.dart';
+import '../../core/services/meal_service.dart';
 
 class AddMealScreen extends StatefulWidget {
   @override
@@ -10,29 +11,65 @@ class _AddMealScreenState extends State<AddMealScreen> {
   String _selectedMealType = 'Snacks';
   TextEditingController _searchController = TextEditingController();
 
-  Future<void> _submitMeal(String name, String calories) async {
-    if (name.isEmpty || calories.isEmpty) return;
+  List<Map<String, dynamic>> _todayMeals = [];
+  int _totalCalories = 0;
+  bool _isLoading = false;
 
-    int cal = int.tryParse(calories) ?? 0;
+  @override
+  void initState() {
+    super.initState();
+    _loadTodayMeals();
+  }
 
-    // Optimistic UI update (optional but smart)
-    setState(() {
-      _allFoods.add({
-        'name': name,
-        'serving': 'Custom',
-        'calories': cal,
-        'category': _selectedMealType,
+  Future<void> _loadTodayMeals() async {
+    setState(() => _isLoading = true);
+
+    final result = await MealService.getTodayMeals();
+
+    if (result['success']) {
+      setState(() {
+        _todayMeals = List<Map<String, dynamic>>.from(result['meals']);
+        _totalCalories = result['total_calories'];
+        _isLoading = false;
       });
-    });
+    } else {
+      setState(() => _isLoading = false);
+      Get.snackbar('Error', result['message']);
+    }
+  }
 
-    try {
-      await MealService.addMeal(
-        name: name,
-        calories: cal,
-        category: _selectedMealType,
+  Future<void> _addMeal(String name, int calories, String serving) async {
+    final result = await MealService.addMeal(
+      foodName: name,
+      calories: calories,
+      mealType: _selectedMealType,
+      servingSize: serving,
+    );
+
+    if (result['success']) {
+      Get.snackbar(
+        'Success',
+        'Meal added successfully!',
+        backgroundColor: Colors.green.shade100,
       );
-    } catch (e) {
-      print("Error: $e");
+      _loadTodayMeals(); // Refresh the list
+    } else {
+      Get.snackbar('Error', result['message']);
+    }
+  }
+
+  Future<void> _deleteMeal(int mealId) async {
+    final result = await MealService.deleteMeal(mealId);
+
+    if (result['success']) {
+      Get.snackbar(
+        'Success',
+        'Meal deleted successfully!',
+        backgroundColor: Colors.green.shade100,
+      );
+      _loadTodayMeals(); // Refresh the list
+    } else {
+      Get.snackbar('Error', result['message']);
     }
   }
 
@@ -209,244 +246,259 @@ class _AddMealScreenState extends State<AddMealScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Green Header
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.fromLTRB(20, 50, 20, 20),
-          decoration: BoxDecoration(
-            color: Color(0xFF5DB075),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
+    return Scaffold(
+      body: Column(
+        children: [
+          // Green Header (Fixed)
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(20, 50, 20, 20),
+            decoration: BoxDecoration(
+              color: Color(0xFF5DB075),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
             ),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.arrow_back, color: Colors.white),
-                  SizedBox(width: 15),
-                  Text(
-                    'Track Calories',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Monitor your daily intake',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-              SizedBox(height: 20),
-
-              // Today's Intake Card
-              Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Today's Intake",
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                        SizedBox(height: 8),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '0',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 36,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              ' / 2000',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '2000 left',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    Icon(Icons.arrow_back, color: Colors.white),
+                    SizedBox(width: 15),
+                    Text(
+                      'Track Calories',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
+                SizedBox(height: 8),
+                Text(
+                  'Monitor your daily intake',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                SizedBox(height: 20),
 
-        Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Add Food Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _openAddMealSheet(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF5DB075),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
+                // Today's Intake Card
+                Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.add, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text(
-                        'Add Food',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Today's Intake",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '$_totalCalories',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                ' / 2000',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${2000 - _totalCalories} left',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              SizedBox(height: 30),
+              ],
+            ),
+          ),
 
-              // Search & Add Food Section
-              Text(
-                'Search & Add Food',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 15),
-
-              // Meal Type Tabs
-              Row(
-                children: [
-                  _buildMealTypeChip('Breakfast'),
-                  SizedBox(width: 10),
-                  _buildMealTypeChip('Lunch'),
-                  SizedBox(width: 10),
-                  _buildMealTypeChip('Dinner'),
-                  SizedBox(width: 10),
-                  _buildMealTypeChip('Snacks'),
-                ],
-              ),
-              SizedBox(height: 20),
-
-              // Search Bar
-              TextField(
-                controller: _searchController,
-                onChanged: (value) => setState(() {}),
-                decoration: InputDecoration(
-                  hintText: 'Search Pakistani foods...',
-                  prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  filled: true,
-                  fillColor: Color(0xFFF5F5F5),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(color: Color(0xFF5DB075)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(
-                      color: Color(0xFF5DB075).withOpacity(0.3),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(color: Color(0xFF5DB075), width: 2),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-
-              // Food List
-              ..._filteredFoods
-                  .map(
-                    (food) => _buildFoodItem(
-                      food['name'],
-                      food['serving'],
-                      food['calories'],
-                    ),
+          // Scrollable Content (Fixed)
+          Expanded(
+            child: _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(color: Color(0xFF5DB075)),
                   )
-                  .toList(),
-
-              // No meals message
-              if (_filteredFoods.isEmpty)
-                Center(
-                  child: Column(
+                : ListView(
+                    padding: EdgeInsets.all(20),
                     children: [
-                      SizedBox(height: 40),
-                      Icon(
-                        Icons.search_off,
-                        size: 60,
-                        color: Colors.grey.shade300,
+                      // Today's Meals List
+                      if (_todayMeals.isNotEmpty) ...[
+                        Text(
+                          "Today's Meals",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 15),
+                        ..._todayMeals
+                            .map((meal) => _buildLoggedMealItem(meal))
+                            .toList(),
+                        SizedBox(height: 30),
+                      ],
+
+                      // Search & Add Food Section
+                      Text(
+                        'Search & Add Food',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       SizedBox(height: 15),
-                      Text(
-                        'No food found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey.shade600,
+
+                      // Meal Type Tabs
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildMealTypeChip('Breakfast'),
+                            SizedBox(width: 10),
+                            _buildMealTypeChip('Lunch'),
+                            SizedBox(width: 10),
+                            _buildMealTypeChip('Dinner'),
+                            SizedBox(width: 10),
+                            _buildMealTypeChip('Snacks'),
+                          ],
                         ),
                       ),
+                      SizedBox(height: 20),
+
+                      // Search Bar
+                      TextField(
+                        controller: _searchController,
+                        onChanged: (value) => setState(() {}),
+                        decoration: InputDecoration(
+                          hintText: 'Search Pakistani foods...',
+                          prefixIcon: Icon(Icons.search, color: Colors.grey),
+                          filled: true,
+                          fillColor: Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(color: Color(0xFF5DB075)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                              color: Color(0xFF5DB075).withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                              color: Color(0xFF5DB075),
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+
+                      // Can't find food? Add custom button
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: () => _showAddCustomFoodDialog(),
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: Color(0xFF5DB075),
+                          ),
+                          label: Text(
+                            "Can't find your food? Add custom",
+                            style: TextStyle(color: Color(0xFF5DB075)),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+
+                      // Food List
+                      ..._filteredFoods
+                          .map(
+                            (food) => _buildFoodItem(
+                              food['name'],
+                              food['serving'],
+                              food['calories'],
+                            ),
+                          )
+                          .toList(),
+
+                      // No meals message
+                      if (_filteredFoods.isEmpty)
+                        Center(
+                          child: Column(
+                            children: [
+                              SizedBox(height: 40),
+                              Icon(
+                                Icons.search_off,
+                                size: 60,
+                                color: Colors.grey.shade300,
+                              ),
+                              SizedBox(height: 15),
+                              Text(
+                                'No food found',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      SizedBox(height: 20),
                     ],
                   ),
-                ),
-            ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildMealTypeChip(String label) {
     bool isSelected = _selectedMealType == label;
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedMealType = label;
-        });
-      },
+      onTap: () => setState(() => _selectedMealType = label),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
@@ -464,136 +516,186 @@ class _AddMealScreenState extends State<AddMealScreen> {
     );
   }
 
-  void _openAddMealSheet(BuildContext context) {
-    TextEditingController nameController = TextEditingController();
-    TextEditingController caloriesController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle bar
-                Container(
-                  width: 40,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(10),
+  Widget _buildFoodItem(String name, String serving, int calories) {
+    return GestureDetector(
+      onTap: () => _addMeal(name, calories, serving),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Color(0xFFF8F8F8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
-                ),
-                SizedBox(height: 20),
-
-                Text(
-                  "Add Meal",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-
-                SizedBox(height: 20),
-
-                // Meal Name
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: "Meal Name",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  SizedBox(height: 4),
+                  Text(
+                    serving,
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                   ),
-                ),
-
-                SizedBox(height: 15),
-
-                // Calories
-                TextField(
-                  controller: caloriesController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: "Calories",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 20),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-
-                      await _submitMeal(
-                        nameController.text,
-                        caloriesController.text,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF5DB075),
-                    ),
-                    child: Text("Add Meal"),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
+            Text(
+              '$calories kcal',
+              style: TextStyle(
+                fontSize: 15,
+                color: Color(0xFFFF9966),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(width: 10),
+            Icon(Icons.add_circle, color: Color(0xFF5DB075)),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildFoodItem(String name, String serving, int calories) {
+  Widget _buildLoggedMealItem(Map<String, dynamic> meal) {
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFFF8F8F8),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Color(0xFF5DB075).withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Color(0xFF5DB075).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.restaurant, color: Color(0xFF5DB075)),
+          ),
+          SizedBox(width: 15),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  meal['food_name'],
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 4),
                 Text(
-                  serving,
+                  '${meal['meal_type']} • ${meal['serving_size']}',
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
               ],
             ),
           ),
           Text(
-            '$calories kcal',
+            '${meal['calories']} kcal',
             style: TextStyle(
               fontSize: 15,
-              color: Color(0xFFFF9966),
+              color: Color(0xFF5DB075),
               fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(width: 10),
-          Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade400),
+          IconButton(
+            onPressed: () => _showDeleteConfirmation(meal['id']),
+            icon: Icon(Icons.delete_outline, color: Colors.red.shade400),
+          ),
         ],
       ),
+    );
+  }
+
+  void _showDeleteConfirmation(int mealId) {
+    Get.defaultDialog(
+      title: 'Delete Meal',
+      middleText: 'Are you sure you want to delete this meal?',
+      textConfirm: 'Delete',
+      textCancel: 'Cancel',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.red,
+      onConfirm: () {
+        Get.back();
+        _deleteMeal(mealId);
+      },
+    );
+  }
+
+  void _showAddCustomFoodDialog() {
+    TextEditingController nameController = TextEditingController();
+    TextEditingController caloriesController = TextEditingController();
+    TextEditingController servingController = TextEditingController();
+
+    Get.defaultDialog(
+      title: 'Add Custom Food',
+      content: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10),
+        child: Column(
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: 'Food Name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            SizedBox(height: 15),
+            TextField(
+              controller: servingController,
+              decoration: InputDecoration(
+                labelText: 'Serving Size (e.g., 1 plate)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            SizedBox(height: 15),
+            TextField(
+              controller: caloriesController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Calories',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      textConfirm: 'Add',
+      textCancel: 'Cancel',
+      confirmTextColor: Colors.white,
+      buttonColor: Color(0xFF5DB075),
+      onConfirm: () {
+        if (nameController.text.isNotEmpty &&
+            caloriesController.text.isNotEmpty) {
+          Get.back();
+          _addMeal(
+            nameController.text,
+            int.parse(caloriesController.text),
+            servingController.text.isEmpty ? 'Custom' : servingController.text,
+          );
+        }
+      },
     );
   }
 
