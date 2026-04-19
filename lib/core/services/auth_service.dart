@@ -25,7 +25,9 @@ class AuthService {
         if (data['token'] != null) {
           box.write('token', data['token']);
           box.write('user', data['user']);
+          box.write('role', data['user']['role']); // for admin
           print('✅ Token saved: ${data['token']}');
+          print('✅ Role saved: ${data['user']['role']}'); //  for admin
         }
 
         return {'success': true, 'data': data};

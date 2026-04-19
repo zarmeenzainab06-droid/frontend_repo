@@ -5,6 +5,7 @@ import '../screens/onboarding_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
+import '../screens/admin/admin_dashboard.dart';
 import '../routes/auth_middleware.dart';
 
 class AppRoutes {
@@ -13,6 +14,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String dashboard = '/dashboard';
+  static const String adminDashboard = '/admin-dashboard';
 
   static final List<GetPage<dynamic>> pages = [
     GetPage(name: splash, page: () => SplashScreen()),
@@ -23,6 +25,11 @@ class AppRoutes {
     GetPage(
       name: dashboard,
       page: () => DashboardScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: adminDashboard,
+      page: () => AdminDashboard(),
       middlewares: [AuthMiddleware()],
     ),
   ];

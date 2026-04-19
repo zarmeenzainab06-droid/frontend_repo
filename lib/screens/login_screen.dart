@@ -36,14 +36,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result['success']) {
       final userName = result['data']['user']['name'];
+      final userRole = result['data']['user']['role']; // ✅ for admin
 
       print(result['data']['token']);
       // ✅ store login state
       box.write('isLoggedIn', true);
       box.write('userName', userName);
       box.write('token', result['data']['token']);
+      box.write('role', userRole); // ✅ for admin
 
-      Get.offAllNamed('/dashboard');
+      // ✅ CHANGED: route by role for admin
+      if (userRole == 'admin') {
+        Get.offAllNamed('/admin-dashboard');
+      } else {
+        Get.offAllNamed('/dashboard');
+      }
     } else {
       Get.snackbar("Error", result['message']);
     }
