@@ -4,6 +4,7 @@ import '../home_screen.dart';
 import '../add_meal_screen.dart';
 import '../diet_plan_screen.dart';
 import '../profile_screen.dart';
+import '../members/add_members.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -23,7 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> _screens = [
     HomeScreen(),
     AddMealScreen(),
-    DietPlanScreen(),
+    AddMemberPage(),
     ProfileScreen(),
   ];
 
@@ -70,8 +71,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Add Meal',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.restaurant_menu),
-            label: 'Diet Plan',
+            icon: Icon(Icons.people_alt_outlined),
+            label: 'Add Members',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
