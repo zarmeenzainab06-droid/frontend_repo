@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'onboarding_screen.dart';
 import '../routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -14,7 +13,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to onboarding after 3 seconds
+
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
     });
@@ -23,57 +22,45 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF5DB075),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo Circle
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD4E8D9),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.eco, size: 60, color: Color(0xFF5DB075)),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // CENTER LOGO
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset("assets/images/logo.png", width: 140),
+                const SizedBox(height: 20),
+                const Text(
+                  "Trainiqo",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 30),
-            // App Title
-            const Text(
-              'Healthy Wealthy',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+          ),
+
+          // BOTTOM TEXT
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: const [
+                Text(
+                  "Smart Gym Management",
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+                SizedBox(height: 10),
+                CircularProgressIndicator(color: Color(0xFFE53935)),
+              ],
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Diet Planner',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFFD4E8D9),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Eat Local, Live Healthy',
-              style: TextStyle(fontSize: 16, color: Color(0xFFD4E8D9)),
-            ),
-            const SizedBox(height: 40),
-            // Loading indicator
-            const SizedBox(
-              width: 30,
-              height: 30,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 3,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../core/services/auth_service.dart';
-import '../routes/app_routes.dart';
-import 'package:get_storage/get_storage.dart';
+import '../core/theme/theme.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -11,348 +10,232 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
-  final _ageController = TextEditingController();
-  final _heightController = TextEditingController();
-  final _weightController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  String _selectedGender = 'Male';
-  bool _isDiabetic = false;
-  bool _hasBP = false;
+  String? _selectedGender;
+  bool _obscurePassword = true;
   bool _isLoading = false;
 
-  Future<void> _register() async {
-    // Debug prints
-    print("=== REGISTRATION DEBUG ===");
-    print("Name: '${_nameController.text}'");
-    print("Age: '${_ageController.text}'");
-    print("Height: '${_heightController.text}'");
-    print("Weight: '${_weightController.text}'");
-    print("Email: '${_emailController.text}'");
-    print("Password: '${_passwordController.text}'");
-    print("Gender: $_selectedGender");
-    print("Diabetic: $_isDiabetic");
-    print("BP: $_hasBP");
+  final List<String> _genderOptions = ['Male', 'Female'];
 
+  Future<void> _register() async {
     if (_nameController.text.isEmpty ||
-        _ageController.text.isEmpty ||
-        _heightController.text.isEmpty ||
-        _weightController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty) {
-      Get.snackbar("Error", "Please fill all fields");
-      print("❌ Validation failed - some fields are empty");
+      Get.snackbar(
+        "Error", "Please fill all required fields",
+        backgroundColor: AppTheme.expiredLight,
+        colorText: AppTheme.expired,
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
-    print("✅ Validation passed, calling AuthService.register...");
+    if (_passwordController.text.length < 6) {
+      Get.snackbar(
+        "Error", "Password must be at least 6 characters",
+        backgroundColor: AppTheme.expiredLight,
+        colorText: AppTheme.expired,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
     final body = {
-      'name': _nameController.text,
-      'age': int.parse(_ageController.text),
-      'height': int.parse(_heightController.text),
-      'weight': int.parse(_weightController.text),
-      'gender': _selectedGender,
-      'is_diabetic': _isDiabetic,
-      'has_bp': _hasBP,
-      'email': _emailController.text,
+      'name': _nameController.text.trim(),
+      'phone': _phoneController.text.trim(),
+      'gender': (_selectedGender ?? 'male').toLowerCase(),
+      'email': _emailController.text.trim(),
       'password': _passwordController.text,
     };
 
-    print("📦 Sending body: $body");
-
     final result = await AuthService.register(body);
-
-    print("📨 Response: $result");
-
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      // Create a user object to save
-      final userData = {
-        'id': result['user_id'],
-        'name': body['name'],
-        'age': body['age'],
-        'height': body['height'],
-        'weight': body['weight'],
-        'gender': body['gender'],
-        'is_diabetic': body['is_diabetic'],
-        'has_bp': body['has_bp'],
-        'email': body['email'],
-      };
-
-      // Save user data to storage
-      final box = GetStorage();
-      box.write('user', userData);
-      box.write('isLoggedIn', true);
-
-      print("✅ User data saved: $userData");
-      print("✅ IsLoggedIn: ${box.read('isLoggedIn')}");
-      print("✅ Navigating to: ${AppRoutes.dashboard}");
-
-      Get.snackbar("Success", "Account created successfully!");
-      Get.offAllNamed(AppRoutes.dashboard); // ✅ Go to dashboard
+      Get.snackbar(
+        "Success", "Account created! Please login.",
+        backgroundColor: AppTheme.activeLight,
+        colorText: AppTheme.active,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      Get.back();
     } else {
-      Get.snackbar("Error", result['message']);
+      Get.snackbar(
+        "Registration Failed", result['message'],
+        backgroundColor: AppTheme.expiredLight,
+        colorText: AppTheme.expired,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFEEF5E8),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 20),
+              const SizedBox(height: 10),
 
-              // Title
-              Text(
+              const Text(
                 'Create Account',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: AppTheme.textPrimary,
                 ),
               ),
-              SizedBox(height: 8),
-              Text(
-                'Join us for a healthier lifestyle',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-              ),
-              SizedBox(height: 30),
+              const SizedBox(height: 28),
 
-              // Form container
+              // Full Name
+              _label('Full Name'),
+              const SizedBox(height: 8),
+              _textField(controller: _nameController, hint: 'John Doe'),
+              const SizedBox(height: 18),
+
+              // Phone
+              _label('Phone Number'),
+              const SizedBox(height: 8),
+              _textField(
+                controller: _phoneController,
+                hint: '+1 234 567 8900',
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 18),
+
+              // Gender dropdown
+              _label('Gender'),
+              const SizedBox(height: 8),
               Container(
-                padding: EdgeInsets.all(20),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Full Name
-                    Text('Full Name', style: _labelStyle()),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: _nameController,
-                      decoration: _inputDecoration(
-                        'Ahmad Khan',
-                        Icons.person_outline,
-                      ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedGender,
+                    hint: Text(
+                      'Select gender',
+                      style: TextStyle(color: AppTheme.textHint, fontSize: 14),
                     ),
-                    SizedBox(height: 20),
-
-                    // Age, Height, Weight
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Age', style: _labelStyle()),
-                              SizedBox(height: 8),
-                              TextField(
-                                controller: _ageController,
-                                keyboardType: TextInputType.number,
-                                decoration: _inputDecoration(
-                                  '25',
-                                  Icons.calendar_today,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Height (cm)', style: _labelStyle()),
-                              SizedBox(height: 8),
-                              TextField(
-                                controller: _heightController,
-                                keyboardType: TextInputType.number,
-                                decoration: _inputDecoration(
-                                  '170',
-                                  Icons.height,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Weight (kg)', style: _labelStyle()),
-                              SizedBox(height: 8),
-                              TextField(
-                                controller: _weightController,
-                                keyboardType: TextInputType.number,
-                                decoration: _inputDecoration(
-                                  '70',
-                                  Icons.monitor_weight_outlined,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-
-                    // Gender
-                    Text('Gender', style: _labelStyle()),
-                    SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedGender = 'Male'),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                color: _selectedGender == 'Male'
-                                    ? Color(0xFF5DB075)
-                                    : Color(0xFFF5F5F5),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Male',
-                                  style: TextStyle(
-                                    color: _selectedGender == 'Male'
-                                        ? Colors.white
-                                        : Colors.grey.shade700,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedGender = 'Female'),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                color: _selectedGender == 'Female'
-                                    ? Color(0xFF5DB075)
-                                    : Color(0xFFF5F5F5),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Female',
-                                  style: TextStyle(
-                                    color: _selectedGender == 'Female'
-                                        ? Colors.white
-                                        : Colors.grey.shade700,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-
-                    // Health Conditions
-                    Text('Health Conditions', style: _labelStyle()),
-                    SizedBox(height: 12),
-                    CheckboxListTile(
-                      title: Text('I am Diabetic'),
-                      value: _isDiabetic,
-                      onChanged: (value) =>
-                          setState(() => _isDiabetic = value!),
-                      activeColor: Color(0xFF5DB075),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    CheckboxListTile(
-                      title: Text('I have Blood Pressure issues'),
-                      value: _hasBP,
-                      onChanged: (value) => setState(() => _hasBP = value!),
-                      activeColor: Color(0xFF5DB075),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    SizedBox(height: 20),
-
-                    // Email
-                    Text('Email', style: _labelStyle()),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: _inputDecoration(
-                        'your@email.com',
-                        Icons.email_outlined,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-
-                    // Password
-                    Text('Password', style: _labelStyle()),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: _inputDecoration(
-                        'Create a password',
-                        Icons.lock_outline,
-                      ),
-                    ),
-                    SizedBox(height: 30),
-
-                    // Register button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _register,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF5DB075),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? CircularProgressIndicator(color: Colors.white)
-                            : Text(
-                                'Create Account',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
+                    icon: Icon(Icons.keyboard_arrow_down_rounded,
+                        color: AppTheme.textSecondary),
+                    isExpanded: true,
+                    style: const TextStyle(
+                        fontSize: 14, color: AppTheme.textPrimary),
+                    items: _genderOptions
+                        .map((g) =>
+                            DropdownMenuItem(value: g, child: Text(g)))
+                        .toList(),
+                    onChanged: (value) =>
+                        setState(() => _selectedGender = value),
+                  ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 18),
+
+              // Email
+              _label('Email'),
+              const SizedBox(height: 8),
+              _textField(
+                controller: _emailController,
+                hint: 'your.email@example.com',
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 18),
+
+              // Password
+              _label('Password'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                style: const TextStyle(
+                    fontSize: 14, color: AppTheme.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Min. 6 characters',
+                  hintStyle:
+                      TextStyle(color: AppTheme.textHint, fontSize: 14),
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: AppTheme.textSecondary,
+                      size: 20,
+                    ),
+                    onPressed: () => setState(
+                        () => _obscurePassword = !_obscurePassword),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppTheme.radiusMd),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppTheme.radiusMd),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppTheme.radiusMd),
+                    borderSide: const BorderSide(
+                        color: AppTheme.primary, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // Register button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    disabledBackgroundColor:
+                        AppTheme.primary.withOpacity(0.6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppTheme.radiusMd),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2.5),
+                        )
+                      : const Text(
+                          'Register',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 20),
 
               // Login link
               Row(
@@ -360,23 +243,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Text(
                     'Already have an account? ',
-                    style: TextStyle(color: Colors.grey.shade600),
+                    style: TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 14),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      Get.back();
-                    },
-                    child: Text(
-                      'Login',
+                    onTap: () => Get.back(),
+                    child: const Text(
+                      'Login here',
                       style: TextStyle(
-                        color: Color(0xFF5DB075),
+                        color: AppTheme.primary,
                         fontWeight: FontWeight.w600,
+                        fontSize: 14,
                       ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -384,34 +267,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  TextStyle _labelStyle() {
-    return TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w600,
-      color: Colors.black87,
-    );
-  }
+  Widget _label(String text) => Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: AppTheme.textPrimary,
+        ),
+      );
 
-  InputDecoration _inputDecoration(String hint, IconData icon) {
-    return InputDecoration(
-      hintText: hint,
-      prefixIcon: Icon(icon, color: Colors.grey),
-      filled: true,
-      fillColor: Color(0xFFF5F5F5),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    );
-  }
+  Widget _textField({
+    required TextEditingController controller,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+  }) =>
+      TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: AppTheme.textHint, fontSize: 14),
+          filled: true,
+          fillColor: const Color(0xFFF5F5F5),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            borderSide:
+                const BorderSide(color: AppTheme.primary, width: 1.5),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+      );
 
   @override
   void dispose() {
     _nameController.dispose();
-    _ageController.dispose();
-    _heightController.dispose();
-    _weightController.dispose();
+    _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();

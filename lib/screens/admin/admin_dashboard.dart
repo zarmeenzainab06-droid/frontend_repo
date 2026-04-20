@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/services/admin_service.dart';
+import '../../core/theme/theme.dart';
 
 class AdminDashboard extends StatefulWidget {
   @override
@@ -10,308 +11,233 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   final box = GetStorage();
-  bool _isLoading = false;
+  bool _isLoading = true;
 
-  int totalFoods = 0;
-  int diabeticSafe = 0;
-  int bpSafe = 0;
-  List<Map<String, dynamic>> foodList = [];
+  // Stats
+  int totalMembers = 0;
+  int activeMembers = 0;
+  int expiredMembers = 0;
+  int pendingPayments = 0;
 
-  TextEditingController _searchController = TextEditingController();
+  // Activity
+  List<Map<String, dynamic>> recentActivity = [];
 
   @override
   void initState() {
     super.initState();
-    _loadFoods();
+    _loadDashboard();
   }
 
-  Future<void> _loadFoods() async {
+  Future<void> _loadDashboard() async {
     setState(() => _isLoading = true);
 
-    final result = await AdminService.getAllFoods();
+    final statsResult = await AdminService.getDashboardStats();
+    final activityResult = await AdminService.getRecentActivity();
 
-    if (result['success']) {
+    if (statsResult['success']) {
+      final s = statsResult['stats'];
       setState(() {
-        foodList = List<Map<String, dynamic>>.from(result['foods']);
-        totalFoods = foodList.length;
-        diabeticSafe = foodList.where((f) => f['is_diabetic_safe'] == 1).length;
-        bpSafe = foodList.where((f) => f['is_bp_safe'] == 1).length;
-        _isLoading = false;
+        totalMembers = s['totalMembers'] ?? 0;
+        activeMembers = s['active'] ?? 0;
+        expiredMembers = s['expired'] ?? 0;
+        pendingPayments = s['pendingPayments'] ?? 0;
       });
-    } else {
-      setState(() => _isLoading = false);
-      Get.snackbar('Error', result['message']);
     }
-  }
 
-  Future<void> _deleteFood(int foodId) async {
-    final result = await AdminService.deleteFood(foodId);
-
-    if (result['success']) {
-      Get.snackbar(
-        'Success',
-        'Food deleted successfully',
-        backgroundColor: Colors.green.shade100,
-      );
-      _loadFoods();
-    } else {
-      Get.snackbar('Error', result['message']);
+    if (activityResult['success']) {
+      setState(() {
+        recentActivity = List<Map<String, dynamic>>.from(
+          activityResult['activity'],
+        );
+      });
     }
-  }
 
-  List<Map<String, dynamic>> get _filteredFoods {
-    String query = _searchController.text.toLowerCase();
-    if (query.isEmpty) {
-      return foodList;
-    }
-    return foodList
-        .where((food) => food['name'].toLowerCase().contains(query))
-        .toList();
+    setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = box.read('user');
-    final adminName = user != null ? user['name'] : 'Admin';
-
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Purple Header
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF9333EA)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Get.back(),
-                        icon: Icon(Icons.arrow_back, color: Colors.white),
-                      ),
-                      SizedBox(width: 10),
-                      Column(
+      backgroundColor: AppTheme.background,
+      body: Column(
+        children: [
+          // ── Red top bar ──────────────────────────────────────
+          _buildTopBar(),
+
+          // ── Scrollable body ──────────────────────────────────
+          Expanded(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  )
+                : RefreshIndicator(
+                    color: AppTheme.primary,
+                    onRefresh: _loadDashboard,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Admin Dashboard',
+                          // Stat cards
+                          _buildStatCard(
+                            label: 'Total Members',
+                            value: totalMembers,
+                            icon: Icons.people_alt_outlined,
+                            iconColor: Colors.blue,
+                            iconBg: Colors.blue.shade50,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildStatCard(
+                            label: 'Active',
+                            value: activeMembers,
+                            icon: Icons.check_circle_outline,
+                            iconColor: AppTheme.active,
+                            iconBg: AppTheme.activeLight,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildStatCard(
+                            label: 'Expired',
+                            value: expiredMembers,
+                            icon: Icons.cancel_outlined,
+                            iconColor: AppTheme.expired,
+                            iconBg: AppTheme.expiredLight,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildStatCard(
+                            label: 'Pending Payments',
+                            value: pendingPayments,
+                            icon: Icons.access_time_outlined,
+                            iconColor: AppTheme.pending,
+                            iconBg: AppTheme.pendingLight,
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Recent Activity
+                          const Text(
+                            'Recent Activity',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary,
                             ),
                           ),
-                          Text(
-                            'Manage food database',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
+                          const SizedBox(height: 12),
+
+                          if (recentActivity.isEmpty)
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32),
+                                child: Text(
+                                  'No recent activity',
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            ...recentActivity
+                                .map((item) => _buildActivityItem(item))
+                                .toList(),
                         ],
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 25),
-
-                  // Stats Cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          '$totalFoods',
-                          'Total Foods',
-                          Icons.restaurant_menu,
-                        ),
-                      ),
-                      SizedBox(width: 15),
-                      Expanded(
-                        child: _buildStatCard(
-                          '$diabeticSafe',
-                          'Diabetic Safe',
-                          Icons.favorite,
-                        ),
-                      ),
-                      SizedBox(width: 15),
-                      Expanded(
-                        child: _buildStatCard(
-                          '$bpSafe',
-                          'BP Safe',
-                          Icons.favorite_border,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 20),
-
-            // Add New Food Button
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () => _showAddFoodDialog(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF7C3AED),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add, color: Colors.white),
-                      SizedBox(width: 10),
-                      Text(
-                        'Add New Food',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            SizedBox(height: 20),
-
-            // Search Bar
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) => setState(() {}),
-                decoration: InputDecoration(
-                  hintText: 'Search foods...',
-                  prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                ),
-              ),
-            ),
-
-            SizedBox(height: 20),
-
-            // Food List
-            Expanded(
-              child: _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF7C3AED),
-                      ),
-                    )
-                  : _filteredFoods.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.restaurant_menu,
-                            size: 60,
-                            color: Colors.grey.shade300,
-                          ),
-                          SizedBox(height: 15),
-                          Text(
-                            'No foods found',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: _filteredFoods.length,
-                      itemBuilder: (context, index) {
-                        return _buildFoodCard(_filteredFoods[index]);
-                      },
-                    ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
+
+      // ── Bottom Nav ───────────────────────────────────────────
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildStatCard(String value, String label, IconData icon) {
+  // ── Top Bar ───────────────────────────────────────────────────
+  Widget _buildTopBar() {
     return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(15),
+      color: AppTheme.primary,
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 12,
+        left: 16,
+        right: 16,
+        bottom: 12,
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(icon, color: Colors.white, size: 24),
-          SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
+          // Logo pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
               color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
+                SizedBox(width: 4),
+                Text(
+                  'GymSwift',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primary,
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(color: Colors.white70, fontSize: 12),
-            textAlign: TextAlign.center,
+          const SizedBox(width: 10),
+          const Text(
+            'Admin Panel',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white70,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const Spacer(),
+          // Live updates badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.bolt, size: 14, color: Colors.white),
+                SizedBox(width: 4),
+                Text(
+                  'Live Updates',
+                  style: TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFoodCard(Map<String, dynamic> food) {
-    bool isDiabeticSafe = food['is_diabetic_safe'] == 1;
-    bool isBpSafe = food['is_bp_safe'] == 1;
-
+  // ── Stat Card ─────────────────────────────────────────────────
+  Widget _buildStatCard({
+    required String label,
+    required int value,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+  }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 15),
-      padding: EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: [AppTheme.cardShadow],
       ),
       child: Row(
         children: [
@@ -320,118 +246,144 @@ class _AdminDashboardState extends State<AdminDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  food['name'],
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
-                  '${food['portion']}',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  '$value',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-                SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    if (isDiabeticSafe)
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF5DB075).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              size: 14,
-                              color: Color(0xFF5DB075),
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Diabetic Safe',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF5DB075),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (isBpSafe)
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              size: 14,
-                              color: Colors.blue.shade700,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'BP Safe',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                const SizedBox(height: 6),
+                // Growth chip — hardcoded for now, wire to real data later
+                Row(
+                  children: const [
+                    Icon(Icons.trending_up, size: 14, color: AppTheme.active),
+                    SizedBox(width: 4),
+                    Text(
+                      '+12% this month',
+                      style: TextStyle(fontSize: 12, color: AppTheme.active),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            child: Icon(icon, color: iconColor, size: 26),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Activity Item ─────────────────────────────────────────────
+  Widget _buildActivityItem(Map<String, dynamic> item) {
+    final name = item['memberName'] ?? '';
+    final action = item['action'] ?? '';
+    final status = (item['status'] ?? '').toString().toLowerCase();
+    final timeAgo = item['timeAgo'] ?? '';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    final statusColor = AppColors.statusColor(status);
+    final statusBg = AppColors.statusLightColor(status);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: [AppTheme.cardShadow],
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppTheme.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                initial,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Name + action
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  action,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Status badge + time
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${food['calories']} kcal',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFFFF9966),
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: statusColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => _showEditFoodDialog(food),
-                    icon: Icon(
-                      Icons.edit_outlined,
-                      color: Colors.blue.shade600,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
-                  ),
-                  SizedBox(width: 15),
-                  IconButton(
-                    onPressed: () =>
-                        _showDeleteConfirmation(food['id'], food['name']),
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: Colors.red.shade600,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
-                  ),
-                ],
+              const SizedBox(height: 6),
+              Text(
+                timeAgo,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textSecondary,
+                ),
               ),
             ],
           ),
@@ -440,279 +392,69 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  void _showAddFoodDialog() {
-    TextEditingController nameController = TextEditingController();
-    TextEditingController caloriesController = TextEditingController();
-    TextEditingController portionController = TextEditingController();
-    bool isDiabeticSafe = false;
-    bool isBpSafe = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Add New Food Item'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Food Name *',
-                    hintText: 'e.g. Chicken Biryani',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 15),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: caloriesController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Calories *',
-                          hintText: '250',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: portionController,
-                        decoration: InputDecoration(
-                          labelText: 'Portion *',
-                          hintText: '1 plate',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 15),
-                Text(
-                  'Health Safety',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                CheckboxListTile(
-                  title: Text('Safe for Diabetic patients'),
-                  value: isDiabeticSafe,
-                  onChanged: (value) {
-                    setDialogState(() => isDiabeticSafe = value!);
-                  },
-                  activeColor: Color(0xFF5DB075),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                CheckboxListTile(
-                  title: Text('Safe for BP patients'),
-                  value: isBpSafe,
-                  onChanged: (value) {
-                    setDialogState(() => isBpSafe = value!);
-                  },
-                  activeColor: Color(0xFF5DB075),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameController.text.isEmpty ||
-                    caloriesController.text.isEmpty ||
-                    portionController.text.isEmpty) {
-                  Get.snackbar('Error', 'Please fill all required fields');
-                  return;
-                }
-
-                Get.back();
-
-                final result = await AdminService.addFood(
-                  name: nameController.text,
-                  calories: int.parse(caloriesController.text),
-                  portion: portionController.text,
-                  isDiabeticSafe: isDiabeticSafe,
-                  isBpSafe: isBpSafe,
-                );
-
-                if (result['success']) {
-                  Get.snackbar(
-                    'Success',
-                    'Food added successfully',
-                    backgroundColor: Colors.green.shade100,
-                  );
-                  _loadFoods();
-                } else {
-                  Get.snackbar('Error', result['message']);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF7C3AED),
+  // ── Bottom Nav ────────────────────────────────────────────────
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _navItem(Icons.home_outlined, 'Home', isActive: true),
+              _navItem(
+                Icons.people_outline,
+                'Members',
+                onTap: () => Get.toNamed('/admin/members'),
               ),
-              child: Text('Add Food'),
-            ),
-          ],
+              _navItem(
+                Icons.bar_chart_outlined,
+                'Reports',
+                onTap: () => Get.toNamed('/admin/reports'),
+              ),
+              _navItem(
+                Icons.person_outline,
+                'Profile',
+                onTap: () => Get.toNamed('/admin/profile'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  void _showEditFoodDialog(Map<String, dynamic> food) {
-    TextEditingController nameController = TextEditingController(
-      text: food['name'],
-    );
-    TextEditingController caloriesController = TextEditingController(
-      text: food['calories'].toString(),
-    );
-    TextEditingController portionController = TextEditingController(
-      text: food['portion'],
-    );
-    bool isDiabeticSafe = food['is_diabetic_safe'] == 1;
-    bool isBpSafe = food['is_bp_safe'] == 1;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Edit Food Item'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Food Name *',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 15),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: caloriesController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Calories *',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: portionController,
-                        decoration: InputDecoration(
-                          labelText: 'Portion *',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 15),
-                Text(
-                  'Health Safety',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                CheckboxListTile(
-                  title: Text('Safe for Diabetic patients'),
-                  value: isDiabeticSafe,
-                  onChanged: (value) {
-                    setDialogState(() => isDiabeticSafe = value!);
-                  },
-                  activeColor: Color(0xFF5DB075),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                CheckboxListTile(
-                  title: Text('Safe for BP patients'),
-                  value: isBpSafe,
-                  onChanged: (value) {
-                    setDialogState(() => isBpSafe = value!);
-                  },
-                  activeColor: Color(0xFF5DB075),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ],
+  Widget _navItem(
+    IconData icon,
+    String label, {
+    bool isActive = false,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 24,
+            color: isActive ? AppTheme.primary : AppTheme.textSecondary,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: isActive ? AppTheme.primary : AppTheme.textSecondary,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Get.back();
-
-                final result = await AdminService.updateFood(
-                  foodId: food['id'],
-                  name: nameController.text,
-                  calories: int.parse(caloriesController.text),
-                  portion: portionController.text,
-                  isDiabeticSafe: isDiabeticSafe,
-                  isBpSafe: isBpSafe,
-                );
-
-                if (result['success']) {
-                  Get.snackbar(
-                    'Success',
-                    'Food updated successfully',
-                    backgroundColor: Colors.green.shade100,
-                  );
-                  _loadFoods();
-                } else {
-                  Get.snackbar('Error', result['message']);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF7C3AED),
-              ),
-              child: Text('Update'),
-            ),
-          ],
-        ),
+        ],
       ),
     );
-  }
-
-  void _showDeleteConfirmation(int foodId, String foodName) {
-    Get.defaultDialog(
-      title: 'Delete Food',
-      middleText: 'Are you sure you want to delete "$foodName"?',
-      textConfirm: 'Delete',
-      textCancel: 'Cancel',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red,
-      onConfirm: () {
-        Get.back();
-        _deleteFood(foodId);
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 }

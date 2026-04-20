@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:get/get.dart';
-import 'register_screen.dart';
-import 'dashboard/dashboard_screen.dart';
-import '../routes/app_routes.dart';
-import '../core/services/auth_service.dart';
 import 'package:get_storage/get_storage.dart';
+import '../core/services/auth_service.dart';
+import '../core/theme/theme.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -17,185 +14,172 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  GetStorage box = GetStorage();
+  bool _obscurePassword = true;
+  final box = GetStorage();
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      Get.snackbar("Error", "Email and Password are required");
+      Get.snackbar(
+        "Error",
+        "Email and Password are required",
+        backgroundColor: AppTheme.expiredLight,
+        colorText: AppTheme.expired,
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
     setState(() => _isLoading = true);
 
     final result = await AuthService.login(
-      _emailController.text,
+      _emailController.text.trim(),
       _passwordController.text,
     );
 
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      final userName = result['data']['user']['name'];
-      final userRole = result['data']['user']['role']; // ✅ for admin
+      final userRole = result['data']['user']['role'];
 
-      print(result['data']['token']);
-      // ✅ store login state
       box.write('isLoggedIn', true);
-      box.write('userName', userName);
-      box.write('token', result['data']['token']);
-      box.write('role', userRole); // ✅ for admin
+      box.write('userName', result['data']['user']['name']);
 
-      // ✅ CHANGED: route by role for admin
       if (userRole == 'admin') {
         Get.offAllNamed('/admin-dashboard');
       } else {
         Get.offAllNamed('/dashboard');
       }
     } else {
-      Get.snackbar("Error", result['message']);
+      Get.snackbar(
+        "Login Failed",
+        result['message'],
+        backgroundColor: AppTheme.expiredLight,
+        colorText: AppTheme.expired,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFEEF5E8),
+      backgroundColor: const Color(0xFFF2F2F2),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo
+                // ── Card ──────────────────────────────────────
                 Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF5DB075),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.eco, size: 40, color: Colors.white),
-                ),
-                SizedBox(height: 30),
-
-                // Welcome text
-                Text(
-                  'Welcome Back',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Login to continue your healthy journey',
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                ),
-                SizedBox(height: 40),
-
-                // Email field
-                Container(
-                  padding: EdgeInsets.all(20),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+                    boxShadow: [AppTheme.cardShadow],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Email',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                      // Title
+                      const Center(
+                        child: Text(
+                          'Welcome Back',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 28),
+
+                      // Email label + field
+                      const Text(
+                        'Email',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          hintText: 'your@email.com',
-                          prefixIcon: Icon(
-                            Icons.email_outlined,
-                            color: Colors.grey,
-                          ),
-                          filled: true,
-                          fillColor: Color(0xFFF5F5F5),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textPrimary,
                         ),
+                        decoration: _inputDecoration('your.email@example.com'),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                      // Password field
-                      Text(
+                      // Password label + field
+                      const Text(
                         'Password',
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textPrimary,
                         ),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: _passwordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your password',
-                          prefixIcon: Icon(
-                            Icons.lock_outline,
-                            color: Colors.grey,
-                          ),
-                          filled: true,
-                          fillColor: Color(0xFFF5F5F5),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
+                        obscureText: _obscurePassword,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textPrimary,
+                        ),
+                        decoration: _inputDecoration(
+                          'Enter your password',
+                          suffix: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: AppTheme.textSecondary,
+                              size: 20,
+                            ),
+                            onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword),
                           ),
                         ),
                       ),
-                      SizedBox(height: 30),
+                      const SizedBox(height: 28),
 
-                      // Login button
+                      // Login Button
                       SizedBox(
                         width: double.infinity,
-                        height: 56,
+                        height: 50,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF5DB075),
+                            backgroundColor: AppTheme.primary,
+                            disabledBackgroundColor:
+                                AppTheme.primary.withOpacity(0.6),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
+                              borderRadius:
+                                  BorderRadius.circular(AppTheme.radiusMd),
                             ),
                             elevation: 0,
                           ),
                           child: _isLoading
-                              ? CircularProgressIndicator(color: Colors.white)
-                              : Text(
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : const Text(
                                   'Login',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
                                   ),
@@ -205,7 +189,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
+
+                const SizedBox(height: 20),
 
                 // Register link
                 Row(
@@ -213,22 +198,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       "Don't have an account? ",
-                      style: TextStyle(color: Colors.grey.shade600),
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                      ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RegisterScreen(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'Register Now',
+                      onTap: () => Get.to(() => RegisterScreen()),
+                      child: const Text(
+                        'Register here',
                         style: TextStyle(
-                          color: Color(0xFF5DB075),
+                          color: AppTheme.primary,
                           fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -239,6 +221,33 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint, {Widget? suffix}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(
+        color: AppTheme.textHint,
+        fontSize: 14,
+      ),
+      filled: true,
+      fillColor: const Color(0xFFF5F5F5),
+      suffixIcon: suffix,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+      ),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 
