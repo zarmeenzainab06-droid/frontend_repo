@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../core/services/auth_service.dart';
-import '../core/theme/theme.dart';
+import '../core/utils/theme.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -145,7 +145,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               size: 20,
                             ),
                             onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
                           ),
                         ),
                       ),
@@ -159,11 +160,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
-                            disabledBackgroundColor:
-                                AppTheme.primary.withOpacity(0.6),
+                            disabledBackgroundColor: AppTheme.primary
+                                .withOpacity(0.6),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppTheme.radiusMd),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusMd,
+                              ),
                             ),
                             elevation: 0,
                           ),
@@ -227,10 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
   InputDecoration _inputDecoration(String hint, {Widget? suffix}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(
-        color: AppTheme.textHint,
-        fontSize: 14,
-      ),
+      hintStyle: TextStyle(color: AppTheme.textHint, fontSize: 14),
       filled: true,
       fillColor: const Color(0xFFF5F5F5),
       suffixIcon: suffix,
@@ -246,8 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
       ),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 

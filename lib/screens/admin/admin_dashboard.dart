@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/services/admin_service.dart';
-import '../../core/theme/theme.dart';
+import '../../core/utils/theme.dart';
 
 class AdminDashboard extends StatefulWidget {
   @override

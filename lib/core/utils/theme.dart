@@ -1,101 +1,146 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // ── Core Colours ──────────────────────────────────────────────
-  static const Color primary    = Color(0xFF2DBE6C); // healthy green
-  static const Color primaryDark= Color(0xFF1E9952);
-  static const Color accent     = Color(0xFF57D68D);
-  static const Color background = Color(0xFFFFFFFF);
-  static const Color surface    = Color(0xFFF5FBF7);
-  static const Color textDark   = Color(0xFF111827);
-  static const Color textGrey   = Color(0xFF6B7280);
-  static const Color border     = Color(0xFFE5E7EB);
+  // ── Brand Colors ──────────────────────────────────────────
+  static const Color primary = Color(0xFFE53935); // GymSwift red
+  static const Color primaryDark = Color(0xFFC62828); // pressed red
+  static const Color primaryLight = Color(0xFFFFEBEE); // red tint bg
 
-  // ── Theme ─────────────────────────────────────────────────────
-  static ThemeData get light => ThemeData(
+  static const Color dark = Color(0xFF212121);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color background = Color(0xFFF5F5F5);
+
+  // ── Status Colors ─────────────────────────────────────────
+  static const Color active = Color(0xFF4CAF50); // green
+  static const Color activeLight = Color(0xFFE8F5E9);
+  static const Color expired = Color(0xFFE53935); // red
+  static const Color expiredLight = Color(0xFFFFEBEE);
+  static const Color pending = Color(0xFFFF9800); // orange
+  static const Color pendingLight = Color(0xFFFFF3E0);
+
+  // ── Text Colors ───────────────────────────────────────────
+  static const Color textPrimary = Color(0xFF212121);
+  static const Color textSecondary = Color(0xFF757575);
+  static const Color textHint = Color(0xFFBDBDBD);
+  static const Color textOnPrimary = Color(0xFFFFFFFF);
+  static const Color textDark = Color(0xFF111827);
+  static const Color textGrey = Color(0xFF9CA3AF);
+
+  // ── Border & Shadow ───────────────────────────────────────
+  static const Color border = Color(0xFFE0E0E0);
+  static BoxShadow cardShadow = BoxShadow(
+    color: Colors.black.withOpacity(0.06),
+    blurRadius: 10,
+    offset: const Offset(0, 3),
+  );
+
+  // ── Radius ────────────────────────────────────────────────
+  static const double radiusSm = 8.0;
+  static const double radiusMd = 12.0;
+  static const double radiusLg = 16.0;
+  static const double radiusXl = 20.0;
+
+  // ── ThemeData ─────────────────────────────────────────────
+  static ThemeData get lightTheme => ThemeData(
     useMaterial3: true,
-    scaffoldBackgroundColor: background,
-    primaryColor: primary,
-    colorScheme: ColorScheme.light(
-      primary:   primary,
-      secondary: accent,
-      surface:   surface,
-      onPrimary: Colors.white,
-      onSurface: textDark,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primary,
+      primary: primary,
+      onPrimary: textOnPrimary,
+      surface: surface,
+      background: background,
     ),
+    scaffoldBackgroundColor: background,
+    fontFamily: 'Poppins',
 
-    // AppBar
     appBarTheme: const AppBarTheme(
-      backgroundColor: background,
-      foregroundColor: textDark,
+      backgroundColor: primary,
+      foregroundColor: textOnPrimary,
       elevation: 0,
-      centerTitle: true,
+      centerTitle: false,
       titleTextStyle: TextStyle(
-        color: textDark, fontSize: 17, fontWeight: FontWeight.w700,
+        color: textOnPrimary,
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
       ),
     ),
 
-    // ElevatedButton
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
-        foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        foregroundColor: textOnPrimary,
+        elevation: 0,
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+        ),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
 
-    // Input / TextFormField
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: surface,
-      labelStyle: const TextStyle(color: textGrey, fontSize: 13),
+      fillColor: const Color(0xFFF5F5F5),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: border),
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: border),
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(radiusMd),
         borderSide: const BorderSide(color: primary, width: 1.5),
       ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent),
-      ),
+      hintStyle: const TextStyle(color: textHint, fontSize: 14),
     ),
 
-    // Switch
-    switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.selected) ? primary : Colors.white,
+    checkboxTheme: CheckboxThemeData(
+      fillColor: MaterialStateProperty.resolveWith(
+        (states) => states.contains(MaterialState.selected)
+            ? primary
+            : Colors.transparent,
       ),
-      trackColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.selected) ? accent : border,
-      ),
+      side: const BorderSide(color: border, width: 1.5),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
     ),
 
-    // Card
-    // cardTheme: CardTheme(
-    //   color: surface,
-    //   elevation: 0,
-    //   shape: RoundedRectangleBorder(
-    //     borderRadius: BorderRadius.circular(14),
-    //     side: const BorderSide(color: border),
-    //   ),
-    // ),
-
-    // Text
-    textTheme: const TextTheme(
-      titleLarge : TextStyle(color: textDark, fontSize: 20, fontWeight: FontWeight.w800),
-      titleMedium: TextStyle(color: textDark, fontSize: 16, fontWeight: FontWeight.w600),
-      bodyMedium : TextStyle(color: textDark, fontSize: 14),
-      bodySmall  : TextStyle(color: textGrey, fontSize: 12),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+      ),
     ),
   );
+}
+
+// ── Reusable Widget Helpers ───────────────────────────────────
+class AppColors {
+  static Color statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return AppTheme.active;
+      case 'expired':
+        return AppTheme.expired;
+      case 'pending':
+        return AppTheme.pending;
+      default:
+        return AppTheme.textSecondary;
+    }
+  }
+
+  static Color statusLightColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return AppTheme.activeLight;
+      case 'expired':
+        return AppTheme.expiredLight;
+      case 'pending':
+        return AppTheme.pendingLight;
+      default:
+        return AppTheme.background;
+    }
+  }
 }
