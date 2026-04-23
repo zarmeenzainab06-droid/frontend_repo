@@ -18,7 +18,9 @@ class _EditMemberPageState extends State<EditMemberPage> {
   late TextEditingController _nameCtrl;
   late TextEditingController _emailCtrl;
   late TextEditingController _phoneCtrl;
-  late TextEditingController _feeCtrl;
+  late TextEditingController _feeCtrl = TextEditingController(
+    text: (_member['membership_fee'] ?? '99.00').toString(),
+  );
 
   String? _gender;
   String? _plan;
@@ -58,9 +60,17 @@ class _EditMemberPageState extends State<EditMemberPage> {
     // Pre-fill dropdowns
     final g = (_member['gender'] ?? '').toString().toLowerCase();
     if (['male', 'female', 'other'].contains(g)) _gender = g;
-
     final p = (_member['plan'] ?? '').toString().toLowerCase();
-    if (['basic', 'standard', 'premium'].contains(p)) _plan = p;
+    // Handle both old and new plan naming
+    const planMap = {
+      'monthly': 'basic',
+      'quarterly': 'standard',
+      'yearly': 'premium',
+      'basic': 'basic',
+      'standard': 'standard',
+      'premium': 'premium',
+    };
+    _plan = planMap[p];
 
     final s = (_member['training_slot'] ?? '').toString().toLowerCase();
     if (['morning', 'midday', 'evening', 'night'].contains(s)) {
