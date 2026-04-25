@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
+import 'auth_service.dart';
 
 class AdminService {
   static const String baseUrl = "http://127.0.0.1:3000";
