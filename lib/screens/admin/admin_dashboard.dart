@@ -111,6 +111,61 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             iconColor: Colors.orange,
                             iconBg: AppTheme.surface,
                           ),
+                          const SizedBox(height: 12),
+
+                          GestureDetector(
+                            onTap: () => Get.toNamed('/admin/packages'),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary,
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusLg,
+                                ),
+                                boxShadow: [AppTheme.cardShadow],
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.card_membership_outlined,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                  SizedBox(width: 16),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Manage Packages',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Add, edit or remove membership plans',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Spacer(),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Colors.white70,
+                                    size: 16,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
                           const SizedBox(height: 24),
 
                           // Recent Activity

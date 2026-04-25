@@ -8,6 +8,7 @@ import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/admin/admin_dashboard.dart';
 import '../screens/admin/admin_members_screen.dart';
 import '../screens/members/add_member_screen.dart';
+import '../screens/admin/admin_packages_screen.dart';
 import '../screens/members/edit_member_screen.dart';
 import '../routes/auth_middleware.dart';
 
@@ -19,6 +20,7 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String adminDashboard = '/admin-dashboard';
   static const String adminMembers = '/admin/members';
+  static const String adminPackages = '/admin/packages'; // for packges
   static const String addMembers = '/add_members';
   static const String editMember = '/edit_member';
 
@@ -40,6 +42,11 @@ class AppRoutes {
     GetPage(
       name: adminMembers,
       page: () => AdminMembersScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: adminPackages,
+      page: () => AdminPackagesScreen(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(

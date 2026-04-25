@@ -14,30 +14,23 @@ class _EditMemberPageState extends State<EditMemberPage> {
 
   late Map<String, dynamic> _member;
 
-  // Controllers pre-filled
   late TextEditingController _nameCtrl;
   late TextEditingController _emailCtrl;
   late TextEditingController _phoneCtrl;
-  late TextEditingController _feeCtrl = TextEditingController(
-    text: (_member['membership_fee'] ?? '99.00').toString(),
-  );
+  late TextEditingController _feeCtrl;
 
   String? _gender;
-  String? _plan;
+  String? _packageId;
   String? _trainingSlot;
   String? _trainerId;
+
   List<Map<String, dynamic>> _trainers = [];
+  List<Map<String, dynamic>> _packages = [];
 
   final List<Map<String, String>> _genders = [
     {'value': 'male', 'label': 'Male'},
     {'value': 'female', 'label': 'Female'},
     {'value': 'other', 'label': 'Other'},
-  ];
-
-  final List<Map<String, String>> _plans = [
-    {'value': 'basic', 'label': 'Basic - 1 Month'},
-    {'value': 'standard', 'label': 'Standard - 3 Months'},
-    {'value': 'premium', 'label': 'Premium - 6 Months'},
   ];
 
   final List<Map<String, String>> _slots = [
@@ -55,29 +48,21 @@ class _EditMemberPageState extends State<EditMemberPage> {
     _nameCtrl = TextEditingController(text: _member['name'] ?? '');
     _emailCtrl = TextEditingController(text: _member['email'] ?? '');
     _phoneCtrl = TextEditingController(text: _member['phone'] ?? '');
-    _feeCtrl = TextEditingController(text: '99.00');
+    _feeCtrl = TextEditingController(
+      text: (_member['membership_fee'] ?? '99.00').toString(),
+    );
 
-    // Pre-fill dropdowns
+    // Pre-fill gender
     final g = (_member['gender'] ?? '').toString().toLowerCase();
     if (['male', 'female', 'other'].contains(g)) _gender = g;
-    final p = (_member['plan'] ?? '').toString().toLowerCase();
-    // Handle both old and new plan naming
-    const planMap = {
-      'monthly': 'basic',
-      'quarterly': 'standard',
-      'yearly': 'premium',
-      'basic': 'basic',
-      'standard': 'standard',
-      'premium': 'premium',
-    };
-    _plan = planMap[p];
 
+    // Pre-fill training slot
     final s = (_member['training_slot'] ?? '').toString().toLowerCase();
-    if (['morning', 'midday', 'evening', 'night'].contains(s)) {
+    if (['morning', 'midday', 'evening', 'night'].contains(s))
       _trainingSlot = s;
-    }
 
     _loadTrainers();
+    _loadPackages();
   }
 
   Future<void> _loadTrainers() async {
@@ -85,44 +70,40 @@ class _EditMemberPageState extends State<EditMemberPage> {
     if (result['success']) {
       setState(() {
         _trainers = List<Map<String, dynamic>>.from(result['trainers']);
-        // Try to match existing trainer
         final tid = _member['trainer_id'];
-        if (tid != null) {
-          _trainerId = tid.toString();
-        }
+        if (tid != null) _trainerId = tid.toString();
       });
     }
   }
 
-  double _planFee(String? plan) {
-    switch (plan) {
-      case 'basic':
-        return 99.00;
-      case 'standard':
-        return 249.00;
-      case 'premium':
-        return 449.00;
-      default:
-        return 99.00;
+  Future<void> _loadPackages() async {
+    final result = await AdminService.getPackages(activeOnly: false);
+    if (result['success']) {
+      setState(() {
+        _packages = List<Map<String, dynamic>>.from(result['packages']);
+        // Pre-fill package — use package_id from member data
+        final pid = _member['package_id'];
+        if (pid != null) _packageId = pid.toString();
+      });
     }
   }
 
-  String _calcEndDate(String plan) {
-    final now = DateTime.now();
-    late DateTime end;
-    switch (plan) {
-      case 'basic':
-        end = DateTime(now.year, now.month + 1, now.day);
-        break;
-      case 'standard':
-        end = DateTime(now.year, now.month + 3, now.day);
-        break;
-      case 'premium':
-        end = DateTime(now.year, now.month + 6, now.day);
-        break;
-      default:
-        end = DateTime(now.year, now.month + 1, now.day);
-    }
+  double _packagePrice(String? packageId) {
+    if (packageId == null) return 99.00;
+    final pkg = _packages.firstWhere(
+      (p) => p['id'].toString() == packageId,
+      orElse: () => <String, dynamic>{},
+    );
+    return double.tryParse(pkg['price']?.toString() ?? '99') ?? 99.00;
+  }
+
+  String _calcEndDate(String packageId) {
+    final pkg = _packages.firstWhere(
+      (p) => p['id'].toString() == packageId,
+      orElse: () => <String, dynamic>{'duration': 30},
+    );
+    final days = (pkg['duration'] ?? 30) as int;
+    final end = DateTime.now().add(Duration(days: days));
     return '${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
   }
 
@@ -131,6 +112,7 @@ class _EditMemberPageState extends State<EditMemberPage> {
 
     setState(() => _isLoading = true);
 
+    // Update user details
     final updateResult = await AdminService.updateMember(
       userId: _member['id'],
       name: _nameCtrl.text.trim(),
@@ -147,19 +129,20 @@ class _EditMemberPageState extends State<EditMemberPage> {
       return;
     }
 
-    // If plan changed, reassign membership
-    if (_plan != null && _plan != _member['plan']) {
+    // If package changed, reassign membership
+    final originalPackageId = _member['package_id']?.toString();
+    if (_packageId != null && _packageId != originalPackageId) {
       final now = DateTime.now();
       final startDate =
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-      final endDate = _calcEndDate(_plan!);
+      final endDate = _calcEndDate(_packageId!);
 
       await AdminService.assignMembership(
         userId: _member['id'],
-        plan: _plan!,
+        packageId: int.parse(_packageId!),
         startDate: startDate,
         endDate: endDate,
-        amount: double.tryParse(_feeCtrl.text) ?? _planFee(_plan),
+        amount: double.tryParse(_feeCtrl.text) ?? _packagePrice(_packageId),
         paymentMethod: 'cash',
       );
     }
@@ -244,13 +227,23 @@ class _EditMemberPageState extends State<EditMemberPage> {
 
                     _label('Membership Plan'),
                     _dropdownField(
-                      hint: 'Select plan',
-                      value: _plan,
-                      items: _plans,
+                      hint: _packages.isEmpty
+                          ? 'Loading plans...'
+                          : 'Select plan',
+                      value: _packageId,
+                      items: _packages
+                          .map(
+                            (p) => {
+                              'value': p['id'].toString(),
+                              'label':
+                                  '${p['name']} - ${p['duration']} days (\$${p['price']})',
+                            },
+                          )
+                          .toList(),
                       onChanged: (val) {
                         setState(() {
-                          _plan = val;
-                          _feeCtrl.text = _planFee(val).toStringAsFixed(2);
+                          _packageId = val;
+                          _feeCtrl.text = _packagePrice(val).toStringAsFixed(2);
                         });
                       },
                     ),
@@ -258,7 +251,9 @@ class _EditMemberPageState extends State<EditMemberPage> {
 
                     _label('Assign Trainer'),
                     _dropdownField(
-                      hint: 'Select trainer',
+                      hint: _trainers.isEmpty
+                          ? 'No trainers available'
+                          : 'Select trainer',
                       value: _trainerId,
                       items: _trainers
                           .map(
@@ -268,7 +263,9 @@ class _EditMemberPageState extends State<EditMemberPage> {
                             },
                           )
                           .toList(),
-                      onChanged: (val) => setState(() => _trainerId = val),
+                      onChanged: _trainers.isEmpty
+                          ? null
+                          : (val) => setState(() => _trainerId = val),
                     ),
                     const SizedBox(height: 16),
 
@@ -450,7 +447,7 @@ class _EditMemberPageState extends State<EditMemberPage> {
     required String hint,
     required String? value,
     required List<Map<String, String>> items,
-    required ValueChanged<String?> onChanged,
+    required ValueChanged<String?>? onChanged,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

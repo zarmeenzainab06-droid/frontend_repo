@@ -166,7 +166,7 @@ class AdminService {
   // ── Assign Membership ──────────────────────────────────────
   static Future<Map<String, dynamic>> assignMembership({
     required int userId,
-    required String plan,
+    required int packageId, // int chnage okhhh
     required String startDate,
     required String endDate,
     required double amount,
@@ -177,7 +177,7 @@ class AdminService {
         Uri.parse('$baseUrl/admin/members/$userId/membership'),
         headers: _headers,
         body: json.encode({
-          'plan': plan,
+          'package_id': packageId, // chnge from plan to packge
           'start_date': startDate,
           'end_date': endDate,
           'amount': amount,
@@ -206,6 +206,85 @@ class AdminService {
         return {'success': true};
       }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Get All Packages ───────────────────────────────────────
+  // Returns: { success, packages: [ { id, name, duration, price, description, is_active } ] }
+  static Future<Map<String, dynamic>> getPackages({
+    bool activeOnly = false,
+  }) async {
+    try {
+      final uri = Uri.parse(
+        '$baseUrl/admin/packages',
+      ).replace(queryParameters: activeOnly ? {'active': '1'} : null);
+      final response = await http.get(uri, headers: _headers);
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'packages': data['packages']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Create Package ─────────────────────────────────────────
+  static Future<Map<String, dynamic>> createPackage(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/packages'),
+        headers: _headers,
+        body: json.encode(data),
+      );
+      final res = json.decode(response.body);
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          res['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': res['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Update Package ─────────────────────────────────────────
+  static Future<Map<String, dynamic>> updatePackage({
+    required int id,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/packages/$id'),
+        headers: _headers,
+        body: json.encode(data),
+      );
+      final res = json.decode(response.body);
+      if (response.statusCode == 200 && res['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': res['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Delete Package ─────────────────────────────────────────
+  static Future<Map<String, dynamic>> deletePackage(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/admin/packages/$id'),
+        headers: _headers,
+      );
+      final res = json.decode(response.body);
+      if (response.statusCode == 200 && res['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': res['message'] ?? 'Failed'};
     } catch (e) {
       return {'success': false, 'message': 'Server error: $e'};
     }

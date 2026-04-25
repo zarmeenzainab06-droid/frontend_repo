@@ -12,31 +12,23 @@ class _AddMemberPageState extends State<AddMemberPage> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // Controllers
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _feeCtrl = TextEditingController(text: '99.00');
 
-  // Dropdown values
   String? _gender;
-  String? _plan;
+  String? _packageId;
   String? _trainingSlot;
   String? _trainerId;
 
-  // Trainers list loaded from backend
   List<Map<String, dynamic>> _trainers = [];
+  List<Map<String, dynamic>> _packages = [];
 
   final List<Map<String, String>> _genders = [
     {'value': 'male', 'label': 'Male'},
     {'value': 'female', 'label': 'Female'},
     {'value': 'other', 'label': 'Other'},
-  ];
-
-  final List<Map<String, String>> _plans = [
-    {'value': 'basic', 'label': 'Basic - 1 Month'},
-    {'value': 'standard', 'label': 'Standard - 3 Months'},
-    {'value': 'premium', 'label': 'Premium - 6 Months'},
   ];
 
   final List<Map<String, String>> _slots = [
@@ -50,6 +42,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
   void initState() {
     super.initState();
     _loadTrainers();
+    _loadPackages();
   }
 
   Future<void> _loadTrainers() async {
@@ -61,35 +54,31 @@ class _AddMemberPageState extends State<AddMemberPage> {
     }
   }
 
-  double _planFee(String? plan) {
-    switch (plan) {
-      case 'basic':
-        return 99.00;
-      case 'standard':
-        return 249.00;
-      case 'premium':
-        return 449.00;
-      default:
-        return 99.00;
+  Future<void> _loadPackages() async {
+    final result = await AdminService.getPackages(activeOnly: true);
+    if (result['success']) {
+      setState(() {
+        _packages = List<Map<String, dynamic>>.from(result['packages']);
+      });
     }
   }
 
-  String _calcEndDate(String plan) {
-    final now = DateTime.now();
-    late DateTime end;
-    switch (plan) {
-      case 'basic':
-        end = DateTime(now.year, now.month + 1, now.day);
-        break;
-      case 'standard':
-        end = DateTime(now.year, now.month + 3, now.day);
-        break;
-      case 'premium':
-        end = DateTime(now.year, now.month + 6, now.day);
-        break;
-      default:
-        end = DateTime(now.year, now.month + 1, now.day);
-    }
+  double _packagePrice(String? packageId) {
+    if (packageId == null) return 99.00;
+    final pkg = _packages.firstWhere(
+      (p) => p['id'].toString() == packageId,
+      orElse: () => <String, dynamic>{},
+    );
+    return double.tryParse(pkg['price']?.toString() ?? '99') ?? 99.00;
+  }
+
+  String _calcEndDate(String packageId) {
+    final pkg = _packages.firstWhere(
+      (p) => p['id'].toString() == packageId,
+      orElse: () => <String, dynamic>{'duration': 30},
+    );
+    final days = (pkg['duration'] ?? 30) as int;
+    final end = DateTime.now().add(Duration(days: days));
     return '${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
   }
 
@@ -99,7 +88,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
       _showError('Please select a gender');
       return;
     }
-    if (_plan == null) {
+    if (_packageId == null) {
       _showError('Please select a membership plan');
       return;
     }
@@ -110,7 +99,6 @@ class _AddMemberPageState extends State<AddMemberPage> {
 
     setState(() => _isLoading = true);
 
-    // 1. Create the user account
     final signupResult = await AdminService.createMember(
       name: _nameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
@@ -130,15 +118,14 @@ class _AddMemberPageState extends State<AddMemberPage> {
     final now = DateTime.now();
     final startDate =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final endDate = _calcEndDate(_plan!);
+    final endDate = _calcEndDate(_packageId!);
 
-    // 2. Assign membership
     final membershipResult = await AdminService.assignMembership(
       userId: userId,
-      plan: _plan!,
+      packageId: int.parse(_packageId!),
       startDate: startDate,
       endDate: endDate,
-      amount: double.tryParse(_feeCtrl.text) ?? _planFee(_plan),
+      amount: double.tryParse(_feeCtrl.text) ?? _packagePrice(_packageId),
       paymentMethod: 'cash',
     );
 
@@ -226,13 +213,23 @@ class _AddMemberPageState extends State<AddMemberPage> {
 
                     _label('Membership Plan *'),
                     _dropdownField(
-                      hint: 'Select plan',
-                      value: _plan,
-                      items: _plans,
+                      hint: _packages.isEmpty
+                          ? 'Loading plans...'
+                          : 'Select plan',
+                      value: _packageId,
+                      items: _packages
+                          .map(
+                            (p) => {
+                              'value': p['id'].toString(),
+                              'label':
+                                  '${p['name']} - ${p['duration']} days (\$${p['price']})',
+                            },
+                          )
+                          .toList(),
                       onChanged: (val) {
                         setState(() {
-                          _plan = val;
-                          _feeCtrl.text = _planFee(val).toStringAsFixed(2);
+                          _packageId = val;
+                          _feeCtrl.text = _packagePrice(val).toStringAsFixed(2);
                         });
                       },
                     ),
@@ -240,7 +237,9 @@ class _AddMemberPageState extends State<AddMemberPage> {
 
                     _label('Assign Trainer'),
                     _dropdownField(
-                      hint: 'Select trainer',
+                      hint: _trainers.isEmpty
+                          ? 'No trainers available'
+                          : 'Select trainer',
                       value: _trainerId,
                       items: _trainers
                           .map(
@@ -250,7 +249,9 @@ class _AddMemberPageState extends State<AddMemberPage> {
                             },
                           )
                           .toList(),
-                      onChanged: (val) => setState(() => _trainerId = val),
+                      onChanged: _trainers.isEmpty
+                          ? null
+                          : (val) => setState(() => _trainerId = val),
                     ),
                     const SizedBox(height: 16),
 
@@ -274,7 +275,6 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 32),
 
-                    // Action buttons
                     Row(
                       children: [
                         Expanded(
@@ -343,7 +343,6 @@ class _AddMemberPageState extends State<AddMemberPage> {
     );
   }
 
-  // ── Top Bar ──────────────────────────────────────────────────
   Widget _buildTopBar() {
     return Container(
       color: AppTheme.primary,
@@ -376,7 +375,6 @@ class _AddMemberPageState extends State<AddMemberPage> {
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────────
   Widget _label(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -435,7 +433,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
     required String hint,
     required String? value,
     required List<Map<String, String>> items,
-    required ValueChanged<String?> onChanged,
+    required ValueChanged<String?>? onChanged,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

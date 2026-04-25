@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import '../routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -15,7 +17,21 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+      final box = GetStorage();
+      final token = box.read('token');
+      final role = box.read('role');
+
+      if (token != null) {
+        // Already logged in — go to correct dashboard
+        if (role == 'admin') {
+          Get.offAllNamed(AppRoutes.adminDashboard);
+        } else {
+          Get.offAllNamed(AppRoutes.dashboard);
+        }
+      } else {
+        // Not logged in — go to onboarding
+        Get.offAllNamed(AppRoutes.onboarding);
+      }
     });
   }
 
@@ -25,7 +41,6 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // CENTER LOGO
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -43,8 +58,6 @@ class _SplashScreenState extends State<SplashScreen> {
               ],
             ),
           ),
-
-          // BOTTOM TEXT
           Positioned(
             bottom: 40,
             left: 0,
