@@ -12,7 +12,7 @@ class _EditMemberPageState extends State<EditMemberPage> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  late Map<String, dynamic> _member
+  late Map<String, dynamic> _member;
 
   // Controllers pre-filled
   late TextEditingController _nameCtrl;
