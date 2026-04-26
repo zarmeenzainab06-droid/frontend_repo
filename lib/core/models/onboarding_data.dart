@@ -12,6 +12,6 @@ class OnboardingData {
     required this.iconColor,
     required this.backgroundColor,
     required this.title,
-    required this.description
+    required this.description,
   });
 }
