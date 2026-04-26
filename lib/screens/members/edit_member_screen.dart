@@ -9,7 +9,7 @@ class EditMemberPage extends StatefulWidget {
 }
 
 class _EditMemberPageState extends State<EditMemberPage> {
-  final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>()
   bool _isLoading = false;
 
   late Map<String, dynamic> _member;
