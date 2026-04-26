@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 
 class AuthService {
-  static const String baseUrl = "http://127.0.0.1:3000"
+  static const String baseUrl = "http://127.0.0.1:3000";
   static final box = GetStorage();
 
   static Future<Map<String, dynamic>> login(
