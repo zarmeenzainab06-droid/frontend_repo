@@ -207,7 +207,7 @@ class AdminService {
       }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {
-      return {'success': false, 'message': 'Server error: $e'};
+      return {'success': false, 'message': 'Server error: $e'}
     }
   }
 }
