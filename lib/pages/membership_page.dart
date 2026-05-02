@@ -532,4 +532,3 @@ class _MembershipPageState extends State<MembershipPage> {
       items: items,
     );
   }
-}
