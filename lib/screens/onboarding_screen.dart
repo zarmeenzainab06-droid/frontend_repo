@@ -1,338 +1,208 @@
 import 'package:flutter/material.dart';
-import '../core/models/onboarding_data.dart';
-import 'login_screen.dart';
-import '../routes/app_routes.dart';
+
+void main() {
+  runApp(SwiftGymApp());
+}
+
+class SwiftGymApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: OnboardingScreen(),
+    );
+  }
+}
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
-
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  _OnboardingScreenState createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _controller = PageController();
-  int _currentIndex = 0;
+  int currentIndex = 0;
 
-  void _next() {
-    if (_currentIndex == 2) {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
-    } else {
-      _controller.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  void _skip() {
-    Navigator.pushReplacementNamed(context, AppRoutes.login);
-  }
+  final List<Map<String, String>> screens = [
+    {
+      "title": "Swift Gym",
+      "desc": "Transform your body & mind with us",
+      "img": "🏋️"
+    },
+    {
+      "title": "Track Progress",
+      "desc": "Monitor workouts and stay consistent",
+      "img": "📊"
+    },
+    {
+      "title": "Workout Plans",
+      "desc": "Get personalized fitness plans",
+      "img": "📅"
+    },
+    {
+      "title": "Expert Trainers",
+      "desc": "Train with professionals بسهولة",
+      "img": "👨‍🏫"
+    },
+    {
+      "title": "Get Started",
+      "desc": "Login or Sign up to begin",
+      "img": "🚀"
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
 
-            /// SKIP BUTTON
-            Align(
-              alignment: Alignment.topRight,
-              child: TextButton(
-                onPressed: _skip,
-                child: const Text(
-                  "SKIP",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-
-            Expanded(
-              child: PageView(
-                controller: _controller,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                },
-                children: const [
-                  PageOne(),
-                  PageTwo(),
-                  PageThree(),
-                ],
-              ),
-            ),
-
-            /// INDICATOR
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                3,
-                (index) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentIndex == index ? 24 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: _currentIndex == index
-                        ? const Color(0xFFE53935)
-                        : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            /// BUTTON
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: ElevatedButton(
-                  onPressed: _next,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53935),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                  ),
-                  child: Text(
-                    _currentIndex == 2 ? "GET STARTED" : "NEXT →",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-
-
-
-
-/// PAGE 1
-class PageTwo extends StatelessWidget {
-  const PageTwo({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-
-          Container(
-            height: 220,
-            width: 220,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: const Icon(
-              Icons.qr_code_scanner,
-              size: 90,
-              color: Color(0xFFE53935),
-            ),
-          ),
-
-          const SizedBox(height: 50),
-
-          const Text(
-            "Scan & Enter Gym Easily",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          const Text(
-            "Use QR code to scan and enter the gym quickly without manual attendance.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-/// PAGE 2
-class PageThree extends StatelessWidget {
-  const PageThree({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          children: [
-
-            const SizedBox(height: 20),
-
-            Container(
-              height: 200,
-              width: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: const Icon(
-                Icons.access_time,
-                size: 80,
-                color: Color(0xFFE53935),
-              ),
-            ),
-
-            const SizedBox(height: 40),
-
-            const Text(
-              "Book Your Time Slot",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            const Text(
-              "Choose your preferred gym timing and avoid peak hour crowd.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-                height: 1.5,
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _timeCard("MORNING", "06:00 AM", "Low Traffic"),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: _timeCard("EVENING", "05:30 PM", "Peak Hour"),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _timeCard(title, time, status) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.red)),
-          const SizedBox(height: 6),
-          Text(
-            time,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            status,
-            style: const TextStyle(color: Colors.grey),
+      /// Skip
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          TextButton(
+            onPressed: () {
+              _controller.jumpToPage(screens.length - 1);
+            },
+            child: Text("Skip", style: TextStyle(color: Colors.red)),
           )
         ],
       ),
-    );
-  }
-}
 
-/// PAGE 3
-class PageOne extends StatelessWidget {
-  const PageOne({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
         children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _controller,
+              itemCount: screens.length,
+              onPageChanged: (index) {
+                setState(() => currentIndex = index);
+              },
+              itemBuilder: (_, i) {
+                return Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
 
-          Container(
-            height: 220,
-            width: 220,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: const Icon(
-              Icons.fitness_center,
-              size: 90,
-              color: Color(0xFFE53935),
+                      /// BIG ICON CARD (like design)
+                      Container(
+                        height: 220,
+                        width: 220,
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Center(
+                          child: Text(
+                            screens[i]["img"]!,
+                            style: TextStyle(fontSize: 80),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 40),
+
+                      /// TITLE
+                      Text(
+                        screens[i]["title"]!,
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+
+                      SizedBox(height: 15),
+
+                      /// DESC
+                      Text(
+                        screens[i]["desc"]!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
 
-          const SizedBox(height: 50),
-
-          const Text(
-            "Track Membership & Trainer",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
+          /// DOTS
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              screens.length,
+              (index) => AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                margin: EdgeInsets.all(4),
+                width: currentIndex == index ? 14 : 8,
+                height: currentIndex == index ? 14 : 8,
+                decoration: BoxDecoration(
+                  color: currentIndex == index
+                      ? Colors.red
+                      : Colors.grey.shade300,
+                  shape: BoxShape.circle,
+                ),
+              ),
             ),
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
-          const Text(
-            "View trainer details, membership plan, expiry date and payment status.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
+          /// BUTTONS
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: currentIndex == screens.length - 1
+                ? Column(
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          minimumSize: Size(double.infinity, 55),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        onPressed: () {},
+                        child: Text("Sign Up"),
+                      ),
+                      SizedBox(height: 10),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: Size(double.infinity, 55),
+                          side: BorderSide(color: Colors.red),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        onPressed: () {},
+                        child: Text("Login",
+                            style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  )
+                : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      minimumSize: Size(double.infinity, 55),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    onPressed: () {
+                      _controller.nextPage(
+                        duration: Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Text("Next"),
+                  ),
+          )
         ],
       ),
     );

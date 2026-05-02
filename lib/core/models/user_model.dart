@@ -10,7 +10,7 @@ class User {
   final bool hasHighBp;
   final String? createdAt;
 
-  User(
+  User({
     required this.id,
     required this.fullName,
     required this.email,
