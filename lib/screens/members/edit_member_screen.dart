@@ -6,7 +6,7 @@ import '../../core/utils/theme.dart';
 class EditMemberPage extends StatefulWidget {
   @override
   State<EditMemberPage> createState() => _EditMemberPageState();
-}
+
 
 class _EditMemberPageState extends State<EditMemberPage> {
   final _formKey = GlobalKey<FormState>();
