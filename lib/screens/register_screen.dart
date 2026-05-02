@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import '../core/services/auth_service.dart';
 import '../core/utils/theme.dart';
 
- RegisterScreen extends StatefulWidget {
+ class RegisterScreen extends StatefulWidget {
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
