@@ -517,3 +517,4 @@ class _MembershipPlansPageState extends State<MembershipPlansPage> {
       ],
     );
   }
+}
