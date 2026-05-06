@@ -51,5 +51,5 @@ class AppRoutes {
       page: () => EditMemberPage(),
       middlewares: [AuthMiddleware()],
     ),
-  ]
+  ];
 }

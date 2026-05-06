@@ -12,6 +12,6 @@ class AuthMiddleware extends GetMiddleware {
       return const RouteSettings(name: AppRoutes.login);
     }
 
-    return null;
+    return null
   }
 }
