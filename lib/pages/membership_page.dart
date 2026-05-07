@@ -528,7 +528,7 @@ class _MembershipPageState extends State<MembershipPage> {
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.white,
-      elevation: 10,
+      elevation: ,
       items: items,
     );
   }
