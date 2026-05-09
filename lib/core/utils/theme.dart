@@ -60,7 +60,7 @@ class AppTheme {
       centerTitle: false,
       titleTextStyle: TextStyle(
         color: textOnPrimary,
-        fontSize: 18,
+        fontSize: ,
         fontWeight: FontWeight.w600,
       ),
     ),
