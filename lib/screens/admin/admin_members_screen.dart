@@ -5,7 +5,7 @@ import '../../core/utils/theme.dart';
 
 class AdminMembersScreen extends StatefulWidget {
   @override
-  State<AdminMembersScreen> createState() = _AdminMembersScreenState();
+  State<AdminMembersScreen> createState() => _AdminMembersScreenState();
 }
 
 class _AdminMembersScreenState extends State<AdminMembersScreen> {
