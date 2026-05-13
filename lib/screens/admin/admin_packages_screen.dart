@@ -217,7 +217,7 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                                       : 'Package created successfully',
                                   backgroundColor: AppTheme.active,
                                   colorText: Colors.white,
-                                  snackPosition: SnackPosition.BOTTOM,
+                                  snackPosition: SnackPosition.TOP,
                                   margin: const EdgeInsets.all(16),
                                 );
                                 _loadPackages();

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../core/models/onboarding_data.dart';
 import 'login_screen.dart';
 import '../routes/app_routes.dart';
 
@@ -36,7 +35,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-
             /// SKIP BUTTON
             Align(
               alignment: Alignment.topRight,
@@ -60,11 +58,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _currentIndex = index;
                   });
                 },
-                children: const [
-                  PageOne(),
-                  PageTwo(),
-                  PageThree(),
-                ],
+                children: const [PageOne(), PageTwo(), PageThree()],
               ),
             ),
 
@@ -122,11 +116,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-
-
-
-
-
 /// PAGE 1
 class PageTwo extends StatelessWidget {
   const PageTwo({Key? key}) : super(key: key);
@@ -138,7 +127,6 @@ class PageTwo extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
           Container(
             height: 220,
             width: 220,
@@ -158,10 +146,7 @@ class PageTwo extends StatelessWidget {
           const Text(
             "Scan & Enter Gym Easily",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 20),
@@ -169,19 +154,13 @@ class PageTwo extends StatelessWidget {
           const Text(
             "Use QR code to scan and enter the gym quickly without manual attendance.",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 16,
-              height: 1.5,
-            ),
+            style: TextStyle(color: Colors.grey, fontSize: 16, height: 1.5),
           ),
         ],
       ),
     );
   }
 }
-
-
 
 /// PAGE 2
 class PageThree extends StatelessWidget {
@@ -194,7 +173,6 @@ class PageThree extends StatelessWidget {
         padding: const EdgeInsets.all(30),
         child: Column(
           children: [
-
             const SizedBox(height: 20),
 
             Container(
@@ -216,10 +194,7 @@ class PageThree extends StatelessWidget {
             const Text(
               "Book Your Time Slot",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 15),
@@ -227,11 +202,7 @@ class PageThree extends StatelessWidget {
             const Text(
               "Choose your preferred gym timing and avoid peak hour crowd.",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-                height: 1.5,
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 16, height: 1.5),
             ),
 
             const SizedBox(height: 30),
@@ -242,9 +213,7 @@ class PageThree extends StatelessWidget {
                   child: _timeCard("MORNING", "06:00 AM", "Low Traffic"),
                 ),
                 const SizedBox(width: 15),
-                Expanded(
-                  child: _timeCard("EVENING", "05:30 PM", "Peak Hour"),
-                ),
+                Expanded(child: _timeCard("EVENING", "05:30 PM", "Peak Hour")),
               ],
             ),
 
@@ -269,16 +238,10 @@ class PageThree extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             time,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 8),
-          Text(
-            status,
-            style: const TextStyle(color: Colors.grey),
-          )
+          Text(status, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
@@ -296,7 +259,6 @@ class PageOne extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
           Container(
             height: 220,
             width: 220,
@@ -316,10 +278,7 @@ class PageOne extends StatelessWidget {
           const Text(
             "Track Membership & Trainer",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 20),
@@ -327,11 +286,7 @@ class PageOne extends StatelessWidget {
           const Text(
             "View trainer details, membership plan, expiry date and payment status.",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 16,
-              height: 1.5,
-            ),
+            style: TextStyle(color: Colors.grey, fontSize: 16, height: 1.5),
           ),
         ],
       ),

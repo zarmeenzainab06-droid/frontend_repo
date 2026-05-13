@@ -5,8 +5,9 @@ import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
 
 class AdminDashboard extends StatefulWidget {
+  // screen chnges while runing for statefulll
   @override
-  State<AdminDashboard> createState() => _AdminDashboardState();
+  State<AdminDashboard> createState() => _AdminDashboardState(); // this method use to connect with logic class
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
@@ -23,6 +24,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   List<Map<String, dynamic>> recentActivity = [];
 
   @override
+  // inistate means run when screen open
   void initState() {
     super.initState();
     _loadDashboard();

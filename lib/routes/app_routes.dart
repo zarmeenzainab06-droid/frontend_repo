@@ -4,7 +4,7 @@ import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
-import '../screens/dashboard/dashboard_screen.dart';
+import '../screens/dashboard/member_dashboard.dart';
 import '../screens/admin/admin_dashboard.dart';
 import '../screens/admin/admin_members_screen.dart';
 import '../screens/members/add_member_screen.dart';
@@ -31,7 +31,7 @@ class AppRoutes {
     GetPage(name: register, page: () => RegisterScreen()),
     GetPage(
       name: dashboard,
-      page: () => DashboardScreen(),
+      page: () => MemberDashboard(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
