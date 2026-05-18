@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
 
@@ -21,6 +23,8 @@ class _AddMemberPageState extends State<AddMemberPage> {
   String? _packageId;
   String? _trainingSlot;
   String? _trainerId;
+  String _paymentType = 'cash'; // default cash
+  File? _screenshotFile;
 
   List<Map<String, dynamic>> _trainers = [];
   List<Map<String, dynamic>> _packages = [];
@@ -82,6 +86,18 @@ class _AddMemberPageState extends State<AddMemberPage> {
     return '${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
   }
 
+  // Pick screenshot from gallery
+  Future<void> _pickScreenshot() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (picked != null) {
+      setState(() => _screenshotFile = File(picked.path));
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_gender == null) {
@@ -96,9 +112,14 @@ class _AddMemberPageState extends State<AddMemberPage> {
       _showError('Please select a training slot');
       return;
     }
+    if (_paymentType == 'online' && _screenshotFile == null) {
+      _showError('Please upload a payment screenshot for online payment');
+      return;
+    }
 
     setState(() => _isLoading = true);
 
+    // 1. Create member account
     final signupResult = await AdminService.createMember(
       name: _nameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
@@ -120,13 +141,15 @@ class _AddMemberPageState extends State<AddMemberPage> {
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final endDate = _calcEndDate(_packageId!);
 
+    // 2. Assign membership + payment with optional screenshot
     final membershipResult = await AdminService.assignMembership(
       userId: userId,
       packageId: int.parse(_packageId!),
       startDate: startDate,
       endDate: endDate,
       amount: double.tryParse(_feeCtrl.text) ?? _packagePrice(_packageId),
-      paymentMethod: 'cash',
+      paymentMethod: _paymentType,
+      screenshotFile: _screenshotFile,
     );
 
     setState(() => _isLoading = false);
@@ -264,14 +287,208 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    _label('Membership Fee (\$) *'),
+                    // ── Payment Type ────────────────────────────
+                    _label('Payment Type *'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() {
+                              _paymentType = 'cash';
+                              _screenshotFile = null;
+                            }),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: _paymentType == 'cash'
+                                    ? AppTheme.primary
+                                    : AppTheme.background,
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusMd,
+                                ),
+                                border: Border.all(
+                                  color: _paymentType == 'cash'
+                                      ? AppTheme.primary
+                                      : AppTheme.border,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.payments_outlined,
+                                    size: 18,
+                                    color: _paymentType == 'cash'
+                                        ? Colors.white
+                                        : AppTheme.textSecondary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Cash',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: _paymentType == 'cash'
+                                          ? Colors.white
+                                          : AppTheme.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () =>
+                                setState(() => _paymentType = 'online'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: _paymentType == 'online'
+                                    ? AppTheme.primary
+                                    : AppTheme.background,
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusMd,
+                                ),
+                                border: Border.all(
+                                  color: _paymentType == 'online'
+                                      ? AppTheme.primary
+                                      : AppTheme.border,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.phone_android_outlined,
+                                    size: 18,
+                                    color: _paymentType == 'online'
+                                        ? Colors.white
+                                        : AppTheme.textSecondary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Online',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: _paymentType == 'online'
+                                          ? Colors.white
+                                          : AppTheme.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Screenshot upload (only for online) ─────
+                    if (_paymentType == 'online') ...[
+                      _label('Payment Screenshot *'),
+                      GestureDetector(
+                        onTap: _pickScreenshot,
+                        child: Container(
+                          width: double.infinity,
+                          height: _screenshotFile != null ? 180 : 100,
+                          decoration: BoxDecoration(
+                            color: AppTheme.background,
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusMd,
+                            ),
+                            border: Border.all(
+                              color: _screenshotFile != null
+                                  ? AppTheme.active
+                                  : AppTheme.border,
+                              style: BorderStyle.solid,
+                            ),
+                          ),
+                          child: _screenshotFile != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    AppTheme.radiusMd,
+                                  ),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      Image.file(
+                                        _screenshotFile!,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      // Change button overlay
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: GestureDetector(
+                                          onTap: _pickScreenshot,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black54,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: const Text(
+                                              'Change',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(
+                                      Icons.upload_outlined,
+                                      size: 32,
+                                      color: AppTheme.textHint,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Tap to upload screenshot',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                    ),
+                                    Text(
+                                      'JPG, PNG supported',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.textHint,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // ── Amount Paid ─────────────────────────────
+                    _label('Amount Paid (\$) *'),
                     _textField(
                       controller: _feeCtrl,
                       hint: '99.00',
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      validator: (v) => v!.isEmpty ? 'Fee is required' : null,
+                      validator: (v) =>
+                          v!.isEmpty ? 'Amount is required' : null,
                     ),
                     const SizedBox(height: 32),
 

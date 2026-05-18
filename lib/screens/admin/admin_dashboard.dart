@@ -3,28 +3,25 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
+import '../../core/widgets/app_drawer.dart';
 
 class AdminDashboard extends StatefulWidget {
-  // screen chnges while runing for statefulll
   @override
-  State<AdminDashboard> createState() => _AdminDashboardState(); // this method use to connect with logic class
+  State<AdminDashboard> createState() => _AdminDashboardState();
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
   final box = GetStorage();
   bool _isLoading = true;
 
-  // Stats
   int totalMembers = 0;
   int activeMembers = 0;
   int expiredMembers = 0;
   int pendingPayments = 0;
 
-  // Activity
   List<Map<String, dynamic>> recentActivity = [];
 
   @override
-  // inistate means run when screen open
   void initState() {
     super.initState();
     _loadDashboard();
@@ -61,12 +58,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
+      drawer: const AppDrawer(role: 'admin'),
       body: Column(
         children: [
-          // ── Red top bar ──────────────────────────────────────
           _buildTopBar(),
-
-          // ── Scrollable body ──────────────────────────────────
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -81,96 +76,52 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Stat cards
+                          // ── Dashboard title ──────────────────
+                          const Text(
+                            'Dashboard',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // ── Stat cards ───────────────────────
                           _buildStatCard(
                             label: 'Total Members',
                             value: totalMembers,
                             icon: Icons.people_alt_outlined,
-                            iconColor: AppTheme.primary,
-                            iconBg: AppTheme.surface,
+                            iconColor: Colors.blue,
+                            iconBg: Colors.blue.withOpacity(0.1),
                           ),
                           const SizedBox(height: 12),
                           _buildStatCard(
                             label: 'Active',
                             value: activeMembers,
                             icon: Icons.check_circle_outline,
-                            iconColor: AppTheme.primaryDark,
-                            iconBg: AppTheme.surface,
+                            iconColor: AppTheme.active,
+                            iconBg: AppTheme.activeLight,
                           ),
                           const SizedBox(height: 12),
                           _buildStatCard(
                             label: 'Expired',
                             value: expiredMembers,
                             icon: Icons.cancel_outlined,
-                            iconColor: Colors.redAccent,
-                            iconBg: AppTheme.surface,
+                            iconColor: AppTheme.expired,
+                            iconBg: AppTheme.expiredLight,
                           ),
                           const SizedBox(height: 12),
                           _buildStatCard(
                             label: 'Pending Payments',
                             value: pendingPayments,
                             icon: Icons.access_time_outlined,
-                            iconColor: Colors.orange,
-                            iconBg: AppTheme.surface,
+                            iconColor: AppTheme.pending,
+                            iconBg: AppTheme.pendingLight,
                           ),
-                          const SizedBox(height: 12),
-
-                          GestureDetector(
-                            onTap: () => Get.toNamed('/admin/packages'),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary,
-                                borderRadius: BorderRadius.circular(
-                                  AppTheme.radiusLg,
-                                ),
-                                boxShadow: [AppTheme.cardShadow],
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.card_membership_outlined,
-                                    color: Colors.white,
-                                    size: 28,
-                                  ),
-                                  SizedBox(width: 16),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Manage Packages',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Add, edit or remove membership plans',
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Spacer(),
-                                  Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: Colors.white70,
-                                    size: 16,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
                           const SizedBox(height: 24),
 
-                          // Recent Activity
+                          // ── Recent Activity ──────────────────
                           const Text(
                             'Recent Activity',
                             style: TextStyle(
@@ -205,8 +156,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
         ],
       ),
-
-      // ── Bottom Nav ───────────────────────────────────────────
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -217,12 +166,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
       color: AppTheme.primary,
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 12,
-        left: 16,
+        left: 4,
         right: 16,
         bottom: 12,
       ),
       child: Row(
         children: [
+          // Hamburger opens drawer
+          Builder(
+            builder: (ctx) => IconButton(
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+              icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+            ),
+          ),
+
           // Logo pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -236,7 +193,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
                 SizedBox(width: 4),
                 Text(
-                  'GymSwift',
+                  'GymFitex',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -246,17 +203,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           const Text(
             'Admin Panel',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: Colors.white70,
               fontWeight: FontWeight.w400,
             ),
           ),
           const Spacer(),
-          // Live updates badge
+
+          // Live Updates badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -320,7 +278,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                // Growth chip — hardcoded for now, wire to real data later
                 Row(
                   children: const [
                     Icon(Icons.trending_up, size: 14, color: AppTheme.active),
@@ -352,7 +309,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final status = (item['status'] ?? '').toString().toLowerCase();
     final timeAgo = item['timeAgo'] ?? '';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-
     final statusColor = AppColors.statusColor(status);
     final statusBg = AppColors.statusLightColor(status);
 
@@ -366,11 +322,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
       child: Row(
         children: [
-          // Avatar
           Container(
             width: 42,
             height: 42,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppTheme.primary,
               shape: BoxShape.circle,
             ),
@@ -386,8 +341,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
           const SizedBox(width: 12),
-
-          // Name + action
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,8 +364,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ],
             ),
           ),
-
-          // Status badge + time
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [

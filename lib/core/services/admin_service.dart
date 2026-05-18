@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
@@ -13,6 +14,11 @@ class AdminService {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
+  }
+
+  static Map<String, String> get _authHeader {
+    final token = box.read('token');
+    return {'Authorization': 'Bearer $token'};
   }
 
   // ── Dashboard Stats ────────────────────────────────────────
@@ -75,7 +81,6 @@ class AdminService {
   }
 
   // ── Get Trainers ───────────────────────────────────────────
-  // Returns: { success, trainers: [ { id, name } ] }
   static Future<Map<String, dynamic>> getTrainers() async {
     try {
       final response = await http.get(
@@ -92,127 +97,7 @@ class AdminService {
     }
   }
 
-  // ── Create Member ──────────────────────────────────────────
-  // Creates user account + returns user_id
-  // Returns: { success, user_id }
-  static Future<Map<String, dynamic>> createMember({
-    required String name,
-    required String email,
-    required String phone,
-    required String gender,
-    required String trainingSlot,
-    String? trainerId,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/admin/members'),
-        headers: _headers,
-        body: json.encode({
-          'name': name,
-          'email': email,
-          'phone': phone,
-          'gender': gender,
-          'training_slot': trainingSlot,
-          if (trainerId != null) 'trainer_id': int.tryParse(trainerId),
-          // Auto-generate a default password they can reset
-          'password': 'GymSwift@123',
-        }),
-      );
-      final data = json.decode(response.body);
-      if ((response.statusCode == 200 || response.statusCode == 201) &&
-          data['success'] == true) {
-        return {'success': true, 'user_id': data['user_id']};
-      }
-      return {'success': false, 'message': data['message'] ?? 'Failed'};
-    } catch (e) {
-      return {'success': false, 'message': 'Server error: $e'};
-    }
-  }
-
-  // ── Update Member ──────────────────────────────────────────
-  // Returns: { success }
-  static Future<Map<String, dynamic>> updateMember({
-    required int userId,
-    required String name,
-    required String email,
-    required String phone,
-    required String gender,
-    required String trainingSlot,
-    String? trainerId,
-  }) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/admin/members/$userId'),
-        headers: _headers,
-        body: json.encode({
-          'name': name,
-          'email': email,
-          'phone': phone,
-          'gender': gender,
-          'training_slot': trainingSlot,
-          if (trainerId != null) 'trainer_id': int.tryParse(trainerId),
-        }),
-      );
-      final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
-        return {'success': true};
-      }
-      return {'success': false, 'message': data['message'] ?? 'Failed'};
-    } catch (e) {
-      return {'success': false, 'message': 'Server error: $e'};
-    }
-  }
-
-  // ── Assign Membership ──────────────────────────────────────
-  static Future<Map<String, dynamic>> assignMembership({
-    required int userId,
-    required int packageId, // int chnage okhhh
-    required String startDate,
-    required String endDate,
-    required double amount,
-    required String paymentMethod,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/admin/members/$userId/membership'),
-        headers: _headers,
-        body: json.encode({
-          'package_id': packageId, // chnge from plan to packge
-          'start_date': startDate,
-          'end_date': endDate,
-          'amount': amount,
-          'payment_method': paymentMethod,
-        }),
-      );
-      final data = json.decode(response.body);
-      if (response.statusCode == 201 && data['success'] == true) {
-        return {'success': true};
-      }
-      return {'success': false, 'message': data['message'] ?? 'Failed'};
-    } catch (e) {
-      return {'success': false, 'message': 'Server error: $e'};
-    }
-  }
-
-  // ── Delete Member ──────────────────────────────────────────
-  static Future<Map<String, dynamic>> deleteMember(int userId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/admin/members/$userId'),
-        headers: _headers,
-      );
-      final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
-        return {'success': true};
-      }
-      return {'success': false, 'message': data['message'] ?? 'Failed'};
-    } catch (e) {
-      return {'success': false, 'message': 'Server error: $e'};
-    }
-  }
-
   // ── Get All Packages ───────────────────────────────────────
-  // Returns: { success, packages: [ { id, name, duration, price, description, is_active } ] }
   static Future<Map<String, dynamic>> getPackages({
     bool activeOnly = false,
   }) async {
@@ -285,6 +170,154 @@ class AdminService {
         return {'success': true};
       }
       return {'success': false, 'message': res['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Create Member ──────────────────────────────────────────
+  static Future<Map<String, dynamic>> createMember({
+    required String name,
+    required String email,
+    required String phone,
+    required String gender,
+    required String trainingSlot,
+    String? trainerId,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/members'),
+        headers: _headers,
+        body: json.encode({
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'gender': gender,
+          'training_slot': trainingSlot,
+          if (trainerId != null) 'trainer_id': int.tryParse(trainerId),
+          'password': 'GymSwift@123',
+        }),
+      );
+      final data = json.decode(response.body);
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data['success'] == true) {
+        return {'success': true, 'user_id': data['user_id']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Update Member ──────────────────────────────────────────
+  static Future<Map<String, dynamic>> updateMember({
+    required int userId,
+    required String name,
+    required String email,
+    required String phone,
+    required String gender,
+    required String trainingSlot,
+    String? trainerId,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/members/$userId'),
+        headers: _headers,
+        body: json.encode({
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'gender': gender,
+          'training_slot': trainingSlot,
+          if (trainerId != null) 'trainer_id': int.tryParse(trainerId),
+        }),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Assign Membership ──────────────────────────────────────
+  // Uses multipart when screenshot file is present (online payment)
+  // Uses JSON when cash payment (no file)
+  static Future<Map<String, dynamic>> assignMembership({
+    required int userId,
+    required int packageId,
+    required String startDate,
+    required String endDate,
+    required double amount,
+    required String paymentMethod,
+    File? screenshotFile,
+  }) async {
+    try {
+      final token = box.read('token');
+      final uri = Uri.parse('$baseUrl/admin/members/$userId/membership');
+
+      if (screenshotFile != null && paymentMethod == 'online') {
+        // ── Multipart request (with screenshot) ─────────────
+        final request = http.MultipartRequest('POST', uri)
+          ..headers['Authorization'] = 'Bearer $token'
+          ..fields['package_id'] = packageId.toString()
+          ..fields['start_date'] = startDate
+          ..fields['end_date'] = endDate
+          ..fields['amount'] = amount.toString()
+          ..fields['payment_method'] = paymentMethod
+          ..files.add(
+            await http.MultipartFile.fromPath(
+              'screenshot',
+              screenshotFile.path,
+            ),
+          );
+
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+        final data = json.decode(response.body);
+
+        if (response.statusCode == 201 && data['success'] == true) {
+          return {'success': true};
+        }
+        return {'success': false, 'message': data['message'] ?? 'Failed'};
+      } else {
+        // ── JSON request (cash payment) ──────────────────────
+        final response = await http.post(
+          uri,
+          headers: _headers,
+          body: json.encode({
+            'package_id': packageId,
+            'start_date': startDate,
+            'end_date': endDate,
+            'amount': amount,
+            'payment_method': paymentMethod,
+          }),
+        );
+        final data = json.decode(response.body);
+        if (response.statusCode == 201 && data['success'] == true) {
+          return {'success': true};
+        }
+        return {'success': false, 'message': data['message'] ?? 'Failed'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Delete Member ──────────────────────────────────────────
+  static Future<Map<String, dynamic>> deleteMember(int userId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/admin/members/$userId'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {
       return {'success': false, 'message': 'Server error: $e'};
     }

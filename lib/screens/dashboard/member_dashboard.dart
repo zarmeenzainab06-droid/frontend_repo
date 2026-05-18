@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/utils/theme.dart';
+import '../../core/widgets/app_drawer.dart';
 
 class MemberDashboard extends StatefulWidget {
   @override
@@ -19,22 +20,11 @@ class _MemberDashboardState extends State<MemberDashboard> {
     _userName = user?['name'] ?? 'Member';
   }
 
-  void _logout() {
-    box.remove('token');
-    box.remove('user');
-    box.remove('role');
-    box.remove('isLoggedIn');
-    Get.offAllNamed('/login');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-
-      // ── Side Drawer ──────────────────────────────────────────
-      drawer: _buildDrawer(),
-
+      drawer: const AppDrawer(role: 'user'),
       body: Column(
         children: [
           _buildTopBar(),
@@ -44,7 +34,6 @@ class _MemberDashboardState extends State<MemberDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Welcome text
                   Text(
                     'Welcome back, $_userName!',
                     style: const TextStyle(
@@ -63,18 +52,15 @@ class _MemberDashboardState extends State<MemberDashboard> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Placeholder cards — will be wired to API later
-                  _buildPlaceholderCard(
+                  // Placeholder cards — wired to API later
+                  _placeholderCard(
                     'Membership Status',
                     Icons.card_membership_outlined,
                   ),
                   const SizedBox(height: 12),
-                  _buildPlaceholderCard(
-                    'Next Payment',
-                    Icons.attach_money_outlined,
-                  ),
+                  _placeholderCard('Next Payment', Icons.attach_money_outlined),
                   const SizedBox(height: 12),
-                  _buildPlaceholderCard(
+                  _placeholderCard(
                     'Workout Sessions',
                     Icons.fitness_center_outlined,
                   ),
@@ -89,7 +75,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildPlaceholderCard(
+                  _placeholderCard(
                     'Activity will appear here',
                     Icons.history_outlined,
                   ),
@@ -99,32 +85,28 @@ class _MemberDashboardState extends State<MemberDashboard> {
           ),
         ],
       ),
-
-      // ── Bottom Nav ───────────────────────────────────────────
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  // ── Top Bar ──────────────────────────────────────────────────
+  // ── Top Bar ───────────────────────────────────────────────────
   Widget _buildTopBar() {
     return Container(
       color: AppTheme.primary,
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 12,
-        left: 8,
+        left: 4,
         right: 16,
         bottom: 12,
       ),
       child: Row(
         children: [
-          // Hamburger icon opens drawer
           Builder(
             builder: (ctx) => IconButton(
               onPressed: () => Scaffold.of(ctx).openDrawer(),
               icon: const Icon(Icons.menu, color: Colors.white, size: 24),
             ),
           ),
-          // Logo pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
@@ -137,7 +119,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
                 Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
                 SizedBox(width: 4),
                 Text(
-                  'GymSwift',
+                  'GymFitex',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -151,7 +133,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
           const Text(
             'Member Portal',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: Colors.white70,
               fontWeight: FontWeight.w400,
             ),
@@ -161,179 +143,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
     );
   }
 
-  // ── Side Drawer ──────────────────────────────────────────────
-  Widget _buildDrawer() {
-    final initial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'M';
-    final role = box.read('role') ?? 'user';
-
-    return Drawer(
-      backgroundColor: AppTheme.surface,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-              color: AppTheme.primary,
-              child: Row(
-                children: [
-                  // Avatar circle
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        initial,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _userName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          role == 'admin' ? 'Administrator' : 'Premium Member',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Close button
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white70,
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Menu items
-            _drawerItem(
-              Icons.calendar_month_outlined,
-              'My Schedule',
-              onTap: () {
-                Get.back();
-                // TODO: Get.toNamed('/member/schedule');
-              },
-            ),
-            _drawerItem(
-              Icons.emoji_events_outlined,
-              'Achievements',
-              onTap: () {
-                Get.back();
-                // TODO: Get.toNamed('/member/achievements');
-              },
-            ),
-            _drawerItem(
-              Icons.bar_chart_outlined,
-              'Progress Tracker',
-              onTap: () {
-                Get.back();
-                // TODO: Get.toNamed('/member/progress');
-              },
-            ),
-            _drawerItem(
-              Icons.settings_outlined,
-              'Settings',
-              onTap: () {
-                Get.back();
-                // TODO: Get.toNamed('/member/settings');
-              },
-            ),
-            _drawerItem(
-              Icons.help_outline,
-              'Help & Support',
-              onTap: () {
-                Get.back();
-                // TODO: Get.toNamed('/member/help');
-              },
-            ),
-
-            const Spacer(),
-
-            // Logout
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-              child: ListTile(
-                onTap: _logout,
-                leading: const Icon(
-                  Icons.logout_outlined,
-                  color: AppTheme.expired,
-                  size: 22,
-                ),
-                title: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: AppTheme.expired,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _drawerItem(IconData icon, String label, {VoidCallback? onTap}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(icon, color: AppTheme.textSecondary, size: 22),
-        title: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            color: AppTheme.textPrimary,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        ),
-        hoverColor: AppTheme.primaryLight,
-      ),
-    );
-  }
-
-  // ── Placeholder Card ─────────────────────────────────────────
-  Widget _buildPlaceholderCard(String label, IconData icon) {
+  Widget _placeholderCard(String label, IconData icon) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -381,27 +191,9 @@ class _MemberDashboardState extends State<MemberDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(Icons.home_outlined, 'Home', isActive: true),
-              _navItem(
-                Icons.card_membership_outlined,
-                'Membership',
-                onTap: () {
-                  // TODO: Get.toNamed('/member/membership');
-                },
-              ),
-              _navItem(
-                Icons.person_outline,
-                'Trainer',
-                onTap: () {
-                  // TODO: Get.toNamed('/member/trainer');
-                },
-              ),
-              _navItem(
-                Icons.account_circle_outlined,
-                'Profile',
-                onTap: () {
-                  // TODO: Get.toNamed('/member/profile');
-                },
-              ),
+              _navItem(Icons.card_membership_outlined, 'Membership'),
+              _navItem(Icons.person_outline, 'Trainer'),
+              _navItem(Icons.account_circle_outlined, 'Profile'),
             ],
           ),
         ),
