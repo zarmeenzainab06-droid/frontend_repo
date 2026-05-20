@@ -50,6 +50,13 @@ class _LoginScreenState extends State<LoginScreen> {
         Get.offAllNamed('/dashboard');
       }
     } else {
+      final role = result['data']['user']['role'];
+
+      if (role == 'trainer') {
+        Get.offAllNamed('/trainer-dashboard');
+      } else {
+        Get.offAllNamed('/dashboard');
+      }
       Get.snackbar(
         "Login Failed",
         result['message'],

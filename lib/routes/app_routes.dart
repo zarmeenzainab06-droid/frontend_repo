@@ -10,6 +10,7 @@ import '../screens/admin/admin_members_screen.dart';
 import '../screens/members/add_member_screen.dart';
 import '../screens/admin/admin_packages_screen.dart';
 import '../screens/members/edit_member_screen.dart';
+import '../screens/trainer/trainer_dashboard.dart'; // ✅ NEW
 import '../routes/auth_middleware.dart';
 
 class AppRoutes {
@@ -20,9 +21,10 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String adminDashboard = '/admin-dashboard';
   static const String adminMembers = '/admin/members';
-  static const String adminPackages = '/admin/packages'; // for packges
+  static const String adminPackages = '/admin/packages';
   static const String addMembers = '/add_members';
   static const String editMember = '/edit_member';
+  static const String trainerDashboard = '/trainer-dashboard'; // ✅ NEW
 
   static final List<GetPage<dynamic>> pages = [
     GetPage(name: splash, page: () => SplashScreen()),
@@ -57,6 +59,13 @@ class AppRoutes {
     GetPage(
       name: editMember,
       page: () => EditMemberPage(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    // ✅ NEW — Trainer route (protected)
+    GetPage(
+      name: trainerDashboard,
+      page: () => TrainerDashboard(),
       middlewares: [AuthMiddleware()],
     ),
   ];

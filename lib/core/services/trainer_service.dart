@@ -74,20 +74,16 @@ class TrainerService {
     }
   }
 
-  // ── Mark Attendance ────────────────────────────────────────
-  static Future<Map<String, dynamic>> markAttendance({
-    required int memberId,
-    required String status, // 'present' | 'absent'
-  }) async {
+  // ── Recent Member Activity ─────────────────────────────────
+  static Future<Map<String, dynamic>> getRecentActivity() async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/trainer/attendance'),
+      final response = await http.get(
+        Uri.parse('$baseUrl/trainer/activity'),
         headers: _headers,
-        body: json.encode({'member_id': memberId, 'status': status}),
       );
       final data = json.decode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        return {'success': true};
+        return {'success': true, 'activity': data['activity']};
       }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {
