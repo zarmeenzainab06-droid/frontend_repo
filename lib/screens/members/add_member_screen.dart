@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -18,13 +18,16 @@ class _AddMemberPageState extends State<AddMemberPage> {
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _feeCtrl = TextEditingController(text: '99.00');
+  final _startDateCtrl = TextEditingController();
 
   String? _gender;
   String? _packageId;
   String? _trainingSlot;
   String? _trainerId;
-  String _paymentType = 'cash'; // default cash
-  File? _screenshotFile;
+  String _paymentType = 'cash';
+
+  Uint8List? _screenshotBytes;
+  String? _screenshotName;
 
   List<Map<String, dynamic>> _trainers = [];
   List<Map<String, dynamic>> _packages = [];
@@ -45,6 +48,10 @@ class _AddMemberPageState extends State<AddMemberPage> {
   @override
   void initState() {
     super.initState();
+    // Default start date to today
+    final now = DateTime.now();
+    _startDateCtrl.text =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     _loadTrainers();
     _loadPackages();
   }
@@ -76,17 +83,19 @@ class _AddMemberPageState extends State<AddMemberPage> {
     return double.tryParse(pkg['price']?.toString() ?? '99') ?? 99.00;
   }
 
-  String _calcEndDate(String packageId) {
+  // Calculate end date from selected start date + package duration
+  String _calcEndDate(String startDate, String packageId) {
     final pkg = _packages.firstWhere(
       (p) => p['id'].toString() == packageId,
       orElse: () => <String, dynamic>{'duration': 30},
     );
     final days = (pkg['duration'] ?? 30) as int;
-    final end = DateTime.now().add(Duration(days: days));
+    final start = DateTime.parse(startDate);
+    final end = start.add(Duration(days: days));
     return '${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
   }
 
-  // Pick screenshot from gallery
+  // Works on web + mobile using bytes
   Future<void> _pickScreenshot() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
@@ -94,7 +103,32 @@ class _AddMemberPageState extends State<AddMemberPage> {
       imageQuality: 80,
     );
     if (picked != null) {
-      setState(() => _screenshotFile = File(picked.path));
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _screenshotBytes = bytes;
+        _screenshotName = picked.name;
+      });
+    }
+  }
+
+  Future<void> _pickStartDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(primary: AppTheme.primary),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _startDateCtrl.text =
+            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      });
     }
   }
 
@@ -112,14 +146,14 @@ class _AddMemberPageState extends State<AddMemberPage> {
       _showError('Please select a training slot');
       return;
     }
-    if (_paymentType == 'online' && _screenshotFile == null) {
+    if (_paymentType == 'online' && _screenshotBytes == null) {
       _showError('Please upload a payment screenshot for online payment');
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // 1. Create member account
+    // Step 1: Create member account
     final signupResult = await AdminService.createMember(
       name: _nameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
@@ -136,12 +170,10 @@ class _AddMemberPageState extends State<AddMemberPage> {
     }
 
     final int userId = signupResult['user_id'];
-    final now = DateTime.now();
-    final startDate =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final endDate = _calcEndDate(_packageId!);
+    final startDate = _startDateCtrl.text;
+    final endDate = _calcEndDate(startDate, _packageId!);
 
-    // 2. Assign membership + payment with optional screenshot
+    // Step 2: Assign membership + payment
     final membershipResult = await AdminService.assignMembership(
       userId: userId,
       packageId: int.parse(_packageId!),
@@ -149,7 +181,8 @@ class _AddMemberPageState extends State<AddMemberPage> {
       endDate: endDate,
       amount: double.tryParse(_feeCtrl.text) ?? _packagePrice(_packageId),
       paymentMethod: _paymentType,
-      screenshotFile: _screenshotFile,
+      screenshotBytes: _screenshotBytes,
+      screenshotName: _screenshotName,
     );
 
     setState(() => _isLoading = false);
@@ -195,6 +228,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ── Full Name ───────────────────────────────
                     _label('Full Name *'),
                     _textField(
                       controller: _nameCtrl,
@@ -203,6 +237,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 16),
 
+                    // ── Email ───────────────────────────────────
                     _label('Email Address *'),
                     _textField(
                       controller: _emailCtrl,
@@ -216,6 +251,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 16),
 
+                    // ── Phone ───────────────────────────────────
                     _label('Phone Number *'),
                     _textField(
                       controller: _phoneCtrl,
@@ -225,6 +261,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 16),
 
+                    // ── Gender ──────────────────────────────────
                     _label('Gender *'),
                     _dropdownField(
                       hint: 'Select gender',
@@ -234,6 +271,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 16),
 
+                    // ── Membership Plan ─────────────────────────
                     _label('Membership Plan *'),
                     _dropdownField(
                       hint: _packages.isEmpty
@@ -258,6 +296,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 16),
 
+                    // ── Assign Trainer ──────────────────────────
                     _label('Assign Trainer'),
                     _dropdownField(
                       hint: _trainers.isEmpty
@@ -278,6 +317,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 16),
 
+                    // ── Training Slot ───────────────────────────
                     _label('Training Slot *'),
                     _dropdownField(
                       hint: 'Select time slot',
@@ -287,15 +327,37 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 16),
 
+                    // ── Membership Start Date ───────────────────
+                    _label('Membership Start Date *'),
+                    GestureDetector(
+                      onTap: _pickStartDate,
+                      child: AbsorbPointer(
+                        child: _textField(
+                          controller: _startDateCtrl,
+                          hint: 'YYYY-MM-DD',
+                          suffixIcon: const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 18,
+                            color: AppTheme.textSecondary,
+                          ),
+                          validator: (v) =>
+                              v!.isEmpty ? 'Start date is required' : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
                     // ── Payment Type ────────────────────────────
                     _label('Payment Type *'),
                     Row(
                       children: [
+                        // Cash button
                         Expanded(
                           child: GestureDetector(
                             onTap: () => setState(() {
                               _paymentType = 'cash';
-                              _screenshotFile = null;
+                              _screenshotBytes = null;
+                              _screenshotName = null;
                             }),
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -339,6 +401,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                           ),
                         ),
                         const SizedBox(width: 12),
+                        // Online button
                         Expanded(
                           child: GestureDetector(
                             onTap: () =>
@@ -388,27 +451,26 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Screenshot upload (only for online) ─────
+                    // ── Screenshot upload (online only) ─────────
                     if (_paymentType == 'online') ...[
                       _label('Payment Screenshot *'),
                       GestureDetector(
                         onTap: _pickScreenshot,
                         child: Container(
                           width: double.infinity,
-                          height: _screenshotFile != null ? 180 : 100,
+                          height: _screenshotBytes != null ? 180 : 110,
                           decoration: BoxDecoration(
                             color: AppTheme.background,
                             borderRadius: BorderRadius.circular(
                               AppTheme.radiusMd,
                             ),
                             border: Border.all(
-                              color: _screenshotFile != null
+                              color: _screenshotBytes != null
                                   ? AppTheme.active
                                   : AppTheme.border,
-                              style: BorderStyle.solid,
                             ),
                           ),
-                          child: _screenshotFile != null
+                          child: _screenshotBytes != null
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(
                                     AppTheme.radiusMd,
@@ -416,11 +478,11 @@ class _AddMemberPageState extends State<AddMemberPage> {
                                   child: Stack(
                                     fit: StackFit.expand,
                                     children: [
-                                      Image.file(
-                                        _screenshotFile!,
+                                      // Image.memory works on web + mobile
+                                      Image.memory(
+                                        _screenshotBytes!,
                                         fit: BoxFit.cover,
                                       ),
-                                      // Change button overlay
                                       Positioned(
                                         top: 8,
                                         right: 8,
@@ -492,6 +554,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ),
                     const SizedBox(height: 32),
 
+                    // ── Action Buttons ──────────────────────────
                     Row(
                       children: [
                         Expanded(
@@ -560,6 +623,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
     );
   }
 
+  // ── Top Bar ───────────────────────────────────────────────────
   Widget _buildTopBar() {
     return Container(
       color: AppTheme.primary,
@@ -592,6 +656,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
     );
   }
 
+  // ── Helpers ───────────────────────────────────────────────────
   Widget _label(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -610,6 +675,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
     required TextEditingController controller,
     required String hint,
     TextInputType? keyboardType,
+    Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
@@ -620,6 +686,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 14),
+        suffixIcon: suffixIcon,
         filled: true,
         fillColor: AppTheme.background,
         contentPadding: const EdgeInsets.symmetric(

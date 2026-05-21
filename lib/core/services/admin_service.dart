@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
@@ -14,11 +15,6 @@ class AdminService {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
-  }
-
-  static Map<String, String> get _authHeader {
-    final token = box.read('token');
-    return {'Authorization': 'Bearer $token'};
   }
 
   // ── Dashboard Stats ────────────────────────────────────────
@@ -243,8 +239,9 @@ class AdminService {
   }
 
   // ── Assign Membership ──────────────────────────────────────
-  // Uses multipart when screenshot file is present (online payment)
-  // Uses JSON when cash payment (no file)
+  // Cash → JSON request
+  // Online → multipart/form-data with screenshot bytes
+  // Works on web + mobile (no dart:io File used)
   static Future<Map<String, dynamic>> assignMembership({
     required int userId,
     required int packageId,
@@ -252,38 +249,51 @@ class AdminService {
     required String endDate,
     required double amount,
     required String paymentMethod,
-    File? screenshotFile,
+    Uint8List? screenshotBytes,
+    String? screenshotName,
   }) async {
     try {
       final token = box.read('token');
       final uri = Uri.parse('$baseUrl/admin/members/$userId/membership');
 
-      if (screenshotFile != null && paymentMethod == 'online') {
-        // ── Multipart request (with screenshot) ─────────────
+      if (screenshotBytes != null && paymentMethod == 'online') {
+        // ── Multipart request (online payment with screenshot) ──
         final request = http.MultipartRequest('POST', uri)
-          ..headers['Authorization'] = 'Bearer $token'
-          ..fields['package_id'] = packageId.toString()
-          ..fields['start_date'] = startDate
-          ..fields['end_date'] = endDate
-          ..fields['amount'] = amount.toString()
-          ..fields['payment_method'] = paymentMethod
-          ..files.add(
-            await http.MultipartFile.fromPath(
-              'screenshot',
-              screenshotFile.path,
-            ),
-          );
+          ..headers['Authorization'] = 'Bearer $token';
+
+        // Form fields
+        request.fields['package_id'] = packageId.toString();
+        request.fields['start_date'] = startDate;
+        request.fields['end_date'] = endDate;
+        request.fields['amount'] = amount.toString();
+        request.fields['payment_method'] = paymentMethod;
+
+        // Screenshot file — fromBytes works on web + mobile
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'screenshot',
+            screenshotBytes,
+            filename: screenshotName ?? 'screenshot.jpg',
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        );
 
         final streamedResponse = await request.send();
         final response = await http.Response.fromStream(streamedResponse);
-        final data = json.decode(response.body);
 
+        print('DEBUG multipart status: ${response.statusCode}');
+        print('DEBUG multipart body: ${response.body}');
+
+        final data = json.decode(response.body);
         if (response.statusCode == 201 && data['success'] == true) {
           return {'success': true};
         }
-        return {'success': false, 'message': data['message'] ?? 'Failed'};
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to save payment',
+        };
       } else {
-        // ── JSON request (cash payment) ──────────────────────
+        // ── JSON request (cash payment) ─────────────────────────
         final response = await http.post(
           uri,
           headers: _headers,
@@ -295,13 +305,21 @@ class AdminService {
             'payment_method': paymentMethod,
           }),
         );
+
+        print('DEBUG cash status: ${response.statusCode}');
+        print('DEBUG cash body: ${response.body}');
+
         final data = json.decode(response.body);
         if (response.statusCode == 201 && data['success'] == true) {
           return {'success': true};
         }
-        return {'success': false, 'message': data['message'] ?? 'Failed'};
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to save payment',
+        };
       }
     } catch (e) {
+      print('DEBUG assignMembership error: $e');
       return {'success': false, 'message': 'Server error: $e'};
     }
   }
