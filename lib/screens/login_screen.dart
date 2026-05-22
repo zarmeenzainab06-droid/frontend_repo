@@ -44,12 +44,22 @@ class _LoginScreenState extends State<LoginScreen> {
       box.write('isLoggedIn', true);
       box.write('userName', result['data']['user']['name']);
 
-      if (userRole == 'admin') {
-        Get.offAllNamed('/admin-dashboard');
+      if (result['success']) {
+        final role = result['data']['user']['role'];
+
+        if (role == 'admin') {
+          Get.offAllNamed('/admin-dashboard');
+        } else if (role == 'trainer') {
+          Get.offAllNamed('/trainer-dashboard'); // ✅ correct place
+        } else {
+          Get.offAllNamed('/dashboard'); // normal user
+        }
       } else {
-        Get.offAllNamed('/dashboard');
+        //
+        // sirf error show karo
+        Get.snackbar("Error", result['message']);
       }
-    } else {
+
       Get.snackbar(
         "Login Failed",
         result['message'],
