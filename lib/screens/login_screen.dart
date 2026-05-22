@@ -39,30 +39,25 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
+      // ✅ Read role from response
       final userRole = result['data']['user']['role'];
 
       box.write('isLoggedIn', true);
       box.write('userName', result['data']['user']['name']);
 
-      if (result['success']) {
-        final role = result['data']['user']['role'];
-
-        if (role == 'admin') {
-          Get.offAllNamed('/admin-dashboard');
-        } else if (role == 'trainer') {
-          Get.offAllNamed('/trainer-dashboard'); // ✅ correct place
-        } else {
-          Get.offAllNamed('/dashboard'); // normal user
-        }
+      // ✅ Route based on role — all 3 cases handled
+      if (userRole == 'admin') {
+        Get.offAllNamed('/admin-dashboard');
+      } else if (userRole == 'trainer') {
+        Get.offAllNamed('/trainer-dashboard'); // ✅ trainer goes here
       } else {
-        //
-        // sirf error show karo
-        Get.snackbar("Error", result['message']);
+        Get.offAllNamed('/dashboard'); // regular member
       }
-
+    } else {
+      // ❌ Login failed — just show error, no redirect
       Get.snackbar(
         "Login Failed",
-        result['message'],
+        result['message'] ?? 'Invalid email or password',
         backgroundColor: AppTheme.expiredLight,
         colorText: AppTheme.expired,
         snackPosition: SnackPosition.BOTTOM,
@@ -81,7 +76,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // ── Card ──────────────────────────────────────
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(28),
@@ -93,7 +87,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title
                       const Center(
                         child: Text(
                           'Welcome Back',
@@ -106,7 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 28),
 
-                      // Email label + field
                       const Text(
                         'Email',
                         style: TextStyle(
@@ -127,7 +119,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Password label + field
                       const Text(
                         'Password',
                         style: TextStyle(
@@ -162,7 +153,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 28),
 
-                      // Login Button
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -204,7 +194,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
-                // Register link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
