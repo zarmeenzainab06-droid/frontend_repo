@@ -137,7 +137,7 @@ class AppDrawer extends StatelessWidget {
         'Manage Packages',
         onTap: () {
           Get.back();
-          Get.toNamed('/admin-packages');
+          Get.toNamed('/admin/packages');
         },
       ),
       _item(

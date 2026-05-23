@@ -256,7 +256,9 @@ class _MemberFormPageState extends State<MemberFormPage> {
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
       );
-      Get.back(result: true);
+      // get.back chnage for added member
+
+      Navigator.pop(context, true);
     } else {
       _showError(membershipResult['message'] ?? 'Failed to assign membership');
     }
@@ -284,6 +286,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
 
     // ✅ FIX: Pass existingScreenshotPath so backend can keep old screenshot
     // when user didn't pick a new one
+    print(_existingScreenshotPath);
     await AdminService.assignMembership(
       userId: widget.memberId!,
       packageId: int.parse(_packageId!),
@@ -305,7 +308,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
       snackPosition: SnackPosition.BOTTOM,
       margin: const EdgeInsets.all(16),
     );
-    Get.back(result: true);
+    Navigator.pop(context, true); //Get.back(result: true); edit member
   }
 
   void _showError(String msg) {
@@ -593,7 +596,10 @@ class _MemberFormPageState extends State<MemberFormPage> {
                                     ),
                                   ),
                                 ),
-                                onPressed: () => Get.back(),
+
+                                //onPressed: () => Get.back()has chnge,
+                                onPressed: () => Navigator.pop(context),
+
                                 child: const Text(
                                   'Cancel',
                                   style: TextStyle(

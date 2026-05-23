@@ -177,15 +177,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
       child: Row(
         children: [
-          // Hamburger opens drawer
           Builder(
             builder: (ctx) => IconButton(
               onPressed: () => Scaffold.of(ctx).openDrawer(),
               icon: const Icon(Icons.menu, color: Colors.white, size: 24),
             ),
           ),
-
-          // Logo pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
@@ -217,25 +214,38 @@ class _AdminDashboardState extends State<AdminDashboard> {
               fontWeight: FontWeight.w400,
             ),
           ),
-          const Spacer(),
+        ],
+      ),
+    );
+  }
 
-          // Live Updates badge
+  Widget _placeholderCard(String label, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: [AppTheme.cardShadow],
+      ),
+      child: Row(
+        children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: AppTheme.primaryLight,
+              shape: BoxShape.circle,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.bolt, size: 14, color: Colors.white),
-                SizedBox(width: 4),
-                Text(
-                  'Live Updates',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
-              ],
+            child: Icon(icon, color: AppTheme.primary, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textSecondary,
             ),
           ),
         ],
