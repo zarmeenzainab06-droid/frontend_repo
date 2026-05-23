@@ -76,6 +76,23 @@ class AdminService {
     }
   }
 
+  ///fooooorrrrr ediittt screennnnn
+  static Future<Map<String, dynamic>> getMemberById(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/members/$userId'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'member': data['member']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
   // ── Get Trainers ───────────────────────────────────────────
   static Future<Map<String, dynamic>> getTrainers() async {
     try {
@@ -251,6 +268,7 @@ class AdminService {
     required String paymentMethod,
     Uint8List? screenshotBytes,
     String? screenshotName,
+    String? existingScreenshotPath,
   }) async {
     try {
       final token = box.read('token');
@@ -303,6 +321,9 @@ class AdminService {
             'end_date': endDate,
             'amount': amount,
             'payment_method': paymentMethod,
+            //send existing path so backend keeps it instead of saving null
+            if (existingScreenshotPath != null)
+              'existing_screenshot': existingScreenshotPath,
           }),
         );
 

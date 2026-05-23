@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:third_task/screens/members/member_form_page.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
 
@@ -200,7 +201,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  // ── Top Bar ──────────────────────────────────────────────────
   Widget _buildTopBar() {
     return Container(
       color: AppTheme.primary,
@@ -248,7 +248,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  // ── Search + Filter Row ──────────────────────────────────────
   Widget _buildSearchAndFilter() {
     return Container(
       color: AppTheme.surface,
@@ -256,7 +255,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title + Add button
           Row(
             children: [
               const Text(
@@ -282,8 +280,13 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                     borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                   ),
                 ),
-                onPressed: () =>
-                    Get.toNamed('/add_members')?.then((_) => _loadMembers()),
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MemberFormPage()),
+                  );
+                  if (result == true) await _loadMembers();
+                },
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text(
                   'Add Member',
@@ -293,8 +296,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
             ],
           ),
           const SizedBox(height: 14),
-
-          // Search bar
           TextField(
             controller: _searchController,
             onChanged: (val) => _loadMembers(),
@@ -322,8 +323,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
             ),
           ),
           const SizedBox(height: 10),
-
-          // Filter row
           Row(
             children: [
               const Icon(
@@ -374,21 +373,40 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  // ── Member Card ──────────────────────────────────────────────
   Widget _buildMemberCard(Map<String, dynamic> member) {
     final name = member['name'] ?? '';
     final email = member['email'] ?? '';
     final phone = member['phone'] ?? '';
-    final plan = member['plan'] ?? 'N/A';
+
+    // ✅ FIXED: was member['plan'] — API returns 'package_name'
+    final packageName = (member['package_name'] ?? '').toString();
+
+    // ✅ FIXED: was member['end_date'] alone — also show start
     final endDate = member['end_date'] ?? '';
+
+    // ✅ FIXED: was member['trainer_name'] — correct key confirmed
     final trainer = member['trainer_name'] ?? '';
+
+    // ✅ FIXED: API returns 'membership_status', default 'pending' for no membership
     final rawStatus = (member['membership_status'] ?? 'pending')
         .toString()
         .toLowerCase();
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
+    // ✅ FIXED: package_duration and membership_fee also available
+    final duration = member['package_duration']?.toString() ?? '';
+    final fee = member['membership_fee'];
+    final feeStr = fee != null
+        ? '\$${double.tryParse(fee.toString())?.toStringAsFixed(0) ?? fee}'
+        : '';
+
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     final statusColor = AppColors.statusColor(rawStatus);
     final statusBg = AppColors.statusLightColor(rawStatus);
+
+    // Build plan label from actual package data
+    final planLabel = packageName.isNotEmpty
+        ? '$packageName${duration.isNotEmpty ? ' ($duration days)' : ''}${feeStr.isNotEmpty ? ' • $feeStr' : ''}'
+        : 'No plan assigned';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -458,24 +476,22 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
             const Divider(height: 1, color: AppTheme.border),
             const SizedBox(height: 10),
 
-            // Email
             _infoRow(Icons.email_outlined, email),
             const SizedBox(height: 6),
-            // Phone
             _infoRow(Icons.phone_outlined, phone.isNotEmpty ? phone : 'N/A'),
             const SizedBox(height: 6),
-            // Plan + expiry
-            _infoRow(
-              Icons.card_membership_outlined,
-              'Plan: ${_planLabel(plan)}  •  Expires: $endDate',
-            ),
+            // ✅ FIXED: now uses real package_name + duration + fee from API
+            _infoRow(Icons.card_membership_outlined, planLabel),
+            if (endDate.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              _infoRow(Icons.calendar_today_outlined, 'Expires: $endDate'),
+            ],
             if (trainer.isNotEmpty) ...[
               const SizedBox(height: 6),
               _infoRow(Icons.person_outline, 'Trainer: $trainer'),
             ],
             const SizedBox(height: 14),
 
-            // Action buttons
             Row(
               children: [
                 Expanded(
@@ -488,10 +504,16 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       ),
                       minimumSize: const Size(0, 40),
                     ),
-                    onPressed: () => Get.toNamed(
-                      '/edit_member',
-                      arguments: member,
-                    )?.then((_) => _loadMembers()),
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              MemberFormPage(memberId: member['id']),
+                        ),
+                      );
+                      if (result == true) await _loadMembers();
+                    },
                     child: const Text(
                       'Edit',
                       style: TextStyle(
@@ -546,19 +568,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  String _planLabel(String plan) {
-    switch (plan.toLowerCase()) {
-      case 'basic':
-        return 'Basic (1 Month)';
-      case 'standard':
-        return 'Standard (3 Months)';
-      case 'premium':
-        return 'Premium (6 Months)';
-      default:
-        return plan.isNotEmpty ? plan : 'N/A';
-    }
-  }
-
   Widget _buildEmpty() {
     return Center(
       child: Column(
@@ -586,7 +595,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  // ── Bottom Nav ────────────────────────────────────────────────
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
