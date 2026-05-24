@@ -39,7 +39,15 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
     final priceCtrl = TextEditingController(
       text: package?['price']?.toString() ?? '',
     );
+
+    ///for the Frommm time to
     final descCtrl = TextEditingController(text: package?['description'] ?? '');
+    final fromTimeCtrl = TextEditingController(
+      text: package?['from_time']?.toString().substring(0, 5) ?? '',
+    );
+    final toTimeCtrl = TextEditingController(
+      text: package?['to_time']?.toString().substring(0, 5) ?? '',
+    );
     bool isActive = (package?['is_active'] ?? 1) == 1;
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
@@ -49,212 +57,270 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheet) => Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          ),
-          decoration: const BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(AppTheme.radiusXl),
+        /// for the from time to to timeeeeeeeee
+        builder: (ctx, setSheet) {
+          Future<void> pickTime(TextEditingController ctrl) async {
+            final picked = await showTimePicker(
+              context: context,
+              initialTime: TimeOfDay.now(),
+              builder: (ctx, child) => Theme(
+                data: Theme.of(ctx).copyWith(
+                  colorScheme: const ColorScheme.light(
+                    primary: AppTheme.primary,
+                  ),
+                ),
+                child: child!,
+              ),
+            );
+
+            if (picked != null) {
+              final h = picked.hour.toString().padLeft(2, '0');
+              final m = picked.minute.toString().padLeft(2, '0');
+
+              ctrl.text = '$h:$m';
+
+              setSheet(() {});
+            }
+          }
+
+          return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
             ),
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-            child: Form(
-              key: formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle bar
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.border,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Title
-                  Text(
-                    isEdit ? 'Edit Package' : 'Add New Package',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  _sheetLabel('Package Name *'),
-                  _sheetField(
-                    controller: nameCtrl,
-                    hint: 'e.g. Gold, Silver, Platinum',
-                    validator: (v) => v!.isEmpty ? 'Name is required' : null,
-                  ),
-                  const SizedBox(height: 14),
-
-                  _sheetLabel('Duration (days) *'),
-                  _sheetField(
-                    controller: durationCtrl,
-                    hint: 'e.g. 30, 90, 180',
-                    keyboardType: TextInputType.number,
-                    validator: (v) {
-                      if (v!.isEmpty) return 'Duration is required';
-                      if (int.tryParse(v) == null)
-                        return 'Enter a valid number';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 14),
-
-                  _sheetLabel('Price (\$) *'),
-                  _sheetField(
-                    controller: priceCtrl,
-                    hint: 'e.g. 99.00',
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    validator: (v) {
-                      if (v!.isEmpty) return 'Price is required';
-                      if (double.tryParse(v) == null)
-                        return 'Enter a valid price';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 14),
-
-                  _sheetLabel('Description'),
-                  _sheetField(
-                    controller: descCtrl,
-                    hint: 'Brief description of what is included',
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Active toggle
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Active',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              'Inactive packages won\'t appear in dropdown',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch(
-                        value: isActive,
-                        activeColor: AppTheme.primary,
-                        onChanged: (val) => setSheet(() => isActive = val),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Save button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusMd,
-                          ),
-                        ),
-                      ),
-                      onPressed: isSaving
-                          ? null
-                          : () async {
-                              if (!formKey.currentState!.validate()) return;
-                              setSheet(() => isSaving = true);
-
-                              final data = {
-                                'name': nameCtrl.text.trim(),
-                                'duration': int.parse(durationCtrl.text.trim()),
-                                'price': double.parse(priceCtrl.text.trim()),
-                                'description': descCtrl.text.trim(),
-                                'is_active': isActive ? 1 : 0,
-                              };
-
-                              final result = isEdit
-                                  ? await AdminService.updatePackage(
-                                      id: package!['id'],
-                                      data: data,
-                                    )
-                                  : await AdminService.createPackage(data);
-
-                              setSheet(() => isSaving = false);
-
-                              if (result['success']) {
-                                Navigator.pop(ctx);
-                                Get.snackbar(
-                                  'Success',
-                                  isEdit
-                                      ? 'Package updated successfully'
-                                      : 'Package created successfully',
-                                  backgroundColor: AppTheme.active,
-                                  colorText: Colors.white,
-                                  snackPosition: SnackPosition.TOP,
-                                  margin: const EdgeInsets.all(16),
-                                );
-                                _loadPackages();
-                              } else {
-                                Get.snackbar(
-                                  'Error',
-                                  result['message'] ?? 'Something went wrong',
-                                  backgroundColor: AppTheme.expired,
-                                  colorText: Colors.white,
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  margin: const EdgeInsets.all(16),
-                                );
-                              }
-                            },
-                      child: isSaving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              isEdit ? 'Update Package' : 'Create Package',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
+            decoration: const BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppTheme.radiusXl),
               ),
             ),
-          ),
-        ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Handle bar
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppTheme.border,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Title
+                    Text(
+                      isEdit ? 'Edit Package' : 'Add New Package',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    _sheetLabel('Package Name *'),
+                    _sheetField(
+                      controller: nameCtrl,
+                      hint: 'e.g. Gold, Silver, Platinum',
+                      validator: (v) => v!.isEmpty ? 'Name is required' : null,
+                    ),
+                    const SizedBox(height: 14),
+
+                    _sheetLabel('Duration (days) *'),
+                    _sheetField(
+                      controller: durationCtrl,
+                      hint: 'e.g. 30, 90, 180',
+                      keyboardType: TextInputType.number,
+                      validator: (v) {
+                        if (v!.isEmpty) return 'Duration is required';
+                        if (int.tryParse(v) == null)
+                          return 'Enter a valid number';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    _sheetLabel('Price (\$) *'),
+                    _sheetField(
+                      controller: priceCtrl,
+                      hint: 'e.g. 99.00',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator: (v) {
+                        if (v!.isEmpty) return 'Price is required';
+                        if (double.tryParse(v) == null)
+                          return 'Enter a valid price';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    _sheetLabel('Description'),
+                    _sheetField(
+                      controller: descCtrl,
+                      hint: 'Brief description of what is included',
+                      maxLines: 3,
+                    ),
+                    // for the timeee
+                    const SizedBox(height: 14),
+                    _sheetLabel('From Time'),
+                    GestureDetector(
+                      onTap: () => pickTime(fromTimeCtrl),
+                      child: AbsorbPointer(
+                        child: _sheetField(
+                          controller: fromTimeCtrl,
+                          hint: 'e.g. 06:00',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _sheetLabel('To Time'),
+                    GestureDetector(
+                      onTap: () => pickTime(toTimeCtrl),
+                      child: AbsorbPointer(
+                        child: _sheetField(
+                          controller: toTimeCtrl,
+                          hint: 'e.g. 09:00',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Active toggle
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Active',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                'Inactive packages won\'t appear in dropdown',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: isActive,
+                          activeColor: AppTheme.primary,
+                          onChanged: (val) => setSheet(() => isActive = val),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Save button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusMd,
+                            ),
+                          ),
+                        ),
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                if (!formKey.currentState!.validate()) return;
+                                setSheet(() => isSaving = true);
+
+                                final data = {
+                                  'name': nameCtrl.text.trim(),
+                                  'duration': int.parse(
+                                    durationCtrl.text.trim(),
+                                  ),
+                                  'price': double.parse(priceCtrl.text.trim()),
+                                  'description': descCtrl.text.trim(),
+                                  'is_active': isActive ? 1 : 0,
+                                  'from_time': fromTimeCtrl.text.isNotEmpty
+                                      ? fromTimeCtrl.text
+                                      : null, // for timeee
+                                  'to_time': toTimeCtrl.text.isNotEmpty
+                                      ? toTimeCtrl.text
+                                      : null,
+                                };
+
+                                final result = isEdit
+                                    ? await AdminService.updatePackage(
+                                        id: package!['id'],
+                                        data: data,
+                                      )
+                                    : await AdminService.createPackage(data);
+
+                                setSheet(() => isSaving = false);
+
+                                if (result['success']) {
+                                  Navigator.pop(ctx);
+                                  Get.snackbar(
+                                    'Success',
+                                    isEdit
+                                        ? 'Package updated successfully'
+                                        : 'Package created successfully',
+                                    backgroundColor: AppTheme.active,
+                                    colorText: Colors.white,
+                                    snackPosition: SnackPosition.TOP,
+                                    margin: const EdgeInsets.all(16),
+                                  );
+                                  _loadPackages();
+                                } else {
+                                  Get.snackbar(
+                                    'Error',
+                                    result['message'] ?? 'Something went wrong',
+                                    backgroundColor: AppTheme.expired,
+                                    colorText: Colors.white,
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    margin: const EdgeInsets.all(16),
+                                  );
+                                }
+                              },
+                        child: isSaving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                isEdit ? 'Update Package' : 'Create Package',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -549,9 +615,27 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                 ),
               ),
             ],
-
-            const SizedBox(height: 14),
-
+            //// forrr the timeeee
+            if (pkg['from_time'] != null || pkg['to_time'] != null) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.access_time,
+                    size: 14,
+                    color: AppTheme.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${pkg['from_time'] ?? '--:--'}  →  ${pkg['to_time'] ?? '--:--'}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             // Action buttons
             Row(
               children: [

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../screens/splash_screen.dart';
-import '../screens/onboarding_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/dashboard/member_dashboard.dart';
@@ -24,7 +23,6 @@ class AppRoutes {
 
   static final List<GetPage<dynamic>> pages = [
     GetPage(name: splash, page: () => SplashScreen()),
-    GetPage(name: onboarding, page: () => OnboardingScreen()),
     GetPage(name: login, page: () => LoginScreen()),
     GetPage(name: register, page: () => RegisterScreen()),
     GetPage(

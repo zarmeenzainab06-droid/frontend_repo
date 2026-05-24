@@ -109,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
           Get.offAllNamed(AppRoutes.dashboard);
         }
       } else {
-        Get.offAllNamed(AppRoutes.onboarding);
+        Get.offAllNamed(AppRoutes.login);
       }
     });
   }
