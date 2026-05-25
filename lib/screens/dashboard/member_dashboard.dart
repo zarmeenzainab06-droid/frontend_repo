@@ -12,12 +12,13 @@ class MemberDashboard extends StatefulWidget {
 class _MemberDashboardState extends State<MemberDashboard> {
   final box = GetStorage();
   String _userName = '';
+  int _currentIndex = 0; // ✅ Active tab track karne ke liye
 
   @override
   void initState() {
     super.initState();
-    final user = box.read('user');
-    _userName = user?['name'] ?? 'Member';
+    // ✅ Fix - userName sahi se nikalo
+    _userName = box.read('userName') ?? 'Member';
   }
 
   @override
@@ -52,10 +53,23 @@ class _MemberDashboardState extends State<MemberDashboard> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Placeholder cards — wired to API later
-                  _placeholderCard(
-                    'Membership Status',
-                    Icons.card_membership_outlined,
+                  // ✅ Cards clickable hain 
+                  GestureDetector(
+                    onTap: () => Get.toNamed('/member-membership'),
+                    onLongPress: () => Get.toNamed('/member-profile'),
+                    onDoubleTap: () => Get.toNamed('/member-trainer'),
+                    child: _placeholderCard(
+                      'Membership Status',
+                      Icons.card_membership_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onDoubleTap: () => Get.toNamed('/member-trainer'),
+                    child: _placeholderCard(
+                      'My Trainer',
+                      Icons.person_outline,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   _placeholderCard('Next Payment', Icons.attach_money_outlined),
@@ -89,7 +103,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
     );
   }
 
-  // ── Top Bar ───────────────────────────────────────────────────
+  // ── Top Bar ─────────────────────────────────────────
   Widget _buildTopBar() {
     return Container(
       color: AppTheme.primary,
@@ -177,7 +191,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
     );
   }
 
-  // ── Bottom Nav ────────────────────────────────────────────────
+  // ── Bottom Nav ───────────────────────────────────────
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -190,11 +204,41 @@ class _MemberDashboardState extends State<MemberDashboard> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _navItem(Icons.home_outlined, 'Home', isActive: true),
-              _navItem(Icons.card_membership_outlined, 'Membership'),
-              _navItem(Icons.person_outline, 'Trainer'),
-              _navItem(Icons.account_circle_outlined, 'Profile'),
-            ],
+              // ✅ Home - Active
+              _navItem(
+  Icons.home_outlined,
+  'Home',
+  isActive: _currentIndex == 0,
+  onTap: () => setState(() => _currentIndex = 0),
+),
+_navItem(
+  Icons.card_membership_outlined,
+  'Membership',
+  isActive: _currentIndex == 1,
+  onTap: () {
+    setState(() => _currentIndex = 1);
+    Get.toNamed('/member_membership');
+  },
+),
+_navItem(
+  Icons.person_outline,
+  'Trainer',
+  isActive: _currentIndex == 2,
+  onTap: () {
+    setState(() => _currentIndex = 2);
+    Get.toNamed('/member_trainer');
+  },
+),
+_navItem(
+  Icons.account_circle_outlined,
+  'Profile',
+  isActive: _currentIndex == 3,
+  onTap: () {
+    setState(() => _currentIndex = 3);
+    Get.toNamed('/member_profile');
+             },
+            )
+           ],
           ),
         ),
       ),
@@ -205,16 +249,18 @@ class _MemberDashboardState extends State<MemberDashboard> {
     IconData icon,
     String label, {
     bool isActive = false,
-    VoidCallback? onTap,
+    VoidCallback? onTap, // ✅ onTap parameter
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 24,
+    return InkWell(
+      onTap: onTap, // ✅ Ab kaam karega
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 24,
             color: isActive ? AppTheme.primary : AppTheme.textSecondary,
           ),
           const SizedBox(height: 4),
@@ -228,6 +274,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
           ),
         ],
       ),
+     )
     );
   }
 }
