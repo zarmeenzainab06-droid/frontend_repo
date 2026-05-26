@@ -63,7 +63,7 @@ class AppTheme {
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
-    ),
+    )
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
