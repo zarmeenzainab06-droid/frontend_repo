@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:third_task/screens/members/member_form_page.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
+import '../../core/widgets/app_shell.dart';
+import '../members/member_form_page.dart';
 
 class AdminMembersScreen extends StatefulWidget {
   @override
@@ -172,11 +173,12 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
+    return AppShell(
+      role: 'admin',
+      subtitle: 'Admin Panel',
+      bottomNav: const AdminBottomNav(activeIndex: 1),
       body: Column(
         children: [
-          _buildTopBar(),
           _buildSearchAndFilter(),
           Expanded(
             child: _isLoading
@@ -194,54 +196,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       itemBuilder: (ctx, i) => _buildMemberCard(_filtered[i]),
                     ),
                   ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  Widget _buildTopBar() {
-    return Container(
-      color: AppTheme.primary,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 12,
-        left: 16,
-        right: 16,
-        bottom: 12,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
-                SizedBox(width: 4),
-                Text(
-                  'GymSwift',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Text(
-            'Admin Panel',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white70,
-              fontWeight: FontWeight.w400,
-            ),
           ),
         ],
       ),
@@ -377,33 +331,20 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     final name = member['name'] ?? '';
     final email = member['email'] ?? '';
     final phone = member['phone'] ?? '';
-
-    // ✅ FIXED: was member['plan'] — API returns 'package_name'
     final packageName = (member['package_name'] ?? '').toString();
-
-    // ✅ FIXED: was member['end_date'] alone — also show start
     final endDate = member['end_date'] ?? '';
-
-    // ✅ FIXED: was member['trainer_name'] — correct key confirmed
     final trainer = member['trainer_name'] ?? '';
-
-    // ✅ FIXED: API returns 'membership_status', default 'pending' for no membership
     final rawStatus = (member['membership_status'] ?? 'pending')
         .toString()
         .toLowerCase();
-
-    // ✅ FIXED: package_duration and membership_fee also available
     final duration = member['package_duration']?.toString() ?? '';
     final fee = member['membership_fee'];
     final feeStr = fee != null
         ? '\$${double.tryParse(fee.toString())?.toStringAsFixed(0) ?? fee}'
         : '';
-
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     final statusColor = AppColors.statusColor(rawStatus);
     final statusBg = AppColors.statusLightColor(rawStatus);
-
-    // Build plan label from actual package data
     final planLabel = packageName.isNotEmpty
         ? '$packageName${duration.isNotEmpty ? ' ($duration days)' : ''}${feeStr.isNotEmpty ? ' • $feeStr' : ''}'
         : 'No plan assigned';
@@ -420,7 +361,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar + name + status
             Row(
               children: [
                 Container(
@@ -475,12 +415,10 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
             const SizedBox(height: 10),
             const Divider(height: 1, color: AppTheme.border),
             const SizedBox(height: 10),
-
             _infoRow(Icons.email_outlined, email),
             const SizedBox(height: 6),
             _infoRow(Icons.phone_outlined, phone.isNotEmpty ? phone : 'N/A'),
             const SizedBox(height: 6),
-            // ✅ FIXED: now uses real package_name + duration + fee from API
             _infoRow(Icons.card_membership_outlined, planLabel),
             if (endDate.isNotEmpty) ...[
               const SizedBox(height: 6),
@@ -491,7 +429,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
               _infoRow(Icons.person_outline, 'Trainer: $trainer'),
             ],
             const SizedBox(height: 14),
-
             Row(
               children: [
                 Expanded(
@@ -589,71 +526,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                 ? 'Try changing the status filter'
                 : 'Add your first member',
             style: const TextStyle(fontSize: 13, color: AppTheme.textHint),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _navItem(
-                Icons.home_outlined,
-                'Home',
-                onTap: () => Get.offNamed('/admin-dashboard'),
-              ),
-              _navItem(Icons.people_outline, 'Members', isActive: true),
-              _navItem(
-                Icons.bar_chart_outlined,
-                'Reports',
-                onTap: () => Get.toNamed('/admin/reports'),
-              ),
-              _navItem(
-                Icons.person_outline,
-                'Profile',
-                onTap: () => Get.toNamed('/admin/profile'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(
-    IconData icon,
-    String label, {
-    bool isActive = false,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 24,
-            color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-            ),
           ),
         ],
       ),
