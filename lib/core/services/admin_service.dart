@@ -76,7 +76,7 @@ class AdminService {
     }
   }
 
-  ///fooooorrrrr ediittt screennnnn
+  ///fooooorrrrr ediittt screennnnn// read member
   static Future<Map<String, dynamic>> getMemberById(int userId) async {
     try {
       final response = await http.get(
@@ -256,8 +256,8 @@ class AdminService {
   }
 
   // ── Assign Membership ──────────────────────────────────────
-  // Cash → JSON request
-  // Online → multipart/form-data with screenshot bytes
+  // Cash -> JSON request
+  // Online -> multipart/form-data with screenshot bytes
   // Works on web + mobile (no dart:io File used)
   static Future<Map<String, dynamic>> assignMembership({
     required int userId,
@@ -350,6 +350,140 @@ class AdminService {
     try {
       final response = await http.delete(
         Uri.parse('$baseUrl/admin/members/$userId'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Get All Trainers ───────────────────────────────────────
+  static Future<Map<String, dynamic>> getAllTrainers({String? search}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/admin/trainers').replace(
+        queryParameters: search != null && search.isNotEmpty
+            ? {'search': search}
+            : null,
+      );
+      final response = await http.get(uri, headers: _headers);
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'trainers': data['trainers']};
+      } else if (response.statusCode == 403) {
+        Get.offAllNamed('/login');
+        return {'success': false, 'message': 'Access denied'};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Get Trainer By ID ──────────────────────────────────────
+  static Future<Map<String, dynamic>> getTrainerById(int id) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/trainers/$id'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'trainer': data['trainer']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Create Trainer ─────────────────────────────────────────
+  static Future<Map<String, dynamic>> createTrainer({
+    required String name,
+    required String email,
+    String? phone,
+    String? gender,
+    int? age,
+    String? specialization,
+    int? experience,
+    String trainingSlot = 'morning',
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/trainers'),
+        headers: _headers,
+        body: json.encode({
+          'name': name,
+          'email': email,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
+          if (gender != null) 'gender': gender,
+          if (age != null) 'age': age,
+          if (specialization != null && specialization.isNotEmpty)
+            'specialization': specialization,
+          if (experience != null) 'experience': experience,
+          'training_slot': trainingSlot,
+        }),
+      );
+      final data = json.decode(response.body);
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data['success'] == true) {
+        return {'success': true, 'trainer_id': data['trainer_id']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Update Trainer ─────────────────────────────────────────
+  static Future<Map<String, dynamic>> updateTrainer({
+    required int id,
+    required String name,
+    required String email,
+    String? phone,
+    String? gender,
+    int? age,
+    String? specialization,
+    int? experience,
+    String trainingSlot = 'morning',
+    int isActive = 1,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/trainers/$id'),
+        headers: _headers,
+        body: json.encode({
+          'name': name,
+          'email': email,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
+          if (gender != null) 'gender': gender,
+          if (age != null) 'age': age,
+          if (specialization != null && specialization.isNotEmpty)
+            'specialization': specialization,
+          if (experience != null) 'experience': experience,
+          'training_slot': trainingSlot,
+          'is_active': isActive,
+        }),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Delete Trainer ─────────────────────────────────────────
+  static Future<Map<String, dynamic>> deleteTrainer(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/admin/trainers/$id'),
         headers: _headers,
       );
       final data = json.decode(response.body);
