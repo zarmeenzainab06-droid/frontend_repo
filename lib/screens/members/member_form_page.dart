@@ -21,6 +21,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
   bool _isLoading = false;
   bool _isFetching = false;
 
+  final _passwordCtrl = TextEditingController(); // for password
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -68,11 +69,24 @@ class _MemberFormPageState extends State<MemberFormPage> {
     });
   }
 
+  // DISPOSE
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _feeCtrl.dispose();
+    _startDateCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose(); // always last
+  }
+
   Future<void> _loadDropdowns() async {
     final results = await Future.wait([
       AdminService.getTrainers(),
       AdminService.getPackages(activeOnly: false),
     ]);
+    if (!mounted) return; // ← ADD THIS
     if (results[0]['success']) {
       setState(() {
         _trainers = List<Map<String, dynamic>>.from(results[0]['trainers']);
@@ -88,6 +102,8 @@ class _MemberFormPageState extends State<MemberFormPage> {
   Future<void> _fetchMemberData() async {
     setState(() => _isFetching = true);
     final result = await AdminService.getMemberById(widget.memberId!);
+    if (!mounted) return; // ← ADD THIS
+
     if (!result['success']) {
       setState(() => _isFetching = false);
       _showError(result['message'] ?? 'Failed to load member data');
@@ -222,10 +238,11 @@ class _MemberFormPageState extends State<MemberFormPage> {
       gender: _gender!,
       trainingSlot: _trainingSlot!,
       trainerId: _trainerId,
-      password: "",
+      password: _passwordCtrl.text.trim(),
     );
 
     if (!signupResult['success']) {
+      if (!mounted) return; // ← ADD THIS
       setState(() => _isLoading = false);
       _showError(signupResult['message'] ?? 'Failed to create member');
       return;
@@ -275,7 +292,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
       trainingSlot: _trainingSlot ?? 'morning',
       trainerId: _trainerId,
     );
-
+    if (!mounted) return; // ← ADD THIS
     if (!updateResult['success']) {
       setState(() => _isLoading = false);
       _showError(updateResult['message'] ?? 'Failed to update member');
@@ -299,7 +316,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
       screenshotName: _screenshotName, // null if not changed
       existingScreenshotPath: _existingScreenshotPath, // ✅ NEW: keep old path
     );
-
+    if (!mounted) return; // ← ADD THIS
     setState(() => _isLoading = false);
     Get.snackbar(
       'Updated',
@@ -375,7 +392,23 @@ class _MemberFormPageState extends State<MemberFormPage> {
                                 v!.isEmpty ? 'Phone is required' : null,
                           ),
                           const SizedBox(height: 16),
-
+                          // for password
+                          const SizedBox(height: 16),
+                          if (!_isEdit) ...[
+                            _label('Password *'),
+                            _textField(
+                              controller: _passwordCtrl,
+                              hint: 'Assign a password',
+                              obscureText: true,
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty)
+                                  return 'Password is required';
+                                if (v.trim().length < 6)
+                                  return 'Minimum 6 characters';
+                                return null;
+                              },
+                            ),
+                          ],
                           _label('Gender *'),
                           _dropdownField(
                             hint: 'Select gender',
@@ -806,6 +839,8 @@ class _MemberFormPageState extends State<MemberFormPage> {
     TextInputType? keyboardType,
     Widget? suffixIcon,
     bool readOnly = false,
+    bool obscureText = false, // for password
+
     String? Function(String?)? validator,
   }) {
     return TextFormField(
@@ -813,6 +848,8 @@ class _MemberFormPageState extends State<MemberFormPage> {
       keyboardType: keyboardType,
       validator: validator,
       readOnly: readOnly,
+      obscureText: obscureText, // for password
+
       style: TextStyle(
         fontSize: 14,
         color: readOnly ? AppTheme.textSecondary : AppTheme.textPrimary,

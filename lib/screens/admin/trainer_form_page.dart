@@ -75,7 +75,6 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
         experience: int.tryParse(_expCtrl.text.trim()),
         trainingSlot: _trainingSlot,
         isActive: _isActive ? 1 : 0,
-        password: '',
       );
     } else {
       result = await AdminService.createTrainer(

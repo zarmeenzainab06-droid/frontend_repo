@@ -454,7 +454,7 @@ class AdminService {
     int? experience,
     String trainingSlot = 'morning',
     int isActive = 1,
-    required String password,
+    // required String password,
   }) async {
     try {
       final response = await http.put(
