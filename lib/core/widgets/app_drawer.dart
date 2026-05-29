@@ -148,7 +148,7 @@ class AppDrawer extends StatelessWidget {
       ),
       _item(
         Icons.people_outline,
-        'Trainers',
+        'Manage Trainers',
         onTap: () {
           Get.back(); // close drawer
           Get.toNamed(AppRoutes.adminTrainers);

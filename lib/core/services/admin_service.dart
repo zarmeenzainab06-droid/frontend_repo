@@ -192,6 +192,7 @@ class AdminService {
   static Future<Map<String, dynamic>> createMember({
     required String name,
     required String email,
+    required String password,
     required String phone,
     required String gender,
     required String trainingSlot,
@@ -411,6 +412,7 @@ class AdminService {
     String? specialization,
     int? experience,
     String trainingSlot = 'morning',
+    required String password,
   }) async {
     try {
       final response = await http.post(
@@ -426,6 +428,7 @@ class AdminService {
             'specialization': specialization,
           if (experience != null) 'experience': experience,
           'training_slot': trainingSlot,
+          'password': password, // for passsword
         }),
       );
       final data = json.decode(response.body);
@@ -451,6 +454,7 @@ class AdminService {
     int? experience,
     String trainingSlot = 'morning',
     int isActive = 1,
+    required String password,
   }) async {
     try {
       final response = await http.put(

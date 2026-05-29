@@ -358,7 +358,8 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
     final spec = trainer['specialization'] ?? '';
     final exp = trainer['experience'];
     final slot = (trainer['training_slot'] ?? '').toString();
-    final isActive = (trainer['is_active'] ?? 1) == 1;
+    final rawActive = trainer['is_active']; // for trainer active thingg
+    final isActive = rawActive == true || rawActive == 1; // also
     final gender = trainer['gender'] ?? '';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 

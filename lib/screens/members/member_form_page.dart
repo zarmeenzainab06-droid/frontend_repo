@@ -222,6 +222,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
       gender: _gender!,
       trainingSlot: _trainingSlot!,
       trainerId: _trainerId,
+      password: "",
     );
 
     if (!signupResult['success']) {

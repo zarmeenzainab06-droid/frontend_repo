@@ -22,6 +22,7 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
   final _phoneCtrl = TextEditingController();
   final _specCtrl = TextEditingController();
   final _expCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
 
   String? _gender;
   String _trainingSlot = 'morning';
@@ -52,7 +53,7 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
       _expCtrl.text = t['experience']?.toString() ?? '';
       _gender = t['gender'];
       _trainingSlot = t['training_slot'] ?? 'morning';
-      _isActive = (t['is_active'] ?? 1) == 1;
+      _isActive = t['is_active'] == true || t['is_active'] == 1;
     }
     setState(() => _isFetching = false);
   }
@@ -74,6 +75,7 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
         experience: int.tryParse(_expCtrl.text.trim()),
         trainingSlot: _trainingSlot,
         isActive: _isActive ? 1 : 0,
+        password: '',
       );
     } else {
       result = await AdminService.createTrainer(
@@ -84,6 +86,7 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
         specialization: _specCtrl.text.trim(),
         experience: int.tryParse(_expCtrl.text.trim()),
         trainingSlot: _trainingSlot,
+        password: _passwordCtrl.text.trim(), // ← ADD THIS
       );
     }
 
@@ -189,6 +192,21 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
                     _buildGenderDropdown(),
 
                     const SizedBox(height: 20),
+                    // for password field
+                    const SizedBox(height: 12),
+                    if (!_isEditing) // Only show on create
+                      _buildField(
+                        controller: _passwordCtrl,
+                        label: 'Password',
+                        hint: 'Assign a password',
+                        icon: Icons.lock_outline,
+                        obscureText: true,
+                        validator: (v) => v == null || v.trim().isEmpty
+                            ? 'Password is required'
+                            : v.trim().length < 6
+                            ? 'Minimum 6 characters'
+                            : null,
+                      ),
 
                     // ── Professional Info section ──────────────
                     _sectionLabel('Professional Info'),
@@ -282,12 +300,14 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
     required String label,
     required String hint,
     required IconData icon,
+    bool obscureText = false, // for the password thingg
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
+      obscureText: obscureText, // for the password thingg
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       validator: validator,
