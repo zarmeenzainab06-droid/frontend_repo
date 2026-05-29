@@ -348,7 +348,7 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () =>
-                      Get.toNamed('/trainer/member-details', arguments: member),
+                      Get.toNamed('/trainer/member-profile', arguments: member),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
