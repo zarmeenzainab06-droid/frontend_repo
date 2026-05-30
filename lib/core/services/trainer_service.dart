@@ -91,7 +91,7 @@ class TrainerService {
     }
   }
 
-  // ── Trainer Profile ────────────────────────────────────────
+  // ── Trainer Profile (full real data from DB) ──────────────
   static Future<Map<String, dynamic>> getProfile() async {
     try {
       final response = await http.get(
