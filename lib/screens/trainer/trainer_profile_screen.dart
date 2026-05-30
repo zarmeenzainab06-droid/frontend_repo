@@ -1,34 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
 
-class TrainerProfileScreen extends StatelessWidget {
+class TrainerProfileScreen extends StatefulWidget {
+  @override
+  State<TrainerProfileScreen> createState() => _TrainerProfileScreenState();
+}
+
+class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   final box = GetStorage();
+  bool _isLoading = true;
 
-  // ── Hardcoded profile data ─────────────────────────────────
-  final String specialty = 'Strength & Conditioning';
-  final String experience = '8 Years Experience';
-  final String phone = '+1 234 567 8910';
-  final String email = 'mike.johnson@gymfitex.com';
-  final String joinedDate = 'March 2018';
-  final int assignedMembers = 24;
-  final int sessionsCompleted = 1420;
+  // ── Real data from API ─────────────────────────────────────
+  String _name = '';
+  String _email = '';
+  String _phone = 'N/A';
+  String _specialty = '';
+  String _joinedDate = '';
+  int _experienceYears = 0;
+  int _assignedMembers = 0;
+  int _sessionsCompleted = 0;
+  List<String> _certifications = [];
 
-  final List<String> certifications = [
-    'NASM-CPT',
-    'CrossFit Level 2',
-    'Sports Nutrition',
-  ];
+  String get _initial => _name.isNotEmpty ? _name[0].toUpperCase() : 'T';
 
-  String get _trainerName {
-    final user = GetStorage().read('user');
-    if (user == null) return 'Trainer';
-    return user['name'] ?? 'Trainer';
+  String get _experienceLabel =>
+      '$_experienceYears Year${_experienceYears == 1 ? '' : 's'} Experience';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
   }
 
-  String get _trainerInitial =>
-      _trainerName.isNotEmpty ? _trainerName[0].toUpperCase() : 'T';
+  Future<void> _loadProfile() async {
+    setState(() => _isLoading = true);
+
+    final result = await TrainerService.getProfile();
+
+    if (result['success']) {
+      final p = result['profile'];
+      setState(() {
+        _name = p['name'] ?? '';
+        _email = p['email'] ?? '';
+        _phone = p['phone'] ?? 'N/A';
+        _specialty = p['specialty'] ?? 'Fitness Trainer';
+        _joinedDate = p['joinedDate'] ?? '';
+        _experienceYears = p['experienceYears'] ?? 0;
+        _assignedMembers = p['assignedMembers'] ?? 0;
+        _sessionsCompleted = p['sessionsCompleted'] ?? 0;
+        _certifications = List<String>.from(p['certifications'] ?? []);
+      });
+    } else {
+      // Fallback to stored user data if API fails
+      final user = box.read('user');
+      if (user != null) {
+        setState(() {
+          _name = user['name'] ?? '';
+          _email = user['email'] ?? '';
+        });
+      }
+    }
+
+    setState(() => _isLoading = false);
+  }
 
   void _logout() {
     box.remove('token');
@@ -46,60 +83,71 @@ class TrainerProfileScreen extends StatelessWidget {
         children: [
           _buildTopBar(context),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Title ──────────────────────────────────
-                  const Text(
-                    'My Profile',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  )
+                : RefreshIndicator(
+                    color: AppTheme.primary,
+                    onRefresh: _loadProfile,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ── Title ──────────────────────────
+                          const Text(
+                            'My Profile',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // ── Red Profile Card ───────────────
+                          _buildProfileCard(),
+                          const SizedBox(height: 14),
+
+                          // ── Stats ──────────────────────────
+                          _buildStatCard(
+                            icon: Icons.people_alt_rounded,
+                            iconBg: Colors.blue,
+                            value: '$_assignedMembers',
+                            label: 'Assigned Members',
+                          ),
+                          const SizedBox(height: 12),
+                          _buildStatCard(
+                            icon: Icons.fitness_center_rounded,
+                            iconBg: Colors.green,
+                            value: '$_sessionsCompleted',
+                            label: 'Sessions Completed',
+                          ),
+                          const SizedBox(height: 12),
+
+                          // ── Joined Date ────────────────────
+                          _buildJoinedCard(),
+                          const SizedBox(height: 14),
+
+                          // ── Contact Info ───────────────────
+                          _buildContactCard(),
+                          const SizedBox(height: 14),
+
+                          // ── Certifications ─────────────────
+                          if (_certifications.isNotEmpty) ...[
+                            _buildCertificationsCard(),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // ── Action Buttons ─────────────────
+                          _buildActionButtons(context),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // ── Red Profile Card ───────────────────────
-                  _buildProfileCard(),
-                  const SizedBox(height: 14),
-
-                  // ── Stats Row ──────────────────────────────
-                  _buildStatCard(
-                    icon: Icons.people_alt_rounded,
-                    iconBg: Colors.blue,
-                    value: '$assignedMembers',
-                    label: 'Assigned Members',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildStatCard(
-                    icon: Icons.fitness_center_rounded,
-                    iconBg: Colors.green,
-                    value: '$sessionsCompleted',
-                    label: 'Sessions Completed',
-                  ),
-                  const SizedBox(height: 12),
-
-                  // ── Joined Date Card ───────────────────────
-                  _buildJoinedCard(),
-                  const SizedBox(height: 14),
-
-                  // ── Contact Information ────────────────────
-                  _buildContactCard(),
-                  const SizedBox(height: 14),
-
-                  // ── Certifications ─────────────────────────
-                  _buildCertificationsCard(),
-                  const SizedBox(height: 14),
-
-                  // ── Action Buttons ─────────────────────────
-                  _buildActionButtons(context),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -174,7 +222,7 @@ class TrainerProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Avatar circle
+          // Avatar
           Container(
             width: 72,
             height: 72,
@@ -184,7 +232,7 @@ class TrainerProfileScreen extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                _trainerInitial,
+                _initial,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 30,
@@ -197,7 +245,7 @@ class TrainerProfileScreen extends StatelessWidget {
 
           // Name
           Text(
-            _trainerName,
+            _name,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -208,34 +256,39 @@ class TrainerProfileScreen extends StatelessWidget {
 
           // Specialty
           Text(
-            specialty,
+            _specialty,
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 12),
 
           // Experience badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.fitness_center, color: Colors.white, size: 13),
-                const SizedBox(width: 6),
-                Text(
-                  experience,
-                  style: const TextStyle(
+          if (_experienceYears > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.fitness_center,
                     color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    size: 13,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  Text(
+                    _experienceLabel,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -295,7 +348,6 @@ class TrainerProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Red calendar icon circle
           Container(
             width: 52,
             height: 52,
@@ -311,7 +363,7 @@ class TrainerProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            joinedDate,
+            _joinedDate,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -350,34 +402,140 @@ class TrainerProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Email row
           _contactRow(
             icon: Icons.email_outlined,
             label: 'Email Address',
-            value: email,
+            value: _email,
           ),
           const SizedBox(height: 12),
-
-          // Phone row
           _contactRow(
             icon: Icons.phone_outlined,
             label: 'Phone Number',
-            value: phone,
+            value: _phone,
           ),
           const SizedBox(height: 12),
-
-          // Specialization row
           _contactRow(
             icon: Icons.fitness_center_outlined,
             label: 'Specialization',
-            value: specialty,
+            value: _specialty,
           ),
         ],
       ),
     );
   }
 
+  // ── Certifications Card ───────────────────────────────────────
+  Widget _buildCertificationsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: [AppTheme.cardShadow],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Certifications',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _certifications.map((cert) => _certBadge(cert)).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Action Buttons ────────────────────────────────────────────
+  Widget _buildActionButtons(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: [AppTheme.cardShadow],
+      ),
+      child: Column(
+        children: [
+          _actionButton(
+            label: 'Edit Profile',
+            isFirst: true,
+            onTap: () => Get.snackbar(
+              'Coming Soon',
+              'Edit profile will be available soon',
+              backgroundColor: AppTheme.surface,
+              colorText: AppTheme.textPrimary,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            ),
+          ),
+          Divider(height: 1, color: AppTheme.border),
+          _actionButton(
+            label: 'Change Password',
+            onTap: () => Get.snackbar(
+              'Coming Soon',
+              'Change password will be available soon',
+              backgroundColor: AppTheme.surface,
+              colorText: AppTheme.textPrimary,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            ),
+          ),
+          Divider(height: 1, color: AppTheme.border),
+          _actionButton(
+            label: 'View Schedule History',
+            onTap: () => Get.snackbar(
+              'Coming Soon',
+              'Schedule history will be available soon',
+              backgroundColor: AppTheme.surface,
+              colorText: AppTheme.textPrimary,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            ),
+          ),
+          Divider(height: 1, color: AppTheme.border),
+
+          // Logout
+          InkWell(
+            onTap: () => _confirmLogout(context),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(AppTheme.radiusLg),
+              bottomRight: Radius.circular(AppTheme.radiusLg),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.logout_rounded, color: AppTheme.primary, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Logout',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Reusable Widgets ──────────────────────────────────────────
   Widget _contactRow({
     required IconData icon,
     required String label,
@@ -421,40 +579,6 @@ class TrainerProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Certifications Card ───────────────────────────────────────
-  Widget _buildCertificationsCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        boxShadow: [AppTheme.cardShadow],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Certifications',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Wrap of pill badges
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: certifications.map((cert) => _certBadge(cert)).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _certBadge(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -478,85 +602,6 @@ class TrainerProfileScreen extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppTheme.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Action Buttons ────────────────────────────────────────────
-  Widget _buildActionButtons(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        boxShadow: [AppTheme.cardShadow],
-      ),
-      child: Column(
-        children: [
-          _actionButton(
-            label: 'Edit Profile',
-            onTap: () => Get.snackbar(
-              'Coming Soon',
-              'Edit profile will be available soon',
-              backgroundColor: AppTheme.surface,
-              colorText: AppTheme.textPrimary,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(16),
-            ),
-            isFirst: true,
-          ),
-          Divider(height: 1, color: AppTheme.border),
-          _actionButton(
-            label: 'Change Password',
-            onTap: () => Get.snackbar(
-              'Coming Soon',
-              'Change password will be available soon',
-              backgroundColor: AppTheme.surface,
-              colorText: AppTheme.textPrimary,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(16),
-            ),
-          ),
-          Divider(height: 1, color: AppTheme.border),
-          _actionButton(
-            label: 'View Schedule History',
-            onTap: () => Get.snackbar(
-              'Coming Soon',
-              'Schedule history will be available soon',
-              backgroundColor: AppTheme.surface,
-              colorText: AppTheme.textPrimary,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(16),
-            ),
-          ),
-          Divider(height: 1, color: AppTheme.border),
-
-          // Logout — red text with icon
-          InkWell(
-            onTap: () => _confirmLogout(context),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(AppTheme.radiusLg),
-              bottomRight: Radius.circular(AppTheme.radiusLg),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.logout_rounded, color: AppTheme.primary, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Logout',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primary,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ],
@@ -601,7 +646,6 @@ class TrainerProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Logout Confirm Dialog ─────────────────────────────────────
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
