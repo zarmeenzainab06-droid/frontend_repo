@@ -10,7 +10,9 @@ import '../screens/admin/admin_packages_screen.dart';
 import '../screens/members/member_form_page.dart';
 import '../routes/auth_middleware.dart';
 import '../screens/admin/admin_trainers_screen.dart';
+import '../screens/admin_profile/admin_profile_screen.dart';
 
+// routess
 class AppRoutes {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
@@ -22,7 +24,9 @@ class AppRoutes {
   static const String adminPackages = '/admin/packages'; // for packges
   static const String addMembers = '/add_members';
   static const String adminTrainers = '/admin/trainers'; // for the trainerss
+  static const String adminProfile = '/admin/profile'; // for the profile
 
+  // pages list
   static final List<GetPage<dynamic>> pages = [
     GetPage(name: splash, page: () => SplashScreen()),
     GetPage(name: login, page: () => LoginScreen()),
@@ -55,6 +59,11 @@ class AppRoutes {
     GetPage(
       name: adminTrainers,
       page: () => const AdminTrainersScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: adminProfile,
+      page: () => const AdminProfileScreen(),
       middlewares: [AuthMiddleware()],
     ),
   ];

@@ -58,8 +58,8 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
     );
     if (result['success']) {
       _trainers = List<Map<String, dynamic>>.from(result['trainers']);
-      _applyFilter();
     }
+    _applyFilter();
     setState(() => _isLoading = false);
   }
 
@@ -74,7 +74,7 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
               .toString()
               .toLowerCase()
               .trim();
-          return slot == _slotFilter;
+          return slot == _slotFilter.toLowerCase().trim(); // for status fix
         }).toList();
       }
     });
@@ -358,8 +358,8 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
     final spec = trainer['specialization'] ?? '';
     final exp = trainer['experience'];
     final slot = (trainer['training_slot'] ?? '').toString();
-    final rawActive = trainer['is_active']; // for trainer active thingg
-    final isActive = rawActive == true || rawActive == 1; // also
+    final rawActive = trainer['is_active'];
+    final isActive = rawActive.toString() == '1'; // for the status
     final gender = trainer['gender'] ?? '';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 

@@ -316,7 +316,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
       screenshotName: _screenshotName, // null if not changed
       existingScreenshotPath: _existingScreenshotPath, // ✅ NEW: keep old path
     );
-    if (!mounted) return; // ← ADD THIS
+
     setState(() => _isLoading = false);
     Get.snackbar(
       'Updated',

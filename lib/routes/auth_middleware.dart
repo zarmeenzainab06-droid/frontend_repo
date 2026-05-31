@@ -7,11 +7,19 @@ class AuthMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
     final box = GetStorage();
+    final token = box.read('token');
+    final role = box.read('role');
 
-    if (box.read('token') == null) {
+    // Not logged in → go to login
+    if (token == null) {
       return const RouteSettings(name: AppRoutes.login);
     }
 
-    return null;
+    // Logged in but trying to access admin route without admin role
+    if (route != null && route.startsWith('/admin') && role != 'admin') {
+      return const RouteSettings(name: AppRoutes.dashboard);
+    }
+
+    return null; // allow navigation
   }
 }

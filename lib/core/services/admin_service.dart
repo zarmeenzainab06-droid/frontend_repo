@@ -499,4 +499,72 @@ class AdminService {
       return {'success': false, 'message': 'Server error: $e'};
     }
   }
+
+  // ── Get Admin Profile ──────────────────────────────────────────
+  static Future<Map<String, dynamic>> getAdminProfile() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/profile'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'profile': data['profile']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Update Admin Profile ───────────────────────────────────────
+  static Future<Map<String, dynamic>> updateAdminProfile({
+    required String name,
+    String? phone,
+    String? gymLocation,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/profile'),
+        headers: _headers,
+        body: json.encode({
+          'name': name,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
+          if (gymLocation != null && gymLocation.isNotEmpty)
+            'gym_location': gymLocation,
+        }),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Change Admin Password ──────────────────────────────────────
+  static Future<Map<String, dynamic>> changeAdminPassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/profile/password'),
+        headers: _headers,
+        body: json.encode({
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        }),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
 }
