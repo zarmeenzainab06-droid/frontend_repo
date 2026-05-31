@@ -137,7 +137,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               _label('Gym Location'),
               _field(
                 controller: _locationCtrl,
-                hint: 'e.g. GymSwift Downtown Branch',
+                hint: 'e.g. GymFitex Downtown Branch',
                 icon: Icons.location_on_outlined,
               ),
               const SizedBox(height: 32),
