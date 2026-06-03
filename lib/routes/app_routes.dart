@@ -14,6 +14,7 @@ import '../screens/trainer/trainer_dashboard.dart';
 import '../screens/trainer/trainer_members_screen.dart';
 import '../screens/trainer/trainer_profile_screen.dart';
 import '../screens/trainer/trainer_member_profile_screen.dart';
+import '../screens/trainer/trainer_schedule_screen.dart';
 import '../routes/auth_middleware.dart';
 
 class AppRoutes {
@@ -34,6 +35,7 @@ class AppRoutes {
   static const String trainerMembers = '/trainer/members';
   static const String trainerProfile = '/trainer/profile';
   static const String trainerMemberProfile = '/trainer/member-profile';
+  static const String trainerSchedule = '/trainer/schedule';
 
   static final List<GetPage<dynamic>> pages = [
     // ── Public ──────────────────────────────────────────────────
@@ -95,6 +97,11 @@ class AppRoutes {
     GetPage(
       name: trainerMemberProfile,
       page: () => TrainerMemberProfileScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: trainerSchedule,
+      page: () => TrainerScheduleScreen(),
       middlewares: [AuthMiddleware()],
     ),
   ];

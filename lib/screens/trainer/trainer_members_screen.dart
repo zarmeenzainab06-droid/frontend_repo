@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
+import '../../core/widgets/trainer_drawer.dart';
 
 class TrainerMembersScreen extends StatefulWidget {
   @override
@@ -65,6 +66,7 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const TrainerDrawer(), // ✅ add this line
       backgroundColor: AppTheme.background,
       body: Column(
         children: [

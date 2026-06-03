@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
+import '../../core/widgets/trainer_drawer.dart';
 
 class TrainerMemberProfileScreen extends StatefulWidget {
   @override
