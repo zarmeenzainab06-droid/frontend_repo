@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/services/admin_service.dart';
-import '../../core/utils/theme.dart';
+import '../../../core/services/admin_service.dart';
+import '../../../core/utils/theme.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});

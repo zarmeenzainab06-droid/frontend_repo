@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:third_task/screens/admin/payments/payment_model.dart'
+    hide ManagePaymentsScreen;
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
@@ -7,10 +9,11 @@ import '../screens/dashboard/member_dashboard.dart';
 import '../screens/admin/admin_dashboard.dart';
 import '../screens/admin/admin_members_screen.dart';
 import '../screens/admin/admin_packages_screen.dart';
-import '../screens/members/member_form_page.dart';
+import '../screens/admin/member_form_page.dart';
 import '../routes/auth_middleware.dart';
 import '../screens/admin/admin_trainers_screen.dart';
-import '../screens/admin_profile/admin_profile_screen.dart';
+import '../screens/admin/admin_profile/admin_profile_screen.dart';
+import '../screens/admin/payments/manage_payments_screen.dart'; // ← NEW
 
 // routess
 class AppRoutes {
@@ -25,6 +28,7 @@ class AppRoutes {
   static const String addMembers = '/add_members';
   static const String adminTrainers = '/admin/trainers'; // for the trainerss
   static const String adminProfile = '/admin/profile'; // for the profile
+  static const String adminPayments = '/admin/payments'; // ← NEW
 
   // pages list
   static final List<GetPage<dynamic>> pages = [
@@ -64,6 +68,12 @@ class AppRoutes {
     GetPage(
       name: adminProfile,
       page: () => const AdminProfileScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      // ← NEW
+      name: adminPayments,
+      page: () => const ManagePaymentsScreen(),
       middlewares: [AuthMiddleware()],
     ),
   ];

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../core/services/admin_service.dart';
-import '../../core/utils/theme.dart';
+import '../../../core/services/admin_service.dart';
+import '../../../core/utils/theme.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> profile;

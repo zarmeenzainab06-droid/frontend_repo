@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
 import '../../core/widgets/app_shell.dart';
-import '../members/member_form_page.dart';
+import 'member_form_page.dart';
 
 class AdminMembersScreen extends StatefulWidget {
   @override

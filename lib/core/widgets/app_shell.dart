@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../core/utils/theme.dart';
+import '../utils/theme.dart';
 import 'app_drawer.dart';
 
 /// AppShell wraps every screen with:
