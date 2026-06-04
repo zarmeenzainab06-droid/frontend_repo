@@ -1,10 +1,9 @@
-// screens/member/member_profile_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../models/member_model.dart';
 import '../../core/services/member_service.dart';
+import '../../core/widgets/member_layout.dart';
 
 class MemberProfileScreen extends StatefulWidget {
   const MemberProfileScreen({super.key});
@@ -14,7 +13,6 @@ class MemberProfileScreen extends StatefulWidget {
 }
 
 class _MemberProfileScreenState extends State<MemberProfileScreen> {
-  int _currentIndex = 3;
   MemberModel? _member;
   bool _isLoading = true;
   final box = GetStorage();
@@ -39,60 +37,14 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     return _member!.fullName[0].toUpperCase();
   }
 
-  void _onTabTapped(int index) {
-    if (index == _currentIndex) return;
-    setState(() => _currentIndex = index);
-    switch (index) {
-      case 0:
-        Get.offAllNamed('/dashboard');
-        break;
-      case 1:
-        Get.offAllNamed('/member-membership');
-        break;
-      case 2:
-        Get.offAllNamed('/member-trainer');
-        break;
-      case 3:
-        break;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF8B1A1A),
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            const Icon(Icons.fitness_center, size: 20),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('GymFitex',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
-                Text('Member Portal',
-                    style: TextStyle(fontSize: 11, color: Colors.white70)),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadProfile,
-          ),
-        ],
-      ),
+    return MemberLayout(
+      currentIndex: 3, // ✅ Profile tab active
+      title: 'Member Portal',
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF8B1A1A)),
+              child: CircularProgressIndicator(color: Color(0xFFE53935)),
             )
           : _member == null
               ? Center(
@@ -111,7 +63,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                       ElevatedButton(
                         onPressed: _loadProfile,
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8B1A1A)),
+                            backgroundColor: const Color(0xFFE53935)),
                         child: const Text('Retry',
                             style: TextStyle(color: Colors.white)),
                       ),
@@ -149,7 +101,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                               const SizedBox(height: 24),
                               CircleAvatar(
                                 radius: 36,
-                                backgroundColor: const Color(0xFF8B1A1A),
+                                backgroundColor: const Color(0xFFE53935),
                                 child: Text(_getInitial(),
                                     style: const TextStyle(
                                         fontSize: 28,
@@ -254,37 +206,6 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                     ),
                   ),
                 ),
-
-      // Bottom Navigation
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF8B1A1A),
-        unselectedItemColor: Colors.grey,
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.card_membership_outlined),
-            activeIcon: Icon(Icons.card_membership),
-            label: 'Membership',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center_outlined),
-            activeIcon: Icon(Icons.fitness_center),
-            label: 'Trainer',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
     );
   }
 
@@ -295,9 +216,9 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
       textCancel: 'Cancel',
       textConfirm: 'Logout',
       confirmTextColor: Colors.white,
-      buttonColor: const Color(0xFF8B1A1A),
+      buttonColor: const Color(0xFFE53935),
       onConfirm: () {
-        box.erase(); // Sab data clear
+        box.erase();
         Get.offAllNamed('/login');
       },
     );
@@ -350,12 +271,12 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   }) {
     return ListTile(
       leading: Icon(icon,
-          color: isLogout ? const Color(0xFF8B1A1A) : Colors.blueGrey,
+          color: isLogout ? const Color(0xFFE53935) : Colors.blueGrey,
           size: 20),
       title: Text(label,
           style: TextStyle(
               fontSize: 15,
-              color: isLogout ? const Color(0xFF8B1A1A) : Colors.black87,
+              color: isLogout ? const Color(0xFFE53935) : Colors.black87,
               fontWeight: FontWeight.w500)),
       trailing: isLogout
           ? null

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/utils/theme.dart';
+import '../../core/widgets/member_layout.dart';
 import '../../core/services/member_service.dart';
 
 class MemberMembershipScreen extends StatefulWidget {
@@ -32,20 +33,12 @@ class _MemberMembershipScreenState extends State<MemberMembershipScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
-        title: const Text('My Membership'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(),
-        ),
-      ),
+    return MemberLayout(
+      currentIndex: 1,
+      title: 'Member Portal',
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primary))
+              child: CircularProgressIndicator(color: Color(0xFFE53935)))
           : _membership == null
               ? Center(
                   child: Column(
@@ -54,13 +47,11 @@ class _MemberMembershipScreenState extends State<MemberMembershipScreen> {
                       const Icon(Icons.error_outline,
                           size: 60, color: Colors.grey),
                       const SizedBox(height: 12),
-                      const Text('Data load nahi hua',
-                          style: TextStyle(color: Colors.grey)),
-                      const SizedBox(height: 12),
+                      const Text('Data load nahi hua'),
                       ElevatedButton(
                         onPressed: _loadMembership,
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary),
+                            backgroundColor: const Color(0xFFE53935)),
                         child: const Text('Retry',
                             style: TextStyle(color: Colors.white)),
                       ),
@@ -71,12 +62,12 @@ class _MemberMembershipScreenState extends State<MemberMembershipScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // ✅ Top Status Card
+                      // Top Card
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: AppTheme.primary,
+                          color: const Color(0xFFE53935),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -85,7 +76,7 @@ class _MemberMembershipScreenState extends State<MemberMembershipScreen> {
                                 color: Colors.white, size: 44),
                             const SizedBox(height: 10),
                             Text(
-                              _membership!['plan'] ?? 'No Plan',
+                              _membership!['package_name'] ?? 'No Plan',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
@@ -114,16 +105,20 @@ class _MemberMembershipScreenState extends State<MemberMembershipScreen> {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 16),
 
-                      // ✅ Detail Card
+                      // Detail Card
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [AppTheme.cardShadow],
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.grey.withOpacity(0.15),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2)),
+                          ],
                         ),
                         child: Column(
                           children: [
@@ -134,13 +129,13 @@ class _MemberMembershipScreenState extends State<MemberMembershipScreen> {
                                 _membership!['end_date']?.toString() ?? 'N/A'),
                             const Divider(height: 1),
                             _buildTile(Icons.timer, 'Duration',
-                                _membership!['duration']?.toString() ?? 'N/A'),
+                                '${_membership!['duration'] ?? 'N/A'} days'),
                             const Divider(height: 1),
-                            _buildTile(Icons.attach_money, 'Plan Price',
+                            _buildTile(Icons.attach_money, 'Price',
                                 'Rs. ${_membership!['price'] ?? '0'}'),
                             const Divider(height: 1),
-                            _buildTile(Icons.payment, 'Amount Paid',
-                                'Rs. ${_membership!['paid_amount'] ?? '0'}',
+                            _buildTile(Icons.description, 'Description',
+                                _membership!['description']?.toString() ?? 'N/A',
                                 isLast: true),
                           ],
                         ),
@@ -157,15 +152,14 @@ class _MemberMembershipScreenState extends State<MemberMembershipScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppTheme.primary),
+          Icon(icon, size: 20, color: const Color(0xFFE53935)),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style:
-                        const TextStyle(fontSize: 12, color: Colors.grey)),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 2),
                 Text(value,
                     style: const TextStyle(

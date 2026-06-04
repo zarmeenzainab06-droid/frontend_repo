@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../utils/theme.dart';
+import 'app_drawer.dart';
 
 class MemberLayout extends StatelessWidget {
   final Widget body;
@@ -18,19 +19,16 @@ class MemberLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      // ✅ Common Header
+      drawer: const AppDrawer(role: 'user'),
       appBar: _buildAppBar(context),
-      // ✅ Page ka content
       body: body,
-      // ✅ Common Bottom Nav
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  // ── Header ──────────────────────────────────────
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: AppTheme.primary,
+      backgroundColor: AppTheme.primary, // ✅ Theme color
       foregroundColor: Colors.white,
       automaticallyImplyLeading: false,
       title: Row(
@@ -66,17 +64,13 @@ class MemberLayout extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.white70,
-            ),
+            style: const TextStyle(fontSize: 13, color: Colors.white70),
           ),
         ],
       ),
     );
   }
 
-  // ── Bottom Nav ──────────────────────────────────
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -93,7 +87,7 @@ class MemberLayout extends StatelessWidget {
             children: [
               _navItem(Icons.home_outlined, 'Home', 0),
               _navItem(Icons.card_membership_outlined, 'Membership', 1),
-              _navItem(Icons.person_outline, 'Trainer', 2),
+              _navItem(Icons.fitness_center_outlined, 'Trainer', 2),
               _navItem(Icons.account_circle_outlined, 'Profile', 3),
             ],
           ),
@@ -129,18 +123,13 @@ class MemberLayout extends StatelessWidget {
           children: [
             Icon(icon,
                 size: 24,
-                color: isActive
-                    ? AppTheme.primary
-                    : AppTheme.textSecondary),
+                color: isActive ? AppTheme.primary : AppTheme.textSecondary),
             const SizedBox(height: 4),
             Text(label,
                 style: TextStyle(
                   fontSize: 11,
-                  color: isActive
-                      ? AppTheme.primary
-                      : AppTheme.textSecondary,
-                  fontWeight:
-                      isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: isActive ? AppTheme.primary : AppTheme.textSecondary,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 )),
           ],
         ),

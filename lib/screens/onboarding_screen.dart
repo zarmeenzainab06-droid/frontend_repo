@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
 import '../routes/app_routes.dart';
 
 class OnboardingScreen extends StatefulWidget {

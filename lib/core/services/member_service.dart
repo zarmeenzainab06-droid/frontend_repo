@@ -1,5 +1,3 @@
-// lib/services/member_service.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
@@ -62,6 +60,32 @@ class MemberService {
       return null;
     } catch (e) {
       print('Membership Error: $e');
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getTrainer() async {
+    try {
+      final token = _getToken();
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/members/trainer'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('Trainer Status: ${response.statusCode}');
+      print('Trainer Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['trainer'];
+      }
+      return null;
+    } catch (e) {
+      print('Trainer Error: $e');
       return null;
     }
   }

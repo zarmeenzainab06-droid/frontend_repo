@@ -58,12 +58,12 @@ class AppTheme {
       foregroundColor: textOnPrimary,
       elevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(
+      titleTextStyle: const TextStyle(
         color: textOnPrimary,
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
-    )
+    ),
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
