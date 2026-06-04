@@ -91,6 +91,61 @@ class TrainerService {
     }
   }
 
+  // ── Update Profile ─────────────────────────────────────────
+  static Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    required String phone,
+    required String specialty,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/trainer/profile'),
+        headers: _headers,
+        body: json.encode({
+          'name': name,
+          'phone': phone,
+          'specialty': specialty,
+        }),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        // Update stored user name
+        final box = GetStorage();
+        final user = box.read('user') ?? {};
+        user['name'] = name;
+        box.write('user', user);
+        return {'success': true};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Change Password ────────────────────────────────────────
+  static Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/trainer/change-password'),
+        headers: _headers,
+        body: json.encode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
   // ── Trainer Profile (full real data from DB) ──────────────
   static Future<Map<String, dynamic>> getProfile() async {
     try {

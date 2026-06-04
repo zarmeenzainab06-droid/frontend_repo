@@ -66,7 +66,7 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const TrainerDrawer(), // ✅ add this line
+      drawer: const TrainerDrawer(),
       backgroundColor: AppTheme.background,
       body: Column(
         children: [

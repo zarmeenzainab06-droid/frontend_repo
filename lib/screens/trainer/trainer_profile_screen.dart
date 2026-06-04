@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
-import '../../core/widgets/trainer_drawer.dart';
 
 class TrainerProfileScreen extends StatefulWidget {
   @override
@@ -14,7 +13,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   final box = GetStorage();
   bool _isLoading = true;
 
-  // ── Real data from API ─────────────────────────────────────
   String _name = '';
   String _email = '';
   String _phone = 'N/A';
@@ -26,7 +24,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   List<String> _certifications = [];
 
   String get _initial => _name.isNotEmpty ? _name[0].toUpperCase() : 'T';
-
   String get _experienceLabel =>
       '$_experienceYears Year${_experienceYears == 1 ? '' : 's'} Experience';
 
@@ -38,9 +35,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
 
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);
-
     final result = await TrainerService.getProfile();
-
     if (result['success']) {
       final p = result['profile'];
       setState(() {
@@ -55,7 +50,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         _certifications = List<String>.from(p['certifications'] ?? []);
       });
     } else {
-      // Fallback to stored user data if API fails
       final user = box.read('user');
       if (user != null) {
         setState(() {
@@ -64,7 +58,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         });
       }
     }
-
     setState(() => _isLoading = false);
   }
 
@@ -76,9 +69,315 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     Get.offAllNamed('/login');
   }
 
+  // ── Edit Profile Dialog ───────────────────────────────────────
+  void _showEditProfile() {
+    final nameCtrl = TextEditingController(text: _name);
+    final phoneCtrl = TextEditingController(
+      text: _phone == 'N/A' ? '' : _phone,
+    );
+    final specialtyCtrl = TextEditingController(text: _specialty);
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          ),
+          title: const Text(
+            'Edit Profile',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _dialogField(nameCtrl, 'Full Name', Icons.person_outline),
+                const SizedBox(height: 12),
+                _dialogField(
+                  phoneCtrl,
+                  'Phone Number',
+                  Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                _dialogField(
+                  specialtyCtrl,
+                  'Specialization',
+                  Icons.fitness_center_outlined,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+              ),
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      setDlgState(() => isSaving = true);
+                      final result = await TrainerService.updateProfile(
+                        name: nameCtrl.text.trim(),
+                        phone: phoneCtrl.text.trim(),
+                        specialty: specialtyCtrl.text.trim(),
+                      );
+                      Navigator.pop(ctx);
+                      if (result['success']) {
+                        await _loadProfile();
+                        Get.snackbar(
+                          'Success',
+                          'Profile updated!',
+                          backgroundColor: AppTheme.active,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                        );
+                      } else {
+                        Get.snackbar(
+                          'Error',
+                          result['message'] ?? 'Failed',
+                          backgroundColor: AppTheme.expired,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                        );
+                      }
+                    },
+              child: isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Change Password Dialog ────────────────────────────────────
+  void _showChangePassword() {
+    final currentCtrl = TextEditingController();
+    final newCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    bool isSaving = false;
+    bool obscureCurrent = true;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          ),
+          title: const Text(
+            'Change Password',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _passwordField(
+                  ctrl: currentCtrl,
+                  label: 'Current Password',
+                  obscure: obscureCurrent,
+                  toggle: () =>
+                      setDlgState(() => obscureCurrent = !obscureCurrent),
+                ),
+                const SizedBox(height: 12),
+                _passwordField(
+                  ctrl: newCtrl,
+                  label: 'New Password',
+                  obscure: obscureNew,
+                  toggle: () => setDlgState(() => obscureNew = !obscureNew),
+                ),
+                const SizedBox(height: 12),
+                _passwordField(
+                  ctrl: confirmCtrl,
+                  label: 'Confirm New Password',
+                  obscure: obscureConfirm,
+                  toggle: () =>
+                      setDlgState(() => obscureConfirm = !obscureConfirm),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+              ),
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      if (newCtrl.text != confirmCtrl.text) {
+                        Get.snackbar(
+                          'Error',
+                          'New passwords do not match',
+                          backgroundColor: AppTheme.expired,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                        );
+                        return;
+                      }
+                      if (newCtrl.text.length < 6) {
+                        Get.snackbar(
+                          'Error',
+                          'Password must be at least 6 characters',
+                          backgroundColor: AppTheme.expired,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                        );
+                        return;
+                      }
+                      setDlgState(() => isSaving = true);
+                      final result = await TrainerService.changePassword(
+                        currentPassword: currentCtrl.text,
+                        newPassword: newCtrl.text,
+                      );
+                      Navigator.pop(ctx);
+                      if (result['success']) {
+                        Get.snackbar(
+                          'Success',
+                          'Password changed successfully!',
+                          backgroundColor: AppTheme.active,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                        );
+                      } else {
+                        Get.snackbar(
+                          'Error',
+                          result['message'] ?? 'Failed',
+                          backgroundColor: AppTheme.expired,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                        );
+                      }
+                    },
+              child: isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Update'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _dialogField(
+    TextEditingController ctrl,
+    String label,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: ctrl,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20, color: AppTheme.textSecondary),
+        filled: true,
+        fillColor: AppTheme.background,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _passwordField({
+    required TextEditingController ctrl,
+    required String label,
+    required bool obscure,
+    required VoidCallback toggle,
+  }) {
+    return TextField(
+      controller: ctrl,
+      obscureText: obscure,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: const Icon(
+          Icons.lock_outline,
+          size: 20,
+          color: AppTheme.textSecondary,
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            size: 20,
+            color: AppTheme.textSecondary,
+          ),
+          onPressed: toggle,
+        ),
+        filled: true,
+        fillColor: AppTheme.background,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: _buildDrawer(),
       backgroundColor: AppTheme.background,
       body: Column(
         children: [
@@ -97,7 +396,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ── Title ──────────────────────────
                           const Text(
                             'My Profile',
                             style: TextStyle(
@@ -107,12 +405,8 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-
-                          // ── Red Profile Card ───────────────
                           _buildProfileCard(),
                           const SizedBox(height: 14),
-
-                          // ── Stats ──────────────────────────
                           _buildStatCard(
                             icon: Icons.people_alt_rounded,
                             iconBg: Colors.blue,
@@ -127,22 +421,14 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                             label: 'Sessions Completed',
                           ),
                           const SizedBox(height: 12),
-
-                          // ── Joined Date ────────────────────
                           _buildJoinedCard(),
                           const SizedBox(height: 14),
-
-                          // ── Contact Info ───────────────────
                           _buildContactCard(),
                           const SizedBox(height: 14),
-
-                          // ── Certifications ─────────────────
                           if (_certifications.isNotEmpty) ...[
                             _buildCertificationsCard(),
                             const SizedBox(height: 14),
                           ],
-
-                          // ── Action Buttons ─────────────────
                           _buildActionButtons(context),
                           const SizedBox(height: 20),
                         ],
@@ -156,7 +442,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  // ── Top Bar ───────────────────────────────────────────────────
   Widget _buildTopBar(BuildContext context) {
     return Container(
       color: AppTheme.primary,
@@ -212,7 +497,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  // ── Red Profile Card ──────────────────────────────────────────
   Widget _buildProfileCard() {
     return Container(
       width: double.infinity,
@@ -223,7 +507,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
       ),
       child: Column(
         children: [
-          // Avatar
           Container(
             width: 72,
             height: 72,
@@ -243,8 +526,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
             ),
           ),
           const SizedBox(height: 14),
-
-          // Name
           Text(
             _name,
             style: const TextStyle(
@@ -254,15 +535,11 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
             ),
           ),
           const SizedBox(height: 6),
-
-          // Specialty
           Text(
             _specialty,
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 12),
-
-          // Experience badge
           if (_experienceYears > 0)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
@@ -295,7 +572,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  // ── Stat Card ─────────────────────────────────────────────────
   Widget _buildStatCard({
     required IconData icon,
     required Color iconBg,
@@ -337,7 +613,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  // ── Joined Date Card ──────────────────────────────────────────
   Widget _buildJoinedCard() {
     return Container(
       width: double.infinity,
@@ -381,7 +656,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  // ── Contact Information Card ──────────────────────────────────
   Widget _buildContactCard() {
     return Container(
       width: double.infinity,
@@ -425,7 +699,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  // ── Certifications Card ───────────────────────────────────────
   Widget _buildCertificationsCard() {
     return Container(
       width: double.infinity,
@@ -457,7 +730,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  // ── Action Buttons ────────────────────────────────────────────
+  // ── Action Buttons — all editable ─────────────────────────────
   Widget _buildActionButtons(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -469,43 +742,23 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         children: [
           _actionButton(
             label: 'Edit Profile',
+            icon: Icons.edit_outlined,
             isFirst: true,
-            onTap: () => Get.snackbar(
-              'Coming Soon',
-              'Edit profile will be available soon',
-              backgroundColor: AppTheme.surface,
-              colorText: AppTheme.textPrimary,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(16),
-            ),
+            onTap: _showEditProfile,
           ),
           Divider(height: 1, color: AppTheme.border),
           _actionButton(
             label: 'Change Password',
-            onTap: () => Get.snackbar(
-              'Coming Soon',
-              'Change password will be available soon',
-              backgroundColor: AppTheme.surface,
-              colorText: AppTheme.textPrimary,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(16),
-            ),
+            icon: Icons.lock_outline,
+            onTap: _showChangePassword,
           ),
           Divider(height: 1, color: AppTheme.border),
           _actionButton(
             label: 'View Schedule History',
-            onTap: () => Get.snackbar(
-              'Coming Soon',
-              'Schedule history will be available soon',
-              backgroundColor: AppTheme.surface,
-              colorText: AppTheme.textPrimary,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(16),
-            ),
+            icon: Icons.history_outlined,
+            onTap: () => Get.toNamed('/trainer/schedule'),
           ),
           Divider(height: 1, color: AppTheme.border),
-
-          // Logout
           InkWell(
             onTap: () => _confirmLogout(context),
             borderRadius: const BorderRadius.only(
@@ -536,7 +789,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  // ── Reusable Widgets ──────────────────────────────────────────
   Widget _contactRow({
     required IconData icon,
     required String label,
@@ -613,6 +865,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   Widget _actionButton({
     required String label,
     required VoidCallback onTap,
+    required IconData icon,
     bool isFirst = false,
   }) {
     return InkWell(
@@ -626,14 +879,17 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.textPrimary,
+            Icon(icon, size: 20, color: AppTheme.textSecondary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textPrimary,
+                ),
               ),
             ),
             const Icon(
@@ -689,7 +945,163 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     );
   }
 
-  // ── Bottom Nav ────────────────────────────────────────────────
+  // ── Drawer (inline) ───────────────────────────────────────────
+  Widget _buildDrawer() {
+    final name = _name.isNotEmpty ? _name : 'Trainer';
+    final initial = name[0].toUpperCase();
+    return Drawer(
+      backgroundColor: AppTheme.surface,
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            color: AppTheme.primary,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 20,
+              left: 20,
+              right: 16,
+              bottom: 24,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      initial,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Trainer',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Get.back(),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white70,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _drawerItem(Icons.home_outlined, 'Dashboard', () {
+            Get.back();
+            Get.toNamed('/trainer-dashboard');
+          }),
+          _drawerItem(Icons.people_outline, 'My Members', () {
+            Get.back();
+            Get.toNamed('/trainer/members');
+          }),
+          _drawerItem(Icons.calendar_month_outlined, 'Schedule', () {
+            Get.back();
+            Get.toNamed('/trainer/schedule');
+          }),
+          _drawerItem(Icons.bar_chart_outlined, 'Performance Report', () {
+            Get.back();
+            Get.snackbar(
+              'Coming Soon',
+              'Performance report will be available soon',
+              backgroundColor: AppTheme.surface,
+              colorText: AppTheme.textPrimary,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            );
+          }),
+          _drawerItem(Icons.settings_outlined, 'Settings', () {
+            Get.back();
+            Get.snackbar(
+              'Coming Soon',
+              'Settings will be available soon',
+              backgroundColor: AppTheme.surface,
+              colorText: AppTheme.textPrimary,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            );
+          }),
+          _drawerItem(Icons.help_outline_rounded, 'Help & Support', () {
+            Get.back();
+            Get.snackbar(
+              'Coming Soon',
+              'Help & Support will be available soon',
+              backgroundColor: AppTheme.surface,
+              colorText: AppTheme.textPrimary,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            );
+          }),
+          _drawerItem(Icons.person_outline, 'Profile', () {
+            Get.back();
+          }, isActive: true),
+          const Spacer(),
+          const Divider(height: 1, color: AppTheme.border),
+          _drawerItem(Icons.logout, 'Logout', _logout, color: AppTheme.expired),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _drawerItem(
+    IconData icon,
+    String label,
+    VoidCallback onTap, {
+    bool isActive = false,
+    Color? color,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(
+        icon,
+        color: color ?? (isActive ? AppTheme.primary : AppTheme.textSecondary),
+        size: 22,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: color ?? (isActive ? AppTheme.primary : AppTheme.textPrimary),
+          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+          fontSize: 14,
+        ),
+      ),
+      tileColor: isActive ? AppTheme.primaryLight : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+    );
+  }
+
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(

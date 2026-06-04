@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
-import '../../core/widgets/trainer_drawer.dart';
 
 class TrainerDashboard extends StatefulWidget {
   @override
@@ -14,16 +13,12 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   final box = GetStorage();
   bool _isLoading = true;
 
-  // ── Stats ──────────────────────────────────────────────────
   int assignedMembers = 0;
   int todaySlots = 0;
   int activeMemberships = 0;
 
-  // ── Data ───────────────────────────────────────────────────
   List<Map<String, dynamic>> _sessions = [];
-  List<Map<String, dynamic>> _activity = [];
 
-  // ── Trainer info ───────────────────────────────────────────
   String get _trainerName {
     final user = box.read('user');
     if (user == null) return 'Trainer';
@@ -50,7 +45,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
 
     final statsResult = await TrainerService.getDashboardStats();
     final scheduleResult = await TrainerService.getTodaySchedule();
-    final activityResult = await TrainerService.getRecentActivity();
 
     if (statsResult['success']) {
       final s = statsResult['stats'];
@@ -62,15 +56,19 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     }
 
     if (scheduleResult['success']) {
-      setState(() {
-        _sessions = List<Map<String, dynamic>>.from(scheduleResult['schedule']);
+      final list = List<Map<String, dynamic>>.from(scheduleResult['schedule']);
+      // ── Descending slot order: night → evening → midday → morning ──
+      const slotOrder = ['night', 'evening', 'midday', 'morning'];
+      list.sort((a, b) {
+        final ai = slotOrder.indexOf(
+          (a['training_slot'] ?? '').toString().toLowerCase(),
+        );
+        final bi = slotOrder.indexOf(
+          (b['training_slot'] ?? '').toString().toLowerCase(),
+        );
+        return ai.compareTo(bi);
       });
-    }
-
-    if (activityResult['success']) {
-      setState(() {
-        _activity = List<Map<String, dynamic>>.from(activityResult['activity']);
-      });
+      setState(() => _sessions = list);
     }
 
     setState(() => _isLoading = false);
@@ -80,6 +78,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     box.remove('token');
     box.remove('user');
     box.remove('role');
+    box.remove('isLoggedIn');
     Get.offAllNamed('/login');
   }
 
@@ -105,11 +104,9 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ── Welcome Banner ──────────────────
                           _buildWelcomeBanner(),
                           const SizedBox(height: 16),
 
-                          // ── Stat Cards ──────────────────────
                           _buildStatCard(
                             label: 'Assigned Members',
                             value: assignedMembers,
@@ -132,11 +129,9 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                           ),
                           const SizedBox(height: 12),
                           _buildStatCard(
-                            label: 'Completed Today',
+                            label: 'Active Memberships',
                             value: activeMemberships,
-                            subtitle: todaySlots > 0
-                                ? '${((activeMemberships / (todaySlots > 0 ? todaySlots : 1)) * 100).toStringAsFixed(0)}% progress'
-                                : '0% progress',
+                            subtitle: 'currently active',
                             subtitleColor: AppTheme.textSecondary,
                             icon: Icons.check_circle_rounded,
                             iconColor: AppTheme.active,
@@ -144,7 +139,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                           ),
                           const SizedBox(height: 20),
 
-                          // ── Quick Actions ────────────────────
+                          // ── Quick Actions — only 2 ───────────
                           _buildQuickActionsGrid(),
                           const SizedBox(height: 20),
 
@@ -177,42 +172,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                                           (s) => _buildSessionRow(
                                             s,
                                             isLast: s == _sessions.last,
-                                          ),
-                                        )
-                                        .toList(),
-                                  ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // ── Recent Member Activity ────────────
-                          const Text(
-                            'Recent Member Activity',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppTheme.surface,
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.radiusLg,
-                              ),
-                              boxShadow: [AppTheme.cardShadow],
-                            ),
-                            child: _activity.isEmpty
-                                ? _buildEmptyState(
-                                    icon: Icons.history_outlined,
-                                    text: 'No recent activity',
-                                  )
-                                : Column(
-                                    children: _activity
-                                        .map(
-                                          (item) => _buildActivityRow(
-                                            item,
-                                            isLast: item == _activity.last,
                                           ),
                                         )
                                         .toList(),
@@ -416,52 +375,26 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // ── Quick Actions 2×2 ─────────────────────────────────────────
+  // ── Quick Actions — only View Schedule + My Members ───────────
   Widget _buildQuickActionsGrid() {
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _actionCard(
-                icon: Icons.calendar_month_rounded,
-                label: 'View Schedule',
-                isActive: true,
-                onTap: () => Get.toNamed('/trainer/schedule'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _actionCard(
-                icon: Icons.people_outline_rounded,
-                label: 'My Members',
-                isActive: false,
-                onTap: () => Get.toNamed('/trainer/members'),
-              ),
-            ),
-          ],
+        Expanded(
+          child: _actionCard(
+            icon: Icons.calendar_month_rounded,
+            label: 'View Schedule',
+            isActive: true,
+            onTap: () => Get.toNamed('/trainer/schedule'),
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _actionCard(
-                icon: Icons.add,
-                label: 'Add Session',
-                isActive: false,
-                onTap: () => Get.toNamed('/trainer/add-session'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _actionCard(
-                icon: Icons.show_chart_rounded,
-                label: 'Progress',
-                isActive: false,
-                onTap: () => Get.toNamed('/trainer/progress'),
-              ),
-            ),
-          ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: _actionCard(
+            icon: Icons.people_outline_rounded,
+            label: 'My Members',
+            isActive: false,
+            onTap: () => Get.toNamed('/trainer/members'),
+          ),
         ),
       ],
     );
@@ -519,7 +452,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              // Red avatar
               Container(
                 width: 44,
                 height: 44,
@@ -564,7 +496,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                   ],
                 ),
               ),
-              // Time + upcoming badge
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -611,84 +542,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // ── Activity Row ──────────────────────────────────────────────
-  Widget _buildActivityRow(Map<String, dynamic> item, {bool isLast = false}) {
-    final name = item['memberName'] ?? item['name'] ?? '';
-    final action = item['action'] ?? '';
-    final timeAgo = item['timeAgo'] ?? '';
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              // Blue avatar
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      action,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                timeAgo,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (!isLast)
-          const Divider(
-            height: 1,
-            indent: 16,
-            endIndent: 16,
-            color: AppTheme.border,
-          ),
-      ],
-    );
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────
   String _slotToTime(String slot) {
     switch (slot.toLowerCase()) {
       case 'morning':
@@ -725,7 +578,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // ── Drawer ────────────────────────────────────────────────────
+  // ── Drawer (inline — no external file needed) ─────────────────
   Widget _buildDrawer() {
     return Drawer(
       backgroundColor: AppTheme.surface,
@@ -740,12 +593,11 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
               right: 20,
               bottom: 28,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.25),
                     shape: BoxShape.circle,
@@ -755,38 +607,39 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                       _trainerInitial,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 26,
+                        fontSize: 24,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  _trainerName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _trainerName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Trainer',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'Trainer',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
+                GestureDetector(
+                  onTap: () => Get.back(),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white70,
+                    size: 20,
                   ),
                 ),
               ],
@@ -807,9 +660,38 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
             Get.back();
             Get.toNamed('/trainer/schedule');
           }),
-          _drawerItem(Icons.show_chart_rounded, 'Progress', () {
+          _drawerItem(Icons.bar_chart_outlined, 'Performance Report', () {
             Get.back();
-            Get.toNamed('/trainer/progress');
+            Get.snackbar(
+              'Coming Soon',
+              'Performance report will be available soon',
+              backgroundColor: AppTheme.surface,
+              colorText: AppTheme.textPrimary,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            );
+          }),
+          _drawerItem(Icons.settings_outlined, 'Settings', () {
+            Get.back();
+            Get.snackbar(
+              'Coming Soon',
+              'Settings will be available soon',
+              backgroundColor: AppTheme.surface,
+              colorText: AppTheme.textPrimary,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            );
+          }),
+          _drawerItem(Icons.help_outline_rounded, 'Help & Support', () {
+            Get.back();
+            Get.snackbar(
+              'Coming Soon',
+              'Help & Support will be available soon',
+              backgroundColor: AppTheme.surface,
+              colorText: AppTheme.textPrimary,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            );
           }),
           _drawerItem(Icons.person_outline, 'Profile', () {
             Get.back();

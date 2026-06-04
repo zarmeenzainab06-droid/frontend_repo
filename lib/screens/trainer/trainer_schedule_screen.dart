@@ -103,8 +103,8 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
       drawer: const TrainerDrawer(),
+      backgroundColor: AppTheme.background,
       body: Column(
         children: [
           _buildTopBar(),
