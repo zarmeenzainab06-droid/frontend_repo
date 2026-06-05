@@ -89,4 +89,55 @@ class MemberService {
       return null;
     }
   }
+
+  // ✅ Update Profile
+  static Future<bool> updateProfile({
+    required String name,
+    required String phone,
+  }) async {
+    try {
+      final token = _getToken();
+      final response = await http.put(
+        Uri.parse('$baseUrl/members/update-profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'name': name, 'phone': phone}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Update Error: $e');
+      return false;
+    }
+  }
+
+  // ✅ Change Password
+  static Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final token = _getToken();
+      final response = await http.put(
+        Uri.parse('$baseUrl/members/change-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        }),
+      );
+      final data = jsonDecode(response.body);
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? '',
+      };
+    } catch (e) {
+      print('Password Error: $e');
+      return {'success': false, 'message': 'Error hua'};
+    }
+  }
 }
