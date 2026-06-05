@@ -352,6 +352,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.16.0"
+<<<<<<< HEAD
   mime:
     dependency: transitive
     description:
@@ -360,6 +361,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+=======
+>>>>>>> 55c8b32aa252a7da629c1e06f721d427d6bd45c1
   octo_image:
     dependency: transitive
     description:

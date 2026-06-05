@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart'; // ADD THIS
+import 'package:get_storage/get_storage.dart';
 import 'routes/app_routes.dart';
+import 'pages/membership_page.dart';
+import 'pages/membership_plans.dart';
+
+
 
 void main() async {
   await GetStorage.init(); // ✅ INITIALIZE STORAGE
