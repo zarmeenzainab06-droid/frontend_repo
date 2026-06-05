@@ -43,7 +43,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       box.write('isLoggedIn', true);
       box.write('userName', result['data']['user']['name']);
-
+      box.write('token', result['data']['token']);
+      box.write('userId', result['data']['user']['id']);
+                                      
       if (userRole == 'admin') {
         Get.offAllNamed('/admin-dashboard');
       } else {

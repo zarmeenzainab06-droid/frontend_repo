@@ -13,6 +13,9 @@ import '../routes/auth_middleware.dart';
 import '../screens/admin/admin_trainers_screen.dart';
 import '../screens/admin/admin_profile/admin_profile_screen.dart';
 import '../screens/admin/payments/manage_payments_screen.dart'; // ← NEW
+import '../screens/dashboard/member_profile.dart';
+import '../screens/dashboard/member_membership.dart';
+import '../screens/dashboard/member_trainer.dart';
 
 // routess
 class AppRoutes {
@@ -28,12 +31,18 @@ class AppRoutes {
   static const String adminTrainers = '/admin/trainers'; // for the trainerss
   static const String adminProfile = '/admin/profile'; // for the profile
   static const String adminPayments = '/admin/payments'; // ← NEW
+  static const String memberProfile = '/member_profile';
+  static const String memberMembership = '/member_membership';
+  static const String memberTrainer = '/member_trainer';
 
   // pages list
   static final List<GetPage<dynamic>> pages = [
     GetPage(name: splash, page: () => SplashScreen()),
     GetPage(name: login, page: () => LoginScreen()),
     GetPage(name: register, page: () => RegisterScreen()),
+    GetPage(name: memberProfile, page: () => MemberProfileScreen()),
+    GetPage(name: memberMembership, page: () => MemberMembershipScreen()),
+    GetPage(name: memberTrainer, page: () => MemberTrainerScreen()),
     GetPage(
       name: dashboard,
       page: () => MemberDashboard(),
@@ -73,6 +82,36 @@ class AppRoutes {
       // ← NEW
       name: adminPayments,
       page: () => const ManagePaymentsScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberProfile,
+      page: () => MemberProfileScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberMembership,
+      page: () => MemberMembershipScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberTrainer,
+      page: () => MemberTrainerScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberProfile,
+      page: () => MemberProfileScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberMembership,
+      page: () => MemberMembershipScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberTrainer,
+      page: () => MemberTrainerScreen(),
       middlewares: [AuthMiddleware()],
     ),
   ];
