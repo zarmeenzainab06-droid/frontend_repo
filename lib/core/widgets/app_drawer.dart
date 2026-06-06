@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import '../../core/utils/theme.dart';
+import '../utils/theme.dart';
+import 'package:third_task/routes/app_routes.dart';
 
 class AppDrawer extends StatelessWidget {
   final String role; // 'admin' or 'user'
@@ -137,18 +138,21 @@ class AppDrawer extends StatelessWidget {
         'Manage Packages',
         onTap: () {
           Get.back();
-          Get.toNamed('/admin-packages');
+          Get.toNamed('/admin/packages');
         },
       ),
       _item(
         Icons.payment_outlined,
         'Payments & Transactions',
-        onTap: () => Get.back(), // placeholder
+        onTap: () => Get.toNamed('/admin/payments'),
       ),
       _item(
         Icons.people_outline,
-        'Trainer Management',
-        onTap: () => Get.back(), // placeholder
+        'Manage Trainers',
+        onTap: () {
+          Get.back(); // close drawer
+          Get.toNamed(AppRoutes.adminTrainers);
+        },
       ),
       _item(
         Icons.bar_chart_outlined,

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/utils/theme.dart';
-import '../../core/widgets/app_drawer.dart';
+import '../../core/widgets/app_shell.dart';
 
 class MemberDashboard extends StatefulWidget {
   @override
@@ -10,19 +9,24 @@ class MemberDashboard extends StatefulWidget {
 }
 
 class _MemberDashboardState extends State<MemberDashboard> {
-  final box = GetStorage();
   String _userName = '';
   int _currentIndex = 0; // ✅ Active tab track karne ke liye
 
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     // ✅ Fix - userName sahi se nikalo
     _userName = box.read('userName') ?? 'Member';
+=======
+    final user = GetStorage().read('user');
+    _userName = user?['name'] ?? 'Member';
+>>>>>>> e3c2e1bb72e6fe6a60ec6eba1a3e476fa5fc1b3d
   }
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     return Scaffold(
       backgroundColor: AppTheme.background,
       drawer: const AppDrawer(role: 'user'),
@@ -119,40 +123,55 @@ class _MemberDashboardState extends State<MemberDashboard> {
             builder: (ctx) => IconButton(
               onPressed: () => Scaffold.of(ctx).openDrawer(),
               icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+=======
+    return AppShell(
+      role: 'user',
+      subtitle: 'Member Portal',
+      bottomNav: const MemberBottomNav(activeIndex: 0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome back, $_userName!',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
+            const SizedBox(height: 4),
+            const Text(
+              "Here's your fitness journey overview",
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+>>>>>>> e3c2e1bb72e6fe6a60ec6eba1a3e476fa5fc1b3d
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
-                SizedBox(width: 4),
-                Text(
-                  'GymFitex',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 20),
+            _placeholderCard(
+              'Membership Status',
+              Icons.card_membership_outlined,
             ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Member Portal',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.white70,
-              fontWeight: FontWeight.w400,
+            const SizedBox(height: 12),
+            _placeholderCard('Next Payment', Icons.attach_money_outlined),
+            const SizedBox(height: 12),
+            _placeholderCard('Workout Sessions', Icons.fitness_center_outlined),
+            const SizedBox(height: 20),
+            const Text(
+              'Recent Activity',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            _placeholderCard(
+              'Activity will appear here',
+              Icons.history_outlined,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -190,6 +209,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
       ),
     );
   }
+<<<<<<< HEAD
 
   // ── Bottom Nav ───────────────────────────────────────
   Widget _buildBottomNav() {
@@ -278,3 +298,6 @@ _navItem(
     );
   }
 }
+=======
+}
+>>>>>>> e3c2e1bb72e6fe6a60ec6eba1a3e476fa5fc1b3d

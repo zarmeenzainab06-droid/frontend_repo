@@ -1,14 +1,14 @@
 import 'package:get/get.dart';
+import 'package:third_task/screens/admin/payments/payment_model.dart'
+    hide ManagePaymentsScreen;
 import '../screens/splash_screen.dart';
-import '../screens/onboarding_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/dashboard/member_dashboard.dart';
 import '../screens/admin/admin_dashboard.dart';
 import '../screens/admin/admin_members_screen.dart';
-import '../screens/members/add_member_screen.dart';
 import '../screens/admin/admin_packages_screen.dart';
-import '../screens/members/edit_member_screen.dart';
+import '../screens/admin/member_form_page.dart';
 import '../screens/trainer/trainer_dashboard.dart';
 import '../screens/trainer/trainer_members_screen.dart';
 import '../screens/trainer/trainer_profile_screen.dart';
@@ -18,7 +18,11 @@ import '../routes/auth_middleware.dart';
 import '../screens/dashboard/member_profile.dart';
 import '../screens/dashboard/member_membership.dart';
 import '../screens/dashboard/member_trainer.dart';
+import '../screens/admin/admin_trainers_screen.dart';
+import '../screens/admin/admin_profile/admin_profile_screen.dart';
+import '../screens/admin/payments/manage_payments_screen.dart'; // ← NEW
 
+// routess
 class AppRoutes {
   // ── Existing routes ──────────────────────────────────────────
   static const String splash = '/';
@@ -30,7 +34,9 @@ class AppRoutes {
   static const String adminMembers = '/admin/members';
   static const String adminPackages = '/admin/packages';
   static const String addMembers = '/add_members';
-  static const String editMember = '/edit_member';
+  static const String adminTrainers = '/admin/trainers'; // for the trainerss
+  static const String adminProfile = '/admin/profile'; // for the profile
+  static const String adminPayments = '/admin/payments'; // ← NEW
 
   // ── Trainer routes ───────────────────────────────────────────
   static const String trainerDashboard = '/trainer-dashboard';
@@ -42,10 +48,10 @@ class AppRoutes {
   static const String memberMembership = '/member_membership';
   static const String memberTrainer = '/member_trainer';
 
+  // pages list
   static final List<GetPage<dynamic>> pages = [
     // ── Public ──────────────────────────────────────────────────
     GetPage(name: splash, page: () => SplashScreen()),
-    GetPage(name: onboarding, page: () => OnboardingScreen()),
     GetPage(name: login, page: () => LoginScreen()),
     GetPage(name: register, page: () => RegisterScreen()),
 
@@ -77,12 +83,65 @@ class AppRoutes {
     ),
     GetPage(
       name: addMembers,
-      page: () => AddMemberPage(),
+      page: () => MemberFormPage(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
-      name: editMember,
-      page: () => EditMemberPage(),
+      name: adminTrainers,
+      page: () => const AdminTrainersScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: adminProfile,
+      page: () => const AdminProfileScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      // ← NEW
+      name: adminPayments,
+      page: () => const ManagePaymentsScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    // ── Trainer ──────────────────────────────────────────────────
+    GetPage(
+      name: trainerDashboard,
+      page: () => TrainerDashboard(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: trainerMembers,
+      page: () => TrainerMembersScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: trainerProfile,
+      page: () => TrainerProfileScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: trainerMemberProfile,
+      page: () => TrainerMemberProfileScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: trainerSchedule,
+      page: () => TrainerScheduleScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberProfile,
+      page: () => MemberProfileScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberMembership,
+      page: () => MemberMembershipScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberTrainer,
+      page: () => MemberTrainerScreen(),
       middlewares: [AuthMiddleware()],
     ),
 

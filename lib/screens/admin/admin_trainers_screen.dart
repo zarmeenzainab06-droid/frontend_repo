@@ -1,63 +1,86 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:third_task/screens/admin/trainer_form_page.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
 import '../../core/widgets/app_shell.dart';
-import 'member_form_page.dart';
+import 'trainer_form_page.dart';
 
-class AdminMembersScreen extends StatefulWidget {
+class AdminTrainersScreen extends StatefulWidget {
+  const AdminTrainersScreen({super.key});
+
   @override
-  State<AdminMembersScreen> createState() => _AdminMembersScreenState();
+  State<AdminTrainersScreen> createState() => _AdminTrainersScreenState();
 }
 
-class _AdminMembersScreenState extends State<AdminMembersScreen> {
+class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
-  List<Map<String, dynamic>> _members = [];
+  List<Map<String, dynamic>> _trainers = [];
   List<Map<String, dynamic>> _filtered = [];
-  String _statusFilter = 'All Status';
 
-  final List<String> _statusOptions = [
-    'All Status',
-    'Active',
-    'Expired',
-    'Pending',
+  // Filter value stored as lowercase to match DB values directly
+  String _slotFilter = 'all';
+
+  final List<String> _slotOptions = [
+    'all',
+    'morning',
+    'midday',
+    'evening',
+    'night',
   ];
+
+  String _slotLabel(String value) {
+    switch (value) {
+      case 'morning':
+        return 'Morning';
+      case 'midday':
+        return 'Midday';
+      case 'evening':
+        return 'Evening';
+      case 'night':
+        return 'Night';
+      default:
+        return 'All Slots';
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadMembers();
+    _loadTrainers();
   }
 
-  Future<void> _loadMembers() async {
+  Future<void> _loadTrainers() async {
     setState(() => _isLoading = true);
-    final result = await AdminService.getAllMembers(
+    final result = await AdminService.getAllTrainers(
       search: _searchController.text,
     );
     if (result['success']) {
-      _members = List<Map<String, dynamic>>.from(result['members']);
-      _applyFilter();
+      _trainers = List<Map<String, dynamic>>.from(result['trainers']);
     }
+    _applyFilter();
     setState(() => _isLoading = false);
   }
 
+  // FIX: compare both sides as lowercase so 'morning' == 'morning' always
   void _applyFilter() {
     setState(() {
-      if (_statusFilter == 'All Status') {
-        _filtered = List.from(_members);
+      if (_slotFilter == 'all') {
+        _filtered = List.from(_trainers);
       } else {
-        _filtered = _members.where((m) {
-          final status = (m['membership_status'] ?? '')
+        _filtered = _trainers.where((t) {
+          final slot = (t['training_slot'] ?? '')
               .toString()
-              .toLowerCase();
-          return status == _statusFilter.toLowerCase();
+              .toLowerCase()
+              .trim();
+          return slot == _slotFilter.toLowerCase().trim(); // for status fix
         }).toList();
       }
     });
   }
 
-  void _showStatusFilter(BuildContext context) {
+  void _showSlotFilter(BuildContext context) {
     final RenderBox button = context.findRenderObject() as RenderBox;
     final RenderBox overlay =
         Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
@@ -76,16 +99,17 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
         offset.dx + button.size.width,
         0,
       ),
-      items: _statusOptions.map((option) {
-        final isSelected = option == _statusFilter;
+      // items use DB-value as PopupMenuItem value
+      items: _slotOptions.map((value) {
+        final isSelected = value == _slotFilter;
         return PopupMenuItem<String>(
-          value: option,
+          value: value,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Row(
             children: [
               Expanded(
                 child: Text(
-                  option,
+                  _slotLabel(value),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
@@ -101,13 +125,13 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       }).toList(),
     ).then((value) {
       if (value != null) {
-        setState(() => _statusFilter = value);
+        setState(() => _slotFilter = value);
         _applyFilter();
       }
     });
   }
 
-  Future<void> _deleteMember(int id, String name) async {
+  Future<void> _deleteTrainer(int id, String name) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -115,7 +139,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         ),
         title: const Text(
-          'Delete Member',
+          'Delete Trainer',
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
         ),
         content: Text(
@@ -147,7 +171,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
 
     if (confirm == true) {
-      final result = await AdminService.deleteMember(id);
+      final result = await AdminService.deleteTrainer(id);
       if (result['success']) {
         Get.snackbar(
           'Deleted',
@@ -157,11 +181,11 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
           snackPosition: SnackPosition.BOTTOM,
           margin: const EdgeInsets.all(16),
         );
-        _loadMembers();
+        _loadTrainers();
       } else {
         Get.snackbar(
           'Error',
-          result['message'] ?? 'Failed to delete member',
+          result['message'] ?? 'Failed to delete trainer',
           backgroundColor: AppTheme.expired,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
@@ -176,7 +200,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     return AppShell(
       role: 'admin',
       subtitle: 'Admin Panel',
-      bottomNav: const AdminBottomNav(activeIndex: 1),
+      bottomNav: const AdminBottomNav(activeIndex: -1),
       body: Column(
         children: [
           _buildSearchAndFilter(),
@@ -189,11 +213,11 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                 ? _buildEmpty()
                 : RefreshIndicator(
                     color: AppTheme.primary,
-                    onRefresh: _loadMembers,
+                    onRefresh: _loadTrainers,
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                       itemCount: _filtered.length,
-                      itemBuilder: (ctx, i) => _buildMemberCard(_filtered[i]),
+                      itemBuilder: (ctx, i) => _buildTrainerCard(_filtered[i]),
                     ),
                   ),
           ),
@@ -212,7 +236,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
           Row(
             children: [
               const Text(
-                'Manage\nMembers',
+                'Manage\nTrainers',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -237,13 +261,13 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                 onPressed: () async {
                   final result = await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const MemberFormPage()),
+                    MaterialPageRoute(builder: (_) => const TrainerFormPage()),
                   );
-                  if (result == true) await _loadMembers();
+                  if (result == true) await _loadTrainers();
                 },
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text(
-                  'Add Member',
+                  'Add Trainer',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -252,9 +276,9 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
           const SizedBox(height: 14),
           TextField(
             controller: _searchController,
-            onChanged: (val) => _loadMembers(),
+            onChanged: (_) => _loadTrainers(),
             decoration: InputDecoration(
-              hintText: 'Search by name or email...',
+              hintText: 'Search by name, email or specialization...',
               prefixIcon: const Icon(
                 Icons.search,
                 color: AppTheme.textHint,
@@ -287,7 +311,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
               const SizedBox(width: 8),
               Builder(
                 builder: (ctx) => GestureDetector(
-                  onTap: () => _showStatusFilter(ctx),
+                  onTap: () => _showSlotFilter(ctx),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -302,7 +326,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          _statusFilter,
+                          _slotLabel(_slotFilter),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -327,27 +351,21 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  Widget _buildMemberCard(Map<String, dynamic> member) {
-    final name = member['name'] ?? '';
-    final email = member['email'] ?? '';
-    final phone = member['phone'] ?? '';
-    final packageName = (member['package_name'] ?? '').toString();
-    final endDate = member['end_date'] ?? '';
-    final trainer = member['trainer_name'] ?? '';
-    final rawStatus = (member['membership_status'] ?? 'pending')
-        .toString()
-        .toLowerCase();
-    final duration = member['package_duration']?.toString() ?? '';
-    final fee = member['membership_fee'];
-    final feeStr = fee != null
-        ? '\$${double.tryParse(fee.toString())?.toStringAsFixed(0) ?? fee}'
-        : '';
+  Widget _buildTrainerCard(Map<String, dynamic> trainer) {
+    final name = trainer['name'] ?? '';
+    final email = trainer['email'] ?? '';
+    final phone = trainer['phone'] ?? '';
+    final spec = trainer['specialization'] ?? '';
+    final exp = trainer['experience'];
+    final slot = (trainer['training_slot'] ?? '').toString();
+    final rawActive = trainer['is_active'];
+    final isActive = rawActive.toString() == '1'; // for the status
+    final gender = trainer['gender'] ?? '';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final statusColor = AppColors.statusColor(rawStatus);
-    final statusBg = AppColors.statusLightColor(rawStatus);
-    final planLabel = packageName.isNotEmpty
-        ? '$packageName${duration.isNotEmpty ? ' ($duration days)' : ''}${feeStr.isNotEmpty ? ' • $feeStr' : ''}'
-        : 'No plan assigned';
+
+    final statusColor = isActive ? AppTheme.active : AppTheme.expired;
+    final statusBg = isActive ? AppTheme.activeLight : AppTheme.expiredLight;
+    final statusLabel = isActive ? 'Active' : 'Inactive';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -383,13 +401,26 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      if (spec.isNotEmpty)
+                        Text(
+                          spec,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 Container(
@@ -402,7 +433,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    rawStatus,
+                    statusLabel,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -415,19 +446,26 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
             const SizedBox(height: 10),
             const Divider(height: 1, color: AppTheme.border),
             const SizedBox(height: 10),
+
             _infoRow(Icons.email_outlined, email),
             const SizedBox(height: 6),
             _infoRow(Icons.phone_outlined, phone.isNotEmpty ? phone : 'N/A'),
-            const SizedBox(height: 6),
-            _infoRow(Icons.card_membership_outlined, planLabel),
-            if (endDate.isNotEmpty) ...[
+            if (gender.isNotEmpty) ...[
               const SizedBox(height: 6),
-              _infoRow(Icons.calendar_today_outlined, 'Expires: $endDate'),
+              _infoRow(Icons.person_outline, _cap(gender)),
             ],
-            if (trainer.isNotEmpty) ...[
+            if (slot.isNotEmpty) ...[
               const SizedBox(height: 6),
-              _infoRow(Icons.person_outline, 'Trainer: $trainer'),
+              _infoRow(Icons.schedule_outlined, 'Slot: ${_cap(slot)}'),
             ],
+            if (exp != null) ...[
+              const SizedBox(height: 6),
+              _infoRow(
+                Icons.workspace_premium_outlined,
+                '$exp year${exp == 1 ? '' : 's'} experience',
+              ),
+            ],
+
             const SizedBox(height: 14),
             Row(
               children: [
@@ -446,10 +484,10 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              MemberFormPage(memberId: member['id']),
+                              TrainerFormPage(trainerId: trainer['id']),
                         ),
                       );
-                      if (result == true) await _loadMembers();
+                      if (result == true) await _loadTrainers();
                     },
                     child: const Text(
                       'Edit',
@@ -471,7 +509,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       ),
                       minimumSize: const Size(0, 40),
                     ),
-                    onPressed: () => _deleteMember(member['id'], name),
+                    onPressed: () => _deleteTrainer(trainer['id'], name),
                     child: const Text(
                       'Delete',
                       style: TextStyle(
@@ -488,6 +526,9 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       ),
     );
   }
+
+  String _cap(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 
   Widget _infoRow(IconData icon, String text) {
     return Row(
@@ -510,10 +551,14 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline, size: 64, color: AppTheme.textHint),
+          Icon(
+            Icons.fitness_center_outlined,
+            size: 64,
+            color: AppTheme.textHint,
+          ),
           const SizedBox(height: 16),
           const Text(
-            'No members found',
+            'No trainers found',
             style: TextStyle(
               fontSize: 16,
               color: AppTheme.textSecondary,
@@ -522,9 +567,9 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _statusFilter != 'All Status'
-                ? 'Try changing the status filter'
-                : 'Add your first member',
+            _slotFilter != 'all'
+                ? 'Try changing the slot filter'
+                : 'Add your first trainer',
             style: const TextStyle(fontSize: 13, color: AppTheme.textHint),
           ),
         ],

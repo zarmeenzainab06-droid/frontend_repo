@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
-import '../../core/widgets/app_drawer.dart';
+import '../../core/widgets/app_shell.dart';
 
 class AdminDashboard extends StatefulWidget {
   @override
@@ -11,14 +9,11 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  final box = GetStorage();
   bool _isLoading = true;
-
   int totalMembers = 0;
   int activeMembers = 0;
   int expiredMembers = 0;
   int pendingPayments = 0;
-
   List<Map<String, dynamic>> recentActivity = [];
 
   @override
@@ -29,7 +24,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _loadDashboard() async {
     setState(() => _isLoading = true);
-
     final statsResult = await AdminService.getDashboardStats();
     final activityResult = await AdminService.getRecentActivity();
 
@@ -42,7 +36,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         pendingPayments = s['pendingPayments'] ?? 0;
       });
     }
-
     if (activityResult['success']) {
       setState(() {
         recentActivity = List<Map<String, dynamic>>.from(
@@ -50,202 +43,113 @@ class _AdminDashboardState extends State<AdminDashboard> {
         );
       });
     }
-
     setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      drawer: const AppDrawer(role: 'admin'),
-      body: Column(
-        children: [
-          _buildTopBar(),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
-                  )
-                : RefreshIndicator(
-                    color: AppTheme.primary,
-                    onRefresh: _loadDashboard,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // ── Dashboard title ──────────────────
-                          const Text(
-                            'Dashboard',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // ── Stat cards ───────────────────────
-                          _buildStatCard(
-                            label: 'Total Members',
-                            value: totalMembers,
-                            icon: Icons.people_alt_outlined,
-                            iconColor: Colors.blue,
-                            iconBg: Colors.blue.withOpacity(0.1),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildStatCard(
-                            label: 'Active',
-                            value: activeMembers,
-                            icon: Icons.check_circle_outline,
-                            iconColor: AppTheme.active,
-                            iconBg: AppTheme.activeLight,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildStatCard(
-                            label: 'Expired',
-                            value: expiredMembers,
-                            icon: Icons.cancel_outlined,
-                            iconColor: AppTheme.expired,
-                            iconBg: AppTheme.expiredLight,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildStatCard(
-                            label: 'Pending Payments',
-                            value: pendingPayments,
-                            icon: Icons.access_time_outlined,
-                            iconColor: AppTheme.pending,
-                            iconBg: AppTheme.pendingLight,
-                          ),
-                          const SizedBox(height: 24),
-
-                          // ── Recent Activity ──────────────────
-                          const Text(
-                            'Recent Activity',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          if (recentActivity.isEmpty)
-                            Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(32),
-                                child: Text(
-                                  'No recent activity',
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            ...recentActivity
-                                .map((item) => _buildActivityItem(item))
-                                .toList(),
-                        ],
+    return AppShell(
+      role: 'admin',
+      subtitle: 'Admin Panel',
+      showLiveUpdates: true,
+      bottomNav: const AdminBottomNav(activeIndex: 0),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primary),
+            )
+          : RefreshIndicator(
+              color: AppTheme.primary,
+              onRefresh: _loadDashboard,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  // Dashboard label
+                  children: [
+                    const Text(
+                      'Dashboard',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
                       ),
                     ),
-                  ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNav(),
+                    // cardsss on dashboard
+                    const SizedBox(height: 16),
+                    _statCard(
+                      'Total Members',
+                      totalMembers,
+                      Icons.people_alt_outlined,
+                      Colors.blue,
+                      Colors.blue.withOpacity(0.1),
+                    ),
+                    const SizedBox(height: 12),
+                    _statCard(
+                      'Active',
+                      activeMembers,
+                      Icons.check_circle_outline,
+                      AppTheme.active,
+                      AppTheme.activeLight,
+                    ),
+                    const SizedBox(height: 12),
+                    _statCard(
+                      'Expired',
+                      expiredMembers,
+                      Icons.cancel_outlined,
+                      AppTheme.expired,
+                      AppTheme.expiredLight,
+                    ),
+                    const SizedBox(height: 12),
+                    _statCard(
+                      'Pending Payments',
+                      pendingPayments,
+                      Icons.access_time_outlined,
+                      AppTheme.pending,
+                      AppTheme.pendingLight,
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Recent Activity',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (recentActivity.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Text(
+                            'No recent activity',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ...recentActivity
+                          .map((item) => _activityItem(item))
+                          .toList(),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
-  // ── Top Bar ───────────────────────────────────────────────────
-  Widget _buildTopBar() {
-    return Container(
-      color: AppTheme.primary,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 12,
-        left: 4,
-        right: 16,
-        bottom: 12,
-      ),
-      child: Row(
-        children: [
-          // Hamburger opens drawer
-          Builder(
-            builder: (ctx) => IconButton(
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-              icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-            ),
-          ),
-
-          // Logo pill
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
-                SizedBox(width: 4),
-                Text(
-                  'GymFitex',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Admin Panel',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.white70,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const Spacer(),
-
-          // Live Updates badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.bolt, size: 14, color: Colors.white),
-                SizedBox(width: 4),
-                Text(
-                  'Live Updates',
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Stat Card ─────────────────────────────────────────────────
-  Widget _buildStatCard({
-    required String label,
-    required int value,
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-  }) {
+  /// dashboard statss
+  Widget _statCard(
+    String label,
+    int value,
+    IconData icon,
+    Color iconColor,
+    Color iconBg,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -302,8 +206,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // ── Activity Item ─────────────────────────────────────────────
-  Widget _buildActivityItem(Map<String, dynamic> item) {
+  /// activityyy itemmmmm
+  Widget _activityItem(Map<String, dynamic> item) {
     final name = item['memberName'] ?? '';
     final action = item['action'] ?? '';
     final status = (item['status'] ?? '').toString().toLowerCase();
@@ -394,72 +298,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Bottom Nav ────────────────────────────────────────────────
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _navItem(Icons.home_outlined, 'Home', isActive: true),
-              _navItem(
-                Icons.people_outline,
-                'Members',
-                onTap: () => Get.toNamed('/admin/members'),
-              ),
-              _navItem(
-                Icons.bar_chart_outlined,
-                'Reports',
-                onTap: () => Get.toNamed('/admin/reports'),
-              ),
-              _navItem(
-                Icons.person_outline,
-                'Profile',
-                onTap: () => Get.toNamed('/admin/profile'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(
-    IconData icon,
-    String label, {
-    bool isActive = false,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 24,
-            color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-            ),
           ),
         ],
       ),
