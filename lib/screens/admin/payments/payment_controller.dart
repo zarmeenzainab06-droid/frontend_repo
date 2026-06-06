@@ -148,7 +148,8 @@ class PaymentController extends GetxController {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.6,
+            maxHeight: MediaQuery.of(context).size.height * 0.55,
+            maxWidth: 360, // ← cap width so it doesn't stretch on web
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -199,19 +200,16 @@ class PaymentController extends GetxController {
     selectedStatus.value = 'Paid';
     amountReceivedController.clear();
     paymentDateController.text = _todayDate();
-    _setCurrentMonth(); // ← sets month BEFORE dialog opens
+    _setCurrentMonth();
   }
 
   // ─── OPEN EDIT FORM ───────────────────────────────────────────────────────
   void openEditForm(PaymentModel payment) {
     editingPayment = payment;
 
-    // Match from members list so reference equality works if needed
     final matched = members.firstWhereOrNull(
       (m) => m['id'] == payment.memberId,
     );
-
-    // In edit mode member is fixed — build from payment data
     selectedMember.value =
         matched ??
         {
@@ -223,12 +221,9 @@ class PaymentController extends GetxController {
         };
 
     packageAmount.value = payment.packageAmount;
-
-    // ← preserve month from record, never reset it
     selectedMonth.value = payment.membershipMonth.isNotEmpty
         ? payment.membershipMonth
         : _currentMonth();
-
     amountReceivedController.text = payment.amountReceived.toStringAsFixed(0);
     selectedStatus.value = _capitalize(payment.paymentStatus);
     paymentDateController.text = payment.paymentDate ?? _todayDate();
@@ -272,6 +267,8 @@ class PaymentController extends GetxController {
           : null,
     );
 
+    debugPrint('Saving payment: ${payment.toJson()}');
+
     try {
       isFormLoading.value = true;
       bool success;
@@ -299,7 +296,7 @@ class PaymentController extends GetxController {
       } else {
         Get.snackbar(
           'Error',
-          'Server did not confirm save. Check backend logs.',
+          'Server did not confirm save.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: const Color(0xFFE53935),
           colorText: Colors.white,
@@ -401,18 +398,19 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
             'Select Month',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 16,
+              fontSize: 15,
               color: Color(0xFF212121),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // ── Year Navigator ──
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -421,13 +419,19 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
                   icon: const Icon(
                     Icons.chevron_left,
                     color: Color(0xFFE53935),
+                    size: 22,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
                   ),
                 ),
                 Text(
                   '$_year',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 20,
+                    fontSize: 17,
                     color: Color(0xFF212121),
                   ),
                 ),
@@ -436,22 +440,28 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
                   icon: const Icon(
                     Icons.chevron_right,
                     color: Color(0xFFE53935),
+                    size: 22,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // ── Month Grid ──
+          // ── Month Grid — compact tiles ──
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
-              childAspectRatio: 1.7,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
+              childAspectRatio: 2.2, // ← wider than tall = compact
+              crossAxisSpacing: 6,
+              mainAxisSpacing: 6,
             ),
             itemCount: 12,
             itemBuilder: (_, i) {
@@ -462,16 +472,17 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
                   widget.onSelected(_year, i + 1);
                 },
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
+                  duration: const Duration(milliseconds: 120),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFFE53935)
                         : const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: isSelected
                           ? const Color(0xFFE53935)
                           : const Color(0xFFE0E0E0),
+                      width: 1,
                     ),
                   ),
                   child: Center(
@@ -480,11 +491,11 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
                       style: TextStyle(
                         color: isSelected
                             ? Colors.white
-                            : const Color(0xFF212121),
+                            : const Color(0xFF424242),
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w500,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ),
@@ -492,14 +503,17 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // ── Cancel ──
           TextButton(
             onPressed: () => Get.back(),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(double.infinity, 36),
+            ),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: Color(0xFF757575)),
+              style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 13),
             ),
           ),
         ],
