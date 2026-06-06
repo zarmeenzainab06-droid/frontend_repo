@@ -146,16 +146,21 @@ class PaymentController extends GetxController {
       context: context,
       builder: (_) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: _MonthYearPickerWidget(
-            initialYear: currentYear,
-            initialMonth: currentMonth,
-            monthNames: monthNames,
-            onSelected: (year, month) {
-              selectedMonth.value = '${monthNames[month - 1]} $year';
-              Get.back();
-            },
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.6,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: _MonthYearPickerWidget(
+              initialYear: currentYear,
+              initialMonth: currentMonth,
+              monthNames: monthNames,
+              onSelected: (year, month) {
+                selectedMonth.value = '${monthNames[month - 1]} $year';
+                Get.back();
+              },
+            ),
           ),
         ),
       ),
@@ -164,22 +169,7 @@ class PaymentController extends GetxController {
 
   // ─── SET CURRENT MONTH ────────────────────────────────────────────────────
   void _setCurrentMonth() {
-    final now = DateTime.now();
-    final months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    selectedMonth.value = '${months[now.month - 1]} ${now.year}';
+    selectedMonth.value = _currentMonth();
   }
 
   String _currentMonth() {
@@ -209,17 +199,19 @@ class PaymentController extends GetxController {
     selectedStatus.value = 'Paid';
     amountReceivedController.clear();
     paymentDateController.text = _todayDate();
-    _setCurrentMonth(); // ← sets month BEFORE dialog opens — no reset
+    _setCurrentMonth(); // ← sets month BEFORE dialog opens
   }
 
   // ─── OPEN EDIT FORM ───────────────────────────────────────────────────────
   void openEditForm(PaymentModel payment) {
     editingPayment = payment;
 
-    // Build member map from payment — no dropdown shown in edit mode
+    // Match from members list so reference equality works if needed
     final matched = members.firstWhereOrNull(
       (m) => m['id'] == payment.memberId,
     );
+
+    // In edit mode member is fixed — build from payment data
     selectedMember.value =
         matched ??
         {
@@ -232,7 +224,7 @@ class PaymentController extends GetxController {
 
     packageAmount.value = payment.packageAmount;
 
-    // ← preserve membership month from the record, don't reset it
+    // ← preserve month from record, never reset it
     selectedMonth.value = payment.membershipMonth.isNotEmpty
         ? payment.membershipMonth
         : _currentMonth();
@@ -400,103 +392,118 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          'Select Month',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-            color: Color(0xFF212121),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Title ──
+          const Text(
+            'Select Month',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: Color(0xFF212121),
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                onPressed: () => setState(() => _year--),
-                icon: const Icon(Icons.chevron_left, color: Color(0xFFE53935)),
-              ),
-              Text(
-                '$_year',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 20,
-                  color: Color(0xFF212121),
-                ),
-              ),
-              IconButton(
-                onPressed: () => setState(() => _year++),
-                icon: const Icon(Icons.chevron_right, color: Color(0xFFE53935)),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            childAspectRatio: 1.7,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: 12,
-          itemBuilder: (_, i) {
-            final isSelected = _selectedMonth == i + 1;
-            return GestureDetector(
-              onTap: () {
-                setState(() => _selectedMonth = i + 1);
-                widget.onSelected(_year, i + 1);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFFE53935)
-                      : const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFFE53935)
-                        : const Color(0xFFE0E0E0),
+          const SizedBox(height: 16),
+
+          // ── Year Navigator ──
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  onPressed: () => setState(() => _year--),
+                  icon: const Icon(
+                    Icons.chevron_left,
+                    color: Color(0xFFE53935),
                   ),
                 ),
-                child: Center(
-                  child: Text(
-                    _shortMonths[i],
-                    style: TextStyle(
+                Text(
+                  '$_year',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    color: Color(0xFF212121),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => setState(() => _year++),
+                  icon: const Icon(
+                    Icons.chevron_right,
+                    color: Color(0xFFE53935),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // ── Month Grid ──
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              childAspectRatio: 1.7,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemCount: 12,
+            itemBuilder: (_, i) {
+              final isSelected = _selectedMonth == i + 1;
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _selectedMonth = i + 1);
+                  widget.onSelected(_year, i + 1);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFFE53935)
+                        : const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
                       color: isSelected
-                          ? Colors.white
-                          : const Color(0xFF212121),
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      fontSize: 12,
+                          ? const Color(0xFFE53935)
+                          : const Color(0xFFE0E0E0),
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _shortMonths[i],
+                      style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF212121),
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: () => Get.back(),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(color: Color(0xFF757575)),
+              );
+            },
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+
+          // ── Cancel ──
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF757575)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
