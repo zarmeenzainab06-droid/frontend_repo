@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:third_task/core/utils/theme.dart';
-import '../../core/widgets/trainer_drawer.dart';
 
 class TrainerDrawer extends StatelessWidget {
   const TrainerDrawer({Key? key}) : super(key: key);
