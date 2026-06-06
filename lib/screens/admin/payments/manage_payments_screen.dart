@@ -79,7 +79,11 @@ class ManagePaymentsScreen extends StatelessWidget {
             const SizedBox(width: 8),
             _statCard('Unpaid', c.totalUnpaid.toString(), AppTheme.expired),
             const SizedBox(width: 8),
-            _statCard('Partial', c.totalPartial.toString(), AppTheme.pending),
+            _statCard(
+              'Partial',
+              c.totalPartial.toString(),
+              const Color.fromARGB(255, 19, 54, 151),
+            ),
             const SizedBox(width: 8),
             _statCard(
               'Revenue',
@@ -485,29 +489,94 @@ class ManagePaymentsScreen extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // ── Select Member ──
-                _label('Select Member *'),
-                Obx(
-                  () => DropdownButtonFormField<Map<String, dynamic>>(
-                    value: c.selectedMember.value,
-                    hint: const Text('Choose a member'),
-                    isExpanded: true,
-                    decoration: _decor(Icons.person_outline),
-                    items: c.members
-                        .map(
-                          (m) => DropdownMenuItem(
-                            value: m,
+                // ── REPLACE the "Select Member" section in _showPaymentDialog ──
+                // with this — shows dropdown in Add mode, read-only card in Edit mode
+
+                // ── Select Member ──
+                _label(isEdit ? 'Member' : 'Select Member *'),
+                if (isEdit)
+                  // Edit mode: show member name as read-only — no dropdown
+                  Obx(
+                    () => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.background,
+                        border: Border.all(color: AppTheme.border),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.person,
+                            color: AppTheme.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
                             child: Text(
-                              m['name'] ?? '',
-                              overflow: TextOverflow.ellipsis,
+                              c.selectedMember.value?['name']?.toString() ?? '',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary,
+                              ),
                             ),
                           ),
-                        )
-                        .toList(),
-                    onChanged: c.onMemberSelected,
-                    validator: (v) =>
-                        v == null ? 'Please select a member' : null,
+                          // Show package name next to member name
+                          if ((c.selectedMember.value?['package_name']
+                                      ?.toString() ??
+                                  '')
+                              .isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryLight,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                c.selectedMember.value!['package_name']
+                                    .toString(),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppTheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  // Add mode: full dropdown
+                  Obx(
+                    () => DropdownButtonFormField<Map<String, dynamic>>(
+                      value: c.selectedMember.value,
+                      hint: const Text('Choose a member'),
+                      isExpanded: true,
+                      decoration: _decor(Icons.person_outline),
+                      items: c.members
+                          .map(
+                            (m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(
+                                m['name']?.toString() ?? '',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: c.onMemberSelected,
+                      validator: (v) =>
+                          v == null ? 'Please select a member' : null,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 14),
 
                 // ── Package (auto-loaded) ──
@@ -531,21 +600,48 @@ class ManagePaymentsScreen extends StatelessWidget {
                 const SizedBox(height: 14),
 
                 // ── Membership Month ──
+                // ── Membership Month ──
                 _label('Membership Month *'),
                 Obx(
-                  () => DropdownButtonFormField<String>(
-                    value: c.selectedMonth.value.isNotEmpty
-                        ? c.selectedMonth.value
-                        : null,
-                    hint: const Text('Select month'),
-                    isExpanded: true,
-                    decoration: _decor(Icons.calendar_month_outlined),
-                    items: c.monthOptions
-                        .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                        .toList(),
-                    onChanged: (v) => c.selectedMonth.value = v!,
-                    validator: (v) =>
-                        v == null ? 'Please select a month' : null,
+                  () => InkWell(
+                    onTap: () => c.pickMonth(context),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.border),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_month_outlined,
+                            color: AppTheme.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            c.selectedMonth.value.isNotEmpty
+                                ? c.selectedMonth.value
+                                : 'Select month',
+                            style: TextStyle(
+                              color: c.selectedMonth.value.isNotEmpty
+                                  ? AppTheme.textPrimary
+                                  : AppTheme.textHint,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const Spacer(),
+                          const Icon(
+                            Icons.arrow_drop_down,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -795,6 +891,113 @@ class ManagePaymentsScreen extends StatelessWidget {
         borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
+}
+
+// for calender
+class _MonthYearPicker extends StatefulWidget {
+  final DateTime initialDate;
+  final void Function(int year, int month) onSelected;
+  const _MonthYearPicker({required this.initialDate, required this.onSelected});
+
+  @override
+  State<_MonthYearPicker> createState() => _MonthYearPickerState();
+}
+
+class _MonthYearPickerState extends State<_MonthYearPicker> {
+  late int _year;
+  late int _selectedMonth;
+
+  final _months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _year = widget.initialDate.year;
+    _selectedMonth = widget.initialDate.month;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Year navigator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              onPressed: () => setState(() => _year--),
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Text(
+              '$_year',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+            ),
+            IconButton(
+              onPressed: () => setState(() => _year++),
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Month grid
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            childAspectRatio: 1.6,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemCount: 12,
+          itemBuilder: (_, i) {
+            final isSelected = _selectedMonth == i + 1;
+            return GestureDetector(
+              onTap: () {
+                setState(() => _selectedMonth = i + 1);
+                widget.onSelected(_year, i + 1);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.primary : AppTheme.background,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  border: Border.all(
+                    color: isSelected ? AppTheme.primary : AppTheme.border,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    _months[i],
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.normal,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

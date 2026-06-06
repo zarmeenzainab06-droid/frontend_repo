@@ -29,6 +29,7 @@ class PaymentService {
     if (params.isNotEmpty) url += '?${params.join('&')}';
 
     final response = await http.get(Uri.parse(url), headers: _headers);
+
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body)['data'];
       return data.map((e) => PaymentModel.fromJson(e)).toList();
@@ -42,6 +43,8 @@ class PaymentService {
       Uri.parse('$baseUrl/admin/members?dropdown=true'),
       headers: _headers,
     );
+    print('MEMBERS BODY: ${response.body}'); // ← paste this output for me
+
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       // members endpoint returns 'members' key (see AdminService.getAllMembers)
@@ -54,7 +57,8 @@ class PaymentService {
               'package_id': e['package_id'],
               'package_name': e['package_name'],
               'package_amount':
-                  e['package_amount'] ?? e['price'] ?? 0, // ← try 'price' too
+                  e['package_price'] ??
+                  0, // ← was package_amount, backend sends package_price
             },
           )
           .toList();
