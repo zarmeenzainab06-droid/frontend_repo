@@ -15,6 +15,9 @@ import '../screens/trainer/trainer_profile_screen.dart';
 import '../screens/trainer/trainer_member_profile_screen.dart';
 import '../screens/trainer/trainer_schedule_screen.dart';
 import '../routes/auth_middleware.dart';
+import '../screens/dashboard/member_profile.dart';
+import '../screens/dashboard/member_membership.dart';
+import '../screens/dashboard/member_trainer.dart';
 
 class AppRoutes {
   // ── Existing routes ──────────────────────────────────────────
@@ -35,6 +38,9 @@ class AppRoutes {
   static const String trainerProfile = '/trainer/profile';
   static const String trainerMemberProfile = '/trainer/member-profile';
   static const String trainerSchedule = '/trainer/schedule';
+  static const String memberProfile = '/member_profile';
+  static const String memberMembership = '/member_membership';
+  static const String memberTrainer = '/member_trainer';
 
   static final List<GetPage<dynamic>> pages = [
     // ── Public ──────────────────────────────────────────────────
@@ -44,6 +50,9 @@ class AppRoutes {
     GetPage(name: register, page: () => RegisterScreen()),
 
     // ── Member ──────────────────────────────────────────────────
+    GetPage(name: memberProfile, page: () => MemberProfileScreen()),
+    GetPage(name: memberMembership, page: () => MemberMembershipScreen()),
+    GetPage(name: memberTrainer, page: () => MemberTrainerScreen()),
     GetPage(
       name: dashboard,
       page: () => MemberDashboard(),
@@ -101,6 +110,21 @@ class AppRoutes {
     GetPage(
       name: trainerSchedule,
       page: () => TrainerScheduleScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberProfile,
+      page: () => MemberProfileScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberMembership,
+      page: () => MemberMembershipScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: memberTrainer,
+      page: () => MemberTrainerScreen(),
       middlewares: [AuthMiddleware()],
     ),
   ];
