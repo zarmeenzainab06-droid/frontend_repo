@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:third_task/core/services/payment_service.dart';
+import 'package:third_task/core/services/admin_payment_service.dart';
 import '../../../screens/admin/payments/payment_model.dart';
 
 class PaymentController extends GetxController {
