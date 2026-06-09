@@ -6,7 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 
 class AdminService {
-  static const String baseUrl = "http://127.0.0.1:3000";
+  static const String baseUrl = "http://localhost:3000";
   static final box = GetStorage();
 
   static Map<String, String> get _headers {

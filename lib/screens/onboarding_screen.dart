@@ -1,20 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-
-void main() {
-  runApp(SwiftGymApp());
-}
-
-class SwiftGymApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: OnboardingScreen(),
-    );
-  }
-}
-=======
 import '../routes/app_routes.dart';
 >>>>>>> 86a3079d988721b94096cf26432b44f45795e600
 

@@ -17,12 +17,18 @@ class _MemberDashboardState extends State<MemberDashboard> {
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     // ✅ Fix - userName sahi se nikalo
     _userName = box.read('userName') ?? 'Member';
+=======
+    final user = GetStorage().read('user');
+    _userName = user?['name'] ?? 'Member';
+>>>>>>> 3b1397774c169d96e8b777b5ecb2c5b52a63e378
   }
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     return Scaffold(
       backgroundColor: AppTheme.background,
       drawer: const AppDrawer(role: 'user'),
@@ -119,6 +125,29 @@ class _MemberDashboardState extends State<MemberDashboard> {
             builder: (ctx) => IconButton(
               onPressed: () => Scaffold.of(ctx).openDrawer(),
               icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+=======
+    return AppShell(
+      role: 'user',
+      subtitle: 'Member Portal',
+      bottomNav: const MemberBottomNav(activeIndex: 0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome back, $_userName!',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              "Here's your fitness journey overview",
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+>>>>>>> 3b1397774c169d96e8b777b5ecb2c5b52a63e378
             ),
           ),
           Container(
@@ -190,6 +219,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
       ),
     );
   }
+<<<<<<< HEAD
 
   // ── Bottom Nav ───────────────────────────────────────
   Widget _buildBottomNav() {
@@ -278,3 +308,6 @@ _navItem(
     );
   }
 }
+=======
+}
+>>>>>>> 3b1397774c169d96e8b777b5ecb2c5b52a63e378

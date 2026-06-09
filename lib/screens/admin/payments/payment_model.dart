@@ -29,21 +29,30 @@ class PaymentModel {
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
     return PaymentModel(
-      id: json['id'],
-      memberId: json['user_id'] ?? json['member_id'], // ← handle both keys
-      memberName: json['member_name'] ?? '',
-      packageId: json['package_id'], // ← nullable, no crash
-      packageName: json['package_name'] ?? '',
-      membershipMonth: json['membership_month'] ?? '',
-      packageAmount: double.tryParse(json['package_amount'].toString()) ?? 0.0,
+      id: json['id'] as int?,
+      memberId: (json['user_id'] ?? json['member_id'] ?? 0) as int,
+      memberName: json['member_name']?.toString() ?? '',
+      packageId: json['package_id'] as int?,
+      packageName: json['package_name']?.toString() ?? '',
+      membershipMonth: json['membership_month']?.toString() ?? '',
+      packageAmount:
+          double.tryParse(json['package_amount']?.toString() ?? '0') ?? 0.0,
       amountReceived:
-          double.tryParse(json['amount_received'].toString()) ?? 0.0,
-      paymentStatus: json['payment_status'] ?? 'Unpaid',
-      paymentDate: json['payment_date'],
-      createdAt: json['created_at'],
+          double.tryParse(json['amount_received']?.toString() ?? '0') ?? 0.0,
+      // ← capitalize first letter so 'paid' → 'Paid' for UI filters
+      paymentStatus: _capitalize(
+        json['payment_status']?.toString() ??
+            json['status']?.toString() ??
+            'Unpaid',
+      ),
+      paymentDate: json['payment_date']?.toString(),
+      createdAt: json['created_at']?.toString(),
     );
   }
 
+  // add this static helper inside the class
+  static String _capitalize(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).toLowerCase();
   Map<String, dynamic> toJson() {
     return {
       'user_id': memberId,
