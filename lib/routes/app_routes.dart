@@ -15,21 +15,18 @@ import '../screens/trainer/trainer_profile_screen.dart';
 import '../screens/trainer/trainer_member_profile_screen.dart';
 import '../screens/trainer/trainer_schedule_screen.dart';
 import '../routes/auth_middleware.dart';
-<<<<<<< HEAD
 import '../screens/admin/admin_trainers_screen.dart';
 import '../screens/admin/admin_profile/admin_profile_screen.dart';
 import '../screens/admin/payments/manage_payments_screen.dart'; // ← NEW
 import '../screens/dashboard/member_profile.dart';
 import '../screens/dashboard/member_membership.dart';
 import '../screens/dashboard/member_trainer.dart';
-=======
 import '../screens/dashboard/member_profile.dart';
 import '../screens/dashboard/member_membership.dart';
 import '../screens/dashboard/member_trainer.dart';
 import '../screens/admin/admin_trainers_screen.dart';
 import '../screens/admin/admin_profile/admin_profile_screen.dart';
 import '../screens/admin/payments/manage_payments_screen.dart'; // ← NEW
->>>>>>> 3b1397774c169d96e8b777b5ecb2c5b52a63e378
 
 // routess
 class AppRoutes {
@@ -46,8 +43,6 @@ class AppRoutes {
   static const String adminTrainers = '/admin/trainers'; // for the trainerss
   static const String adminProfile = '/admin/profile'; // for the profile
   static const String adminPayments = '/admin/payments'; // ← NEW
-<<<<<<< HEAD
-=======
 
   // ── Trainer routes ───────────────────────────────────────────
   static const String trainerDashboard = '/trainer-dashboard';
@@ -55,7 +50,6 @@ class AppRoutes {
   static const String trainerProfile = '/trainer/profile';
   static const String trainerMemberProfile = '/trainer/member-profile';
   static const String trainerSchedule = '/trainer/schedule';
->>>>>>> 3b1397774c169d96e8b777b5ecb2c5b52a63e378
   static const String memberProfile = '/member_profile';
   static const String memberMembership = '/member_membership';
   static const String memberTrainer = '/member_trainer';
