@@ -96,10 +96,14 @@ class AdminService {
   // ── Get Trainers ───────────────────────────────────────────
   static Future<Map<String, dynamic>> getTrainers() async {
     try {
+      print("getAllTrainers API called");
+
       final response = await http.get(
         Uri.parse('$baseUrl/admin/trainers'),
         headers: _headers,
       );
+      print("Status: ${response.statusCode}");
+      print("Body: ${response.body}");
       final data = json.decode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
         return {'success': true, 'trainers': data['trainers']};
@@ -366,12 +370,21 @@ class AdminService {
   // ── Get All Trainers ───────────────────────────────────────
   static Future<Map<String, dynamic>> getAllTrainers({String? search}) async {
     try {
+      final token = box.read('token'); // debug
+      print("TOKEN: $token");
+
       final uri = Uri.parse('$baseUrl/admin/trainers').replace(
         queryParameters: search != null && search.isNotEmpty
             ? {'search': search}
             : null,
       );
+
+      print("REQUEST URL: $uri"); // debug
+
       final response = await http.get(uri, headers: _headers);
+
+      print("STATUS: ${response.statusCode}"); // debug
+      print("BODY: ${response.body}");
       final data = json.decode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
         return {'success': true, 'trainers': data['trainers']};

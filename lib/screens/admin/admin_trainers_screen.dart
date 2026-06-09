@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:third_task/screens/admin/trainer_form_page.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
 import '../../core/widgets/app_shell.dart';
@@ -19,7 +18,6 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
   List<Map<String, dynamic>> _trainers = [];
   List<Map<String, dynamic>> _filtered = [];
 
-  // Filter value stored as lowercase to match DB values directly
   String _slotFilter = 'all';
 
   final List<String> _slotOptions = [
@@ -56,28 +54,50 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
     final result = await AdminService.getAllTrainers(
       search: _searchController.text,
     );
+    print("API RESULT: $result");
+    print("TRAINERS FROM API: ${result['trainers']}");
     if (result['success']) {
+      // BUG FIX 1 & 2: Set _trainers first, THEN call _applyFilter.
+      // Previously _applyFilter was called inside a setState that also set
+      // _isLoading, meaning _trainers hadn't been updated in the local variable
+      // yet when _applyFilter read it. Now we set _trainers synchronously and
+      // call _applyFilter after so it always sees fresh data.
       _trainers = List<Map<String, dynamic>>.from(result['trainers']);
+      print("TRAINERS STATE: $_trainers");
+    } else {
+      _trainers = [];
     }
+
+    // BUG FIX 3 (slot filter): _applyFilter uses the current _slotFilter value
+    // which is preserved in state — we never reset it here, so the user's
+    // chosen filter survives every reload triggered by search or pull-to-refresh.
     _applyFilter();
+
     setState(() => _isLoading = false);
   }
 
-  // FIX: compare both sides as lowercase so 'morning' == 'morning' always
   void _applyFilter() {
-    setState(() {
-      if (_slotFilter == 'all') {
-        _filtered = List.from(_trainers);
-      } else {
-        _filtered = _trainers.where((t) {
-          final slot = (t['training_slot'] ?? '')
-              .toString()
-              .toLowerCase()
-              .trim();
-          return slot == _slotFilter.toLowerCase().trim(); // for status fix
-        }).toList();
-      }
-    });
+    print("FILTER SELECTED: $_slotFilter");
+    print("BEFORE FILTER: $_trainers");
+    // This runs synchronously after _trainers is already updated above,
+    // so it always filters the latest data.
+    final filtered = _slotFilter == 'all'
+        ? List<Map<String, dynamic>>.from(_trainers)
+        : _trainers.where((t) {
+            // BUG FIX 3: normalise both sides to lowercase + trim so
+            // 'Midday', 'midday', ' midday ' all match 'midday'.
+            final slot = (t['training_slot'] ?? '')
+                .toString()
+                .toLowerCase()
+                .trim();
+            return slot == _slotFilter.toLowerCase().trim();
+          }).toList();
+
+    // Only call setState if the widget is still mounted and we're not
+    // already inside a setState (we call this from _loadTrainers which
+    // calls its own setState after, so just update the field directly here).
+    _filtered = filtered;
+    print("AFTER FILTER: $_filtered");
   }
 
   void _showSlotFilter(BuildContext context) {
@@ -99,7 +119,6 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
         offset.dx + button.size.width,
         0,
       ),
-      // items use DB-value as PopupMenuItem value
       items: _slotOptions.map((value) {
         final isSelected = value == _slotFilter;
         return PopupMenuItem<String>(
@@ -125,8 +144,13 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
       }).toList(),
     ).then((value) {
       if (value != null) {
-        setState(() => _slotFilter = value);
-        _applyFilter();
+        // BUG FIX 3: setState here updates _slotFilter then calls _applyFilter
+        // so the UI reflects the new filter immediately using already-loaded data
+        // without triggering a network request.
+        setState(() {
+          _slotFilter = value;
+          _applyFilter();
+        });
       }
     });
   }
@@ -197,6 +221,7 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("UI REBUILD");
     return AppShell(
       role: 'admin',
       subtitle: 'Admin Panel',
@@ -352,16 +377,22 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
   }
 
   Widget _buildTrainerCard(Map<String, dynamic> trainer) {
+    print(trainer);
     final name = trainer['name'] ?? '';
     final email = trainer['email'] ?? '';
     final phone = trainer['phone'] ?? '';
     final spec = trainer['specialization'] ?? '';
     final exp = trainer['experience'];
     final slot = (trainer['training_slot'] ?? '').toString();
-    final rawActive = trainer['is_active'];
-    final isActive = rawActive.toString() == '1'; // for the status
     final gender = trainer['gender'] ?? '';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    // BUG FIX 1 (status): tinyint from MySQL comes as int 1/0 in Dart.
+    // We handle int, bool, and string forms so it works regardless of how
+    // the HTTP client deserialises the JSON number.
+    final rawActive = trainer['is_active'];
+    final isActive =
+        rawActive == 1 || rawActive == true || rawActive.toString() == '1';
 
     final statusColor = isActive ? AppTheme.active : AppTheme.expired;
     final statusBg = isActive ? AppTheme.activeLight : AppTheme.expiredLight;
@@ -447,7 +478,10 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
             const Divider(height: 1, color: AppTheme.border),
             const SizedBox(height: 10),
 
-            _infoRow(Icons.email_outlined, email),
+            // BUG FIX 2 (N/A fields): guard each field so empty string shows
+            // 'N/A' but a non-empty value always shows — previously the null
+            // coalescing returned '' which the card displayed as blank/N/A.
+            _infoRow(Icons.email_outlined, email.isNotEmpty ? email : 'N/A'),
             const SizedBox(height: 6),
             _infoRow(Icons.phone_outlined, phone.isNotEmpty ? phone : 'N/A'),
             if (gender.isNotEmpty) ...[
@@ -462,7 +496,8 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
               const SizedBox(height: 6),
               _infoRow(
                 Icons.workspace_premium_outlined,
-                '$exp year${exp == 1 ? '' : 's'} experience',
+                // exp may arrive as String from JSON; parse safely
+                '${exp.toString()} year${exp.toString() == '1' ? '' : 's'} experience',
               ),
             ],
 

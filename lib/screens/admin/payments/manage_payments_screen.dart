@@ -3,11 +3,46 @@ import 'package:get/get.dart';
 import 'package:third_task/core/utils/theme.dart';
 import 'payment_controller.dart';
 import '../../../screens/admin/payments/payment_model.dart';
-import '../../../core/widgets/app_shell.dart'; // AppShell, AdminBottomNav
-import '../../../core/utils/theme.dart';
+import '../../../core/widgets/app_shell.dart';
 
 class ManagePaymentsScreen extends StatelessWidget {
   const ManagePaymentsScreen({super.key});
+
+  // ─── STATUS HELPERS ───────────────────────────────────────────────────────
+  String _statusLabel(String s) {
+    switch (s.toLowerCase()) {
+      case 'paid':
+        return 'Paid';
+      case 'partial':
+        return 'Partial';
+      case 'unpaid':
+        return 'Unpaid';
+      default:
+        return s.isEmpty ? 'Unpaid' : s;
+    }
+  }
+
+  Color _statusColor(String s) {
+    switch (s.toLowerCase()) {
+      case 'paid':
+        return AppTheme.active;
+      case 'partial':
+        return AppTheme.pending;
+      default:
+        return AppTheme.expired;
+    }
+  }
+
+  Color _statusLight(String s) {
+    switch (s.toLowerCase()) {
+      case 'paid':
+        return AppTheme.activeLight;
+      case 'partial':
+        return AppTheme.pendingLight;
+      default:
+        return AppTheme.expiredLight;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +66,6 @@ class ManagePaymentsScreen extends StatelessWidget {
                 Expanded(child: _buildPaymentsList(context, controller)),
               ],
             ),
-            // FAB
             Positioned(
               bottom: 16,
               right: 16,
@@ -54,9 +88,7 @@ class ManagePaymentsScreen extends StatelessWidget {
           ],
         );
       }),
-      bottomNav: const AdminBottomNav(
-        activeIndex: -1,
-      ), // payments not in bottom nav
+      bottomNav: const AdminBottomNav(activeIndex: -1),
       actions: [
         AppShellAction(
           icon: Icons.refresh,
@@ -79,11 +111,7 @@ class ManagePaymentsScreen extends StatelessWidget {
             const SizedBox(width: 8),
             _statCard('Unpaid', c.totalUnpaid.toString(), AppTheme.expired),
             const SizedBox(width: 8),
-            _statCard(
-              'Partial',
-              c.totalPartial.toString(),
-              const Color.fromARGB(255, 19, 54, 151),
-            ),
+            _statCard('Partial', c.totalPartial.toString(), AppTheme.pending),
             const SizedBox(width: 8),
             _statCard(
               'Revenue',
@@ -229,22 +257,15 @@ class ManagePaymentsScreen extends StatelessWidget {
     });
   }
 
+  // ─── PAYMENT CARD ─────────────────────────────────────────────────────────
   Widget _paymentCard(
     BuildContext context,
     PaymentModel payment,
     PaymentController c,
   ) {
-    final statusColor = payment.paymentStatus.toLowerCase() == 'paid'
-        ? AppTheme.active
-        : payment.paymentStatus.toLowerCase() == 'partial'
-        ? AppTheme.pending
-        : AppTheme.expired;
-
-    final statusLight = payment.paymentStatus.toLowerCase() == 'paid'
-        ? AppTheme.activeLight
-        : payment.paymentStatus.toLowerCase() == 'partial'
-        ? AppTheme.pendingLight
-        : AppTheme.expiredLight;
+    final label = _statusLabel(payment.paymentStatus);
+    final color = _statusColor(payment.paymentStatus);
+    final light = _statusLight(payment.paymentStatus);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -307,21 +328,21 @@ class ManagePaymentsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Status badge
+                // ── Status Badge ── fixed: always shows correct label + color
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
-                    vertical: 4,
+                    vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: statusLight,
+                    color: light,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                    border: Border.all(color: color.withOpacity(0.35)),
                   ),
                   child: Text(
-                    payment.paymentStatus,
+                    label, // ← normalized label, never empty
                     style: TextStyle(
-                      color: statusColor,
+                      color: color,
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
                     ),
@@ -333,7 +354,9 @@ class ManagePaymentsScreen extends StatelessWidget {
             const Divider(height: 20, color: AppTheme.border),
 
             // ── Details ──
-            Row(
+            Wrap(
+              spacing: 10,
+              runSpacing: 6,
               children: [
                 _chip(
                   Icons.calendar_month_outlined,
@@ -341,12 +364,10 @@ class ManagePaymentsScreen extends StatelessWidget {
                       ? payment.membershipMonth
                       : 'No month',
                 ),
-                const SizedBox(width: 10),
                 _chip(
                   Icons.currency_rupee,
                   'Pkg: Rs ${payment.packageAmount.toStringAsFixed(0)}',
                 ),
-                const SizedBox(width: 10),
                 _chip(
                   Icons.payments_outlined,
                   'Paid: Rs ${payment.amountReceived.toStringAsFixed(0)}',
@@ -488,14 +509,9 @@ class ManagePaymentsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // ── Select Member ──
-                // ── REPLACE the "Select Member" section in _showPaymentDialog ──
-                // with this — shows dropdown in Add mode, read-only card in Edit mode
-
-                // ── Select Member ──
+                // ── Member ──
                 _label(isEdit ? 'Member' : 'Select Member *'),
                 if (isEdit)
-                  // Edit mode: show member name as read-only — no dropdown
                   Obx(
                     () => Container(
                       padding: const EdgeInsets.symmetric(
@@ -525,7 +541,6 @@ class ManagePaymentsScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Show package name next to member name
                           if ((c.selectedMember.value?['package_name']
                                       ?.toString() ??
                                   '')
@@ -554,7 +569,6 @@ class ManagePaymentsScreen extends StatelessWidget {
                     ),
                   )
                 else
-                  // Add mode: full dropdown
                   Obx(
                     () => DropdownButtonFormField<Map<String, dynamic>>(
                       value: c.selectedMember.value,
@@ -579,7 +593,7 @@ class ManagePaymentsScreen extends StatelessWidget {
                   ),
                 const SizedBox(height: 14),
 
-                // ── Package (auto-loaded) ──
+                // ── Package ──
                 _label('Package'),
                 Obx(
                   () => TextFormField(
@@ -599,7 +613,6 @@ class ManagePaymentsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // ── Membership Month ──
                 // ── Membership Month ──
                 _label('Membership Month *'),
                 Obx(
@@ -646,7 +659,7 @@ class ManagePaymentsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // ── Package Amount (auto-loaded) ──
+                // ── Package Amount ──
                 _label('Package Amount'),
                 Obx(
                   () => TextFormField(
@@ -686,7 +699,9 @@ class ManagePaymentsScreen extends StatelessWidget {
                 Obx(
                   () => Row(
                     children: ['Paid', 'Partial', 'Unpaid'].map((status) {
-                      final selected = c.selectedStatus.value == status;
+                      final selected =
+                          c.selectedStatus.value.toLowerCase() ==
+                          status.toLowerCase(); // ← case-insensitive
                       final color = status == 'Paid'
                           ? AppTheme.active
                           : status == 'Partial'
@@ -891,113 +906,6 @@ class ManagePaymentsScreen extends StatelessWidget {
         borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    );
-  }
-}
-
-// for calender
-class _MonthYearPicker extends StatefulWidget {
-  final DateTime initialDate;
-  final void Function(int year, int month) onSelected;
-  const _MonthYearPicker({required this.initialDate, required this.onSelected});
-
-  @override
-  State<_MonthYearPicker> createState() => _MonthYearPickerState();
-}
-
-class _MonthYearPickerState extends State<_MonthYearPicker> {
-  late int _year;
-  late int _selectedMonth;
-
-  final _months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _year = widget.initialDate.year;
-    _selectedMonth = widget.initialDate.month;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Year navigator
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(
-              onPressed: () => setState(() => _year--),
-              icon: const Icon(Icons.chevron_left),
-            ),
-            Text(
-              '$_year',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
-            ),
-            IconButton(
-              onPressed: () => setState(() => _year++),
-              icon: const Icon(Icons.chevron_right),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Month grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            childAspectRatio: 1.6,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: 12,
-          itemBuilder: (_, i) {
-            final isSelected = _selectedMonth == i + 1;
-            return GestureDetector(
-              onTap: () {
-                setState(() => _selectedMonth = i + 1);
-                widget.onSelected(_year, i + 1);
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primary : AppTheme.background,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                  border: Border.all(
-                    color: isSelected ? AppTheme.primary : AppTheme.border,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    _months[i],
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : AppTheme.textPrimary,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.normal,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
     );
   }
 }

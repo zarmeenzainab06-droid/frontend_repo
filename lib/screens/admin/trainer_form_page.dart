@@ -5,7 +5,7 @@ import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
 
 class TrainerFormPage extends StatefulWidget {
-  final int? trainerId; // null = create, non-null = edit
+  final int? trainerId;
 
   const TrainerFormPage({super.key, this.trainerId});
 
@@ -16,7 +16,6 @@ class TrainerFormPage extends StatefulWidget {
 class _TrainerFormPageState extends State<TrainerFormPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -29,6 +28,9 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
   bool _isActive = true;
   bool _isLoading = false;
   bool _isFetching = false;
+
+  // FIX 4: state variable to toggle password visibility
+  bool _passwordVisible = false;
 
   bool get _isEditing => widget.trainerId != null;
 
@@ -53,7 +55,11 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
       _expCtrl.text = t['experience']?.toString() ?? '';
       _gender = t['gender'];
       _trainingSlot = t['training_slot'] ?? 'morning';
-      _isActive = t['is_active'] == true || t['is_active'] == 1;
+      // FIX: same normalisation as the card — handles int 1/0 and bool
+      _isActive =
+          t['is_active'] == 1 ||
+          t['is_active'] == true ||
+          t['is_active'].toString() == '1';
     }
     setState(() => _isFetching = false);
   }
@@ -85,7 +91,7 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
         specialization: _specCtrl.text.trim(),
         experience: int.tryParse(_expCtrl.text.trim()),
         trainingSlot: _trainingSlot,
-        password: _passwordCtrl.text.trim(), // ← ADD THIS
+        password: _passwordCtrl.text.trim(),
       );
     }
 
@@ -122,6 +128,7 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
     _phoneCtrl.dispose();
     _specCtrl.dispose();
     _expCtrl.dispose();
+    _passwordCtrl.dispose();
     super.dispose();
   }
 
@@ -153,7 +160,6 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Basic Info section ─────────────────────
                     _sectionLabel('Basic Information'),
                     const SizedBox(height: 12),
                     _buildField(
@@ -190,24 +196,13 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
                     const SizedBox(height: 12),
                     _buildGenderDropdown(),
 
-                    const SizedBox(height: 20),
-                    // for password field
-                    const SizedBox(height: 12),
-                    if (!_isEditing) // Only show on create
-                      _buildField(
-                        controller: _passwordCtrl,
-                        label: 'Password',
-                        hint: 'Assign a password',
-                        icon: Icons.lock_outline,
-                        obscureText: true,
-                        validator: (v) => v == null || v.trim().isEmpty
-                            ? 'Password is required'
-                            : v.trim().length < 6
-                            ? 'Minimum 6 characters'
-                            : null,
-                      ),
+                    // Password field — create mode only
+                    if (!_isEditing) ...[
+                      const SizedBox(height: 12),
+                      _buildPasswordField(),
+                    ],
 
-                    // ── Professional Info section ──────────────
+                    const SizedBox(height: 20),
                     _sectionLabel('Professional Info'),
                     const SizedBox(height: 12),
                     _buildField(
@@ -228,7 +223,6 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
                     const SizedBox(height: 12),
                     _buildSlotDropdown(),
 
-                    // ── Active toggle (edit only) ──────────────
                     if (_isEditing) ...[
                       const SizedBox(height: 20),
                       _sectionLabel('Status'),
@@ -238,7 +232,6 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
 
                     const SizedBox(height: 28),
 
-                    // ── Submit button ──────────────────────────
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -280,7 +273,69 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────
+  // ── Password field with eye toggle ─────────────────────────────────────────
+
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: _passwordCtrl,
+      // FIX 4: driven by _passwordVisible state, not hardcoded true
+      obscureText: !_passwordVisible,
+      validator: (v) => v == null || v.trim().isEmpty
+          ? 'Password is required'
+          : v.trim().length < 6
+          ? 'Minimum 6 characters'
+          : null,
+      decoration: InputDecoration(
+        labelText: 'Password',
+        hintText: 'Assign a password',
+        prefixIcon: const Icon(
+          Icons.lock_outline,
+          size: 18,
+          color: AppTheme.textSecondary,
+        ),
+        // Eye icon suffix button
+        suffixIcon: IconButton(
+          onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
+          icon: Icon(
+            _passwordVisible
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            size: 20,
+            color: AppTheme.textSecondary,
+          ),
+          tooltip: _passwordVisible ? 'Hide password' : 'Show password',
+        ),
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          color: AppTheme.textSecondary,
+        ),
+        filled: true,
+        fillColor: AppTheme.surface,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: const BorderSide(color: AppTheme.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: const BorderSide(color: AppTheme.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: const BorderSide(color: AppTheme.expired),
+        ),
+      ),
+    );
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   Widget _sectionLabel(String label) {
     return Text(
@@ -299,14 +354,12 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
     required String label,
     required String hint,
     required IconData icon,
-    bool obscureText = false, // for the password thingg
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: obscureText, // for the password thingg
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       validator: validator,

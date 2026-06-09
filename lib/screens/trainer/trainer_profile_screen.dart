@@ -16,7 +16,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   String _name = '';
   String _email = '';
   String _phone = 'N/A';
-  String _specialty = '';
+  String _specialization = '';
   String _joinedDate = '';
   int _experienceYears = 0;
   int _assignedMembers = 0;
@@ -42,7 +42,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         _name = p['name'] ?? '';
         _email = p['email'] ?? '';
         _phone = p['phone'] ?? 'N/A';
-        _specialty = p['specialty'] ?? 'Fitness Trainer';
+        _specialization = p['specialization'] ?? 'Fitness Trainer';
         _joinedDate = p['joinedDate'] ?? '';
         _experienceYears = p['experienceYears'] ?? 0;
         _assignedMembers = p['assignedMembers'] ?? 0;
@@ -75,7 +75,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
     final phoneCtrl = TextEditingController(
       text: _phone == 'N/A' ? '' : _phone,
     );
-    final specialtyCtrl = TextEditingController(text: _specialty);
+    final specializationCtrl = TextEditingController(text: _specialization);
     bool isSaving = false;
 
     showDialog(
@@ -104,7 +104,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                 ),
                 const SizedBox(height: 12),
                 _dialogField(
-                  specialtyCtrl,
+                  specializationCtrl,
                   'Specialization',
                   Icons.fitness_center_outlined,
                 ),
@@ -134,7 +134,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                       final result = await TrainerService.updateProfile(
                         name: nameCtrl.text.trim(),
                         phone: phoneCtrl.text.trim(),
-                        specialty: specialtyCtrl.text.trim(),
+                        specialty: specializationCtrl.text.trim(),
                       );
                       Navigator.pop(ctx);
                       if (result['success']) {
@@ -536,7 +536,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            _specialty,
+            _specialization,
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 12),
@@ -692,7 +692,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
           _contactRow(
             icon: Icons.fitness_center_outlined,
             label: 'Specialization',
-            value: _specialty,
+            value: _specialization,
           ),
         ],
       ),

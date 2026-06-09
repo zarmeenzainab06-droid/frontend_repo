@@ -28,10 +28,10 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   String get _trainerInitial =>
       _trainerName.isNotEmpty ? _trainerName[0].toUpperCase() : 'T';
 
-  String get _trainerSpecialty {
+  String get _trainerspecialization {
     final user = box.read('user');
     if (user == null) return '';
-    return user['specialty'] ?? '';
+    return user['specialization'] ?? '';
   }
 
   @override
@@ -288,10 +288,10 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                     height: 1.3,
                   ),
                 ),
-                if (_trainerSpecialty.isNotEmpty) ...[
+                if (_trainerspecialization.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    _trainerSpecialty,
+                    _trainerspecialization,
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ],
