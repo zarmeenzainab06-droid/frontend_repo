@@ -95,7 +95,7 @@ class TrainerService {
   static Future<Map<String, dynamic>> updateProfile({
     required String name,
     required String phone,
-    required String specialty,
+    required String specialization,
   }) async {
     try {
       final response = await http.put(
@@ -104,7 +104,7 @@ class TrainerService {
         body: json.encode({
           'name': name,
           'phone': phone,
-          'specialty': specialty,
+          'specialization': specialization,
         }),
       );
       final data = json.decode(response.body);

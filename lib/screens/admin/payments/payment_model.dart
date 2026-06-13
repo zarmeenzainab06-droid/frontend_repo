@@ -9,15 +9,19 @@ class PaymentModel {
   final String membershipMonth;
   final double packageAmount;
   final double amountReceived;
-  final String paymentStatus; // 'Paid' | 'Partial' | 'Unpaid'
+  final String paymentStatus; // 'Paid' | 'pending' | 'Unpaid'
   final String? paymentDate;
   final String? createdAt;
+  // ── NEW ──
+  final String method; // 'cash' | 'online'
+  final String? screenshot; // filename stored on server
+  final String? transactionId; // for online payments
 
   PaymentModel({
     this.id,
     required this.memberId,
     required this.memberName,
-    this.packageId, // ← make nullable
+    this.packageId,
     required this.packageName,
     required this.membershipMonth,
     required this.packageAmount,
@@ -25,6 +29,9 @@ class PaymentModel {
     required this.paymentStatus,
     this.paymentDate,
     this.createdAt,
+    this.method = 'cash',
+    this.screenshot,
+    this.transactionId,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
@@ -39,7 +46,6 @@ class PaymentModel {
           double.tryParse(json['package_amount']?.toString() ?? '0') ?? 0.0,
       amountReceived:
           double.tryParse(json['amount_received']?.toString() ?? '0') ?? 0.0,
-      // ← capitalize first letter so 'paid' → 'Paid' for UI filters
       paymentStatus: _capitalize(
         json['payment_status']?.toString() ??
             json['status']?.toString() ??
@@ -47,12 +53,15 @@ class PaymentModel {
       ),
       paymentDate: json['payment_date']?.toString(),
       createdAt: json['created_at']?.toString(),
+      method: json['method']?.toString() ?? 'cash',
+      screenshot: json['screenshot']?.toString(),
+      transactionId: json['transaction_id']?.toString(),
     );
   }
 
-  // add this static helper inside the class
   static String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).toLowerCase();
+
   Map<String, dynamic> toJson() {
     return {
       'user_id': memberId,
@@ -60,8 +69,10 @@ class PaymentModel {
       'membership_month': membershipMonth,
       'package_amount': packageAmount,
       'amount_received': amountReceived,
-      'status': paymentStatus.toLowerCase(), // ← backend expects lowercase
+      'status': paymentStatus.toLowerCase(),
       'payment_date': paymentDate,
+      'method': method,
+      if (transactionId != null) 'transaction_id': transactionId,
     };
   }
 }

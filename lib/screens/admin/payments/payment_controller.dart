@@ -1,7 +1,9 @@
+import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:third_task/core/services/admin_payment_service.dart';
+import 'package:third_task/core/services/admin_payment_service.dart'
+    hide debugPrint;
 import '../../../screens/admin/payments/payment_model.dart';
 
 class PaymentController extends GetxController {
@@ -17,12 +19,19 @@ class PaymentController extends GetxController {
   final formKey = GlobalKey<FormState>();
   final amountReceivedController = TextEditingController();
   final paymentDateController = TextEditingController();
+  final transactionIdController = TextEditingController(); // ← NEW
 
   // ─── FORM OBSERVABLES ─────────────────────────────────────────────────────
   final Rx<Map<String, dynamic>?> selectedMember = Rx(null);
   final RxString selectedMonth = ''.obs;
   final RxDouble packageAmount = 0.0.obs;
   final RxString selectedStatus = 'Paid'.obs;
+  final RxString selectedMethod = 'cash'.obs; // ← NEW
+
+  // ─── SCREENSHOT (online payment) ──────────────────────────────────────────
+  final Rx<Uint8List?> screenshotBytes = Rx(null); // ← NEW
+  final RxString screenshotName = ''.obs; // ← NEW
+  final RxString existingScreenshot = ''.obs; // ← for edit mode
 
   // ─── EDITING STATE ────────────────────────────────────────────────────────
   PaymentModel? editingPayment;
@@ -39,6 +48,7 @@ class PaymentController extends GetxController {
   void onClose() {
     amountReceivedController.dispose();
     paymentDateController.dispose();
+    transactionIdController.dispose();
     super.onClose();
   }
 
@@ -59,8 +69,8 @@ class PaymentController extends GetxController {
       payments.where((p) => p.paymentStatus.toLowerCase() == 'paid').length;
   int get totalUnpaid =>
       payments.where((p) => p.paymentStatus.toLowerCase() == 'unpaid').length;
-  int get totalPartial =>
-      payments.where((p) => p.paymentStatus.toLowerCase() == 'partial').length;
+  int get totalpending =>
+      payments.where((p) => p.paymentStatus.toLowerCase() == 'pending').length;
 
   double get totalRevenue => payments
       .where((p) => p.paymentStatus.toLowerCase() == 'paid')
@@ -95,7 +105,7 @@ class PaymentController extends GetxController {
     }
   }
 
-  // ─── MEMBER SELECTED (Add mode only) ──────────────────────────────────────
+  // ─── MEMBER SELECTED ──────────────────────────────────────────────────────
   void onMemberSelected(Map<String, dynamic>? member) {
     selectedMember.value = member;
     if (member == null) {
@@ -149,7 +159,7 @@ class PaymentController extends GetxController {
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.55,
-            maxWidth: 360, // ← cap width so it doesn't stretch on web
+            maxWidth: 360,
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -169,9 +179,7 @@ class PaymentController extends GetxController {
   }
 
   // ─── SET CURRENT MONTH ────────────────────────────────────────────────────
-  void _setCurrentMonth() {
-    selectedMonth.value = _currentMonth();
-  }
+  void _setCurrentMonth() => selectedMonth.value = _currentMonth();
 
   String _currentMonth() {
     final now = DateTime.now();
@@ -198,6 +206,11 @@ class PaymentController extends GetxController {
     selectedMember.value = null;
     packageAmount.value = 0.0;
     selectedStatus.value = 'Paid';
+    selectedMethod.value = 'cash';
+    screenshotBytes.value = null;
+    screenshotName.value = '';
+    existingScreenshot.value = '';
+    transactionIdController.clear();
     amountReceivedController.clear();
     paymentDateController.text = _todayDate();
     _setCurrentMonth();
@@ -206,6 +219,8 @@ class PaymentController extends GetxController {
   // ─── OPEN EDIT FORM ───────────────────────────────────────────────────────
   void openEditForm(PaymentModel payment) {
     editingPayment = payment;
+
+    print('Screenshot from API: ${payment.screenshot}');
 
     final matched = members.firstWhereOrNull(
       (m) => m['id'] == payment.memberId,
@@ -224,8 +239,13 @@ class PaymentController extends GetxController {
     selectedMonth.value = payment.membershipMonth.isNotEmpty
         ? payment.membershipMonth
         : _currentMonth();
-    amountReceivedController.text = payment.amountReceived.toStringAsFixed(0);
     selectedStatus.value = _capitalize(payment.paymentStatus);
+    selectedMethod.value = payment.method.isNotEmpty ? payment.method : 'cash';
+    existingScreenshot.value = payment.screenshot ?? '';
+    screenshotBytes.value = null;
+    screenshotName.value = '';
+    transactionIdController.text = payment.transactionId ?? '';
+    amountReceivedController.text = payment.amountReceived.toStringAsFixed(0);
     paymentDateController.text = payment.paymentDate ?? _todayDate();
   }
 
@@ -248,6 +268,17 @@ class PaymentController extends GetxController {
       );
       return;
     }
+    // Screenshot required for online on ADD
+    if (selectedMethod.value == 'online' &&
+        editingPayment == null &&
+        screenshotBytes.value == null) {
+      Get.snackbar(
+        'Validation',
+        'Please upload a payment screenshot',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
 
     final member = selectedMember.value!;
     final payment = PaymentModel(
@@ -265,6 +296,10 @@ class PaymentController extends GetxController {
       paymentDate: paymentDateController.text.isNotEmpty
           ? paymentDateController.text
           : null,
+      method: selectedMethod.value,
+      transactionId: selectedMethod.value == 'online'
+          ? transactionIdController.text.trim()
+          : null,
     );
 
     debugPrint('Saving payment: ${payment.toJson()}');
@@ -272,15 +307,24 @@ class PaymentController extends GetxController {
     try {
       isFormLoading.value = true;
       bool success;
+
       if (editingPayment != null) {
         success = await PaymentService.updatePayment(
           editingPayment!.id!,
           payment,
+          screenshotBytes: screenshotBytes.value,
+          screenshotName: screenshotName.value.isNotEmpty
+              ? screenshotName.value
+              : null,
         );
-        debugPrint('updatePayment result: $success');
       } else {
-        success = await PaymentService.addPayment(payment);
-        debugPrint('addPayment result: $success');
+        success = await PaymentService.addPayment(
+          payment,
+          screenshotBytes: screenshotBytes.value,
+          screenshotName: screenshotName.value.isNotEmpty
+              ? screenshotName.value
+              : null,
+        );
       }
 
       if (success) {
@@ -393,7 +437,6 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Title ──
           const Text(
             'Select Month',
             style: TextStyle(
@@ -403,8 +446,6 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // ── Year Navigator ──
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFFF5F5F5),
@@ -452,14 +493,12 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // ── Month Grid — compact tiles ──
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
-              childAspectRatio: 2.2, // ← wider than tall = compact
+              childAspectRatio: 2.2,
               crossAxisSpacing: 6,
               mainAxisSpacing: 6,
             ),
@@ -482,7 +521,6 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
                       color: isSelected
                           ? const Color(0xFFE53935)
                           : const Color(0xFFE0E0E0),
-                      width: 1,
                     ),
                   ),
                   child: Center(
@@ -504,8 +542,6 @@ class _MonthYearPickerWidgetState extends State<_MonthYearPickerWidget> {
             },
           ),
           const SizedBox(height: 4),
-
-          // ── Cancel ──
           TextButton(
             onPressed: () => Get.back(),
             style: TextButton.styleFrom(

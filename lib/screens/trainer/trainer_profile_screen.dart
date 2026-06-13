@@ -21,7 +21,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   int _experienceYears = 0;
   int _assignedMembers = 0;
   int _sessionsCompleted = 0;
-  List<String> _certifications = [];
 
   String get _initial => _name.isNotEmpty ? _name[0].toUpperCase() : 'T';
   String get _experienceLabel =>
@@ -47,7 +46,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
         _experienceYears = p['experienceYears'] ?? 0;
         _assignedMembers = p['assignedMembers'] ?? 0;
         _sessionsCompleted = p['sessionsCompleted'] ?? 0;
-        _certifications = List<String>.from(p['certifications'] ?? []);
       });
     } else {
       final user = box.read('user');
@@ -134,7 +132,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                       final result = await TrainerService.updateProfile(
                         name: nameCtrl.text.trim(),
                         phone: phoneCtrl.text.trim(),
-                        specialty: specializationCtrl.text.trim(),
+                        specialization: specializationCtrl.text.trim(),
                       );
                       Navigator.pop(ctx);
                       if (result['success']) {
@@ -425,10 +423,7 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                           const SizedBox(height: 14),
                           _buildContactCard(),
                           const SizedBox(height: 14),
-                          if (_certifications.isNotEmpty) ...[
-                            _buildCertificationsCard(),
-                            const SizedBox(height: 14),
-                          ],
+
                           _buildActionButtons(context),
                           const SizedBox(height: 20),
                         ],
@@ -693,37 +688,6 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
             icon: Icons.fitness_center_outlined,
             label: 'Specialization',
             value: _specialization,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCertificationsCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        boxShadow: [AppTheme.cardShadow],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Certifications',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _certifications.map((cert) => _certBadge(cert)).toList(),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:third_task/core/utils/theme.dart';
+import 'package:third_task/screens/admin/payments/payment_form_screen.dart';
 import 'payment_controller.dart';
 import '../../../screens/admin/payments/payment_model.dart';
 import '../../../core/widgets/app_shell.dart';
@@ -8,13 +9,12 @@ import '../../../core/widgets/app_shell.dart';
 class ManagePaymentsScreen extends StatelessWidget {
   const ManagePaymentsScreen({super.key});
 
-  // ─── STATUS HELPERS ───────────────────────────────────────────────────────
   String _statusLabel(String s) {
     switch (s.toLowerCase()) {
       case 'paid':
         return 'Paid';
-      case 'partial':
-        return 'Partial';
+      case 'pending':
+        return 'pending';
       case 'unpaid':
         return 'Unpaid';
       default:
@@ -26,7 +26,7 @@ class ManagePaymentsScreen extends StatelessWidget {
     switch (s.toLowerCase()) {
       case 'paid':
         return AppTheme.active;
-      case 'partial':
+      case 'pending':
         return AppTheme.pending;
       default:
         return AppTheme.expired;
@@ -37,7 +37,7 @@ class ManagePaymentsScreen extends StatelessWidget {
     switch (s.toLowerCase()) {
       case 'paid':
         return AppTheme.activeLight;
-      case 'partial':
+      case 'pending':
         return AppTheme.pendingLight;
       default:
         return AppTheme.expiredLight;
@@ -72,7 +72,8 @@ class ManagePaymentsScreen extends StatelessWidget {
               child: FloatingActionButton.extended(
                 onPressed: () {
                   controller.openAddForm();
-                  _showPaymentDialog(context, controller);
+                  // ← navigate to full page instead of dialog
+                  Get.to(() => const PaymentFormPage());
                 },
                 backgroundColor: AppTheme.primary,
                 icon: const Icon(Icons.add, color: Colors.white),
@@ -107,11 +108,15 @@ class ManagePaymentsScreen extends StatelessWidget {
       child: Obx(
         () => Row(
           children: [
-            _statCard('Paid', c.totalPaid.toString(), AppTheme.active),
+            _statCard(
+              'Paid',
+              c.totalPaid.toString(),
+              const Color.fromARGB(255, 32, 207, 38),
+            ),
             const SizedBox(width: 8),
             _statCard('Unpaid', c.totalUnpaid.toString(), AppTheme.expired),
             const SizedBox(width: 8),
-            _statCard('Partial', c.totalPartial.toString(), AppTheme.pending),
+            _statCard('pending', c.totalpending.toString(), AppTheme.pending),
             const SizedBox(width: 8),
             _statCard(
               'Revenue',
@@ -212,7 +217,7 @@ class ManagePaymentsScreen extends StatelessWidget {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: c.filterStatus.value,
-                  items: ['All', 'Paid', 'Unpaid', 'Partial']
+                  items: ['All', 'Paid', 'Unpaid', 'pending']
                       .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                       .toList(),
                   onChanged: (v) => c.filterStatus.value = v!,
@@ -279,13 +284,13 @@ class ManagePaymentsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──
+            // Header
             Row(
               children: [
                 Container(
                   width: 42,
                   height: 42,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppTheme.primaryLight,
                     shape: BoxShape.circle,
                   ),
@@ -328,7 +333,6 @@ class ManagePaymentsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                // ── Status Badge ── fixed: always shows correct label + color
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -340,7 +344,7 @@ class ManagePaymentsScreen extends StatelessWidget {
                     border: Border.all(color: color.withOpacity(0.35)),
                   ),
                   child: Text(
-                    label, // ← normalized label, never empty
+                    label,
                     style: TextStyle(
                       color: color,
                       fontWeight: FontWeight.w700,
@@ -350,10 +354,8 @@ class ManagePaymentsScreen extends StatelessWidget {
                 ),
               ],
             ),
-
             const Divider(height: 20, color: AppTheme.border),
-
-            // ── Details ──
+            // Details
             Wrap(
               spacing: 10,
               runSpacing: 6,
@@ -373,17 +375,24 @@ class ManagePaymentsScreen extends StatelessWidget {
                   'Paid: Rs ${payment.amountReceived.toStringAsFixed(0)}',
                   color: AppTheme.active,
                 ),
+                _chip(
+                  payment.method == 'online'
+                      ? Icons.phone_android_outlined
+                      : Icons.payments_outlined,
+                  payment.method == 'online' ? 'Online' : 'Cash',
+                  color: payment.method == 'online'
+                      ? AppTheme.primary
+                      : AppTheme.textSecondary,
+                ),
               ],
             ),
-
-            // ── Actions ──
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 _actionBtn(Icons.edit_outlined, 'Edit', AppTheme.primary, () {
                   c.openEditForm(payment);
-                  _showPaymentDialog(context, c);
+                  Get.to(() => const PaymentFormPage()); // ← full page
                 }),
                 const SizedBox(width: 8),
                 _actionBtn(
@@ -453,370 +462,6 @@ class ManagePaymentsScreen extends StatelessWidget {
     );
   }
 
-  // ─── ADD / EDIT DIALOG ────────────────────────────────────────────────────
-  void _showPaymentDialog(BuildContext context, PaymentController c) {
-    final isEdit = c.editingPayment != null;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-        ),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: c.formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Title ──
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryLight,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                      ),
-                      child: const Icon(
-                        Icons.payments_outlined,
-                        color: AppTheme.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      isEdit ? 'Edit Payment' : 'Add Payment',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textDark,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Get.back(),
-                      icon: const Icon(
-                        Icons.close,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // ── Member ──
-                _label(isEdit ? 'Member' : 'Select Member *'),
-                if (isEdit)
-                  Obx(
-                    () => Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.background,
-                        border: Border.all(color: AppTheme.border),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.person,
-                            color: AppTheme.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              c.selectedMember.value?['name']?.toString() ?? '',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                          if ((c.selectedMember.value?['package_name']
-                                      ?.toString() ??
-                                  '')
-                              .isNotEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryLight,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                c.selectedMember.value!['package_name']
-                                    .toString(),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  Obx(
-                    () => DropdownButtonFormField<Map<String, dynamic>>(
-                      value: c.selectedMember.value,
-                      hint: const Text('Choose a member'),
-                      isExpanded: true,
-                      decoration: _decor(Icons.person_outline),
-                      items: c.members
-                          .map(
-                            (m) => DropdownMenuItem(
-                              value: m,
-                              child: Text(
-                                m['name']?.toString() ?? '',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: c.onMemberSelected,
-                      validator: (v) =>
-                          v == null ? 'Please select a member' : null,
-                    ),
-                  ),
-                const SizedBox(height: 14),
-
-                // ── Package ──
-                _label('Package'),
-                Obx(
-                  () => TextFormField(
-                    readOnly: true,
-                    decoration: _decor(Icons.fitness_center).copyWith(
-                      hintText: c.selectedMember.value != null
-                          ? (c.selectedMember.value!['package_name'] ??
-                                'No package assigned')
-                          : 'Auto-loaded after member selection',
-                      filled: true,
-                      fillColor: AppTheme.background,
-                    ),
-                    controller: TextEditingController(
-                      text: c.selectedMember.value?['package_name'] ?? '',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // ── Membership Month ──
-                _label('Membership Month *'),
-                Obx(
-                  () => InkWell(
-                    onTap: () => c.pickMonth(context),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.border),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.calendar_month_outlined,
-                            color: AppTheme.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            c.selectedMonth.value.isNotEmpty
-                                ? c.selectedMonth.value
-                                : 'Select month',
-                            style: TextStyle(
-                              color: c.selectedMonth.value.isNotEmpty
-                                  ? AppTheme.textPrimary
-                                  : AppTheme.textHint,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const Spacer(),
-                          const Icon(
-                            Icons.arrow_drop_down,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // ── Package Amount ──
-                _label('Package Amount'),
-                Obx(
-                  () => TextFormField(
-                    readOnly: true,
-                    decoration: _decor(Icons.currency_rupee).copyWith(
-                      hintText: 'Auto-loaded from package',
-                      filled: true,
-                      fillColor: AppTheme.background,
-                    ),
-                    controller: TextEditingController(
-                      text: c.packageAmount.value > 0
-                          ? c.packageAmount.value.toStringAsFixed(0)
-                          : '',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // ── Amount Received ──
-                _label('Amount Received *'),
-                TextFormField(
-                  controller: c.amountReceivedController,
-                  keyboardType: TextInputType.number,
-                  decoration: _decor(
-                    Icons.payments_outlined,
-                  ).copyWith(hintText: 'Enter amount received'),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Required';
-                    if (double.tryParse(v) == null) return 'Enter valid amount';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 14),
-
-                // ── Payment Status ──
-                _label('Payment Status *'),
-                Obx(
-                  () => Row(
-                    children: ['Paid', 'Partial', 'Unpaid'].map((status) {
-                      final selected =
-                          c.selectedStatus.value.toLowerCase() ==
-                          status.toLowerCase(); // ← case-insensitive
-                      final color = status == 'Paid'
-                          ? AppTheme.active
-                          : status == 'Partial'
-                          ? AppTheme.pending
-                          : AppTheme.expired;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => c.selectedStatus.value = status,
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 6),
-                            padding: const EdgeInsets.symmetric(vertical: 11),
-                            decoration: BoxDecoration(
-                              color: selected ? color : color.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.radiusSm,
-                              ),
-                              border: Border.all(
-                                color: color.withOpacity(selected ? 1 : 0.3),
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                status,
-                                style: TextStyle(
-                                  color: selected ? Colors.white : color,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // ── Payment Date ──
-                _label('Payment Date (optional)'),
-                TextFormField(
-                  controller: c.paymentDateController,
-                  readOnly: true,
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
-                      builder: (ctx, child) => Theme(
-                        data: ThemeData.light().copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: AppTheme.primary,
-                          ),
-                        ),
-                        child: child!,
-                      ),
-                    );
-                    if (picked != null) {
-                      c.paymentDateController.text =
-                          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-                    }
-                  },
-                  decoration: _decor(
-                    Icons.date_range_outlined,
-                  ).copyWith(hintText: 'Pick a date'),
-                ),
-                const SizedBox(height: 24),
-
-                // ── Save Button ──
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: Obx(
-                    () => ElevatedButton(
-                      onPressed: c.isFormLoading.value ? null : c.savePayment,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        disabledBackgroundColor: AppTheme.primary.withOpacity(
-                          0.6,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusMd,
-                          ),
-                        ),
-                      ),
-                      child: c.isFormLoading.value
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              isEdit ? 'Update Payment' : 'Save Payment',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   // ─── DELETE DIALOG ────────────────────────────────────────────────────────
   void _confirmDelete(
     BuildContext context,
@@ -872,40 +517,6 @@ class ManagePaymentsScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  // ─── HELPERS ──────────────────────────────────────────────────────────────
-  Widget _label(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-          color: AppTheme.textPrimary,
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _decor(IconData icon) {
-    return InputDecoration(
-      prefixIcon: Icon(icon, color: AppTheme.primary, size: 20),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        borderSide: const BorderSide(color: AppTheme.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        borderSide: const BorderSide(color: AppTheme.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 }

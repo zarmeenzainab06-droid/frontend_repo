@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:third_task/screens/admin/payments/payment_model.dart'
     hide ManagePaymentsScreen;
@@ -9,22 +10,24 @@ import '../screens/admin/admin_dashboard.dart';
 import '../screens/admin/admin_members_screen.dart';
 import '../screens/admin/admin_packages_screen.dart';
 import '../screens/admin/member_form_page.dart';
+import '../routes/auth_middleware.dart';
+import '../screens/admin/admin_trainers_screen.dart';
+import '../screens/admin/admin_profile/admin_profile_screen.dart';
+import '../screens/admin/payments/manage_payments_screen.dart';
+// nimra
+import '../screens/dashboard/member_profile.dart';
+import '../screens/dashboard/member_membership.dart';
+import '../screens/dashboard/member_trainer.dart';
+
+// eman
 import '../screens/trainer/trainer_dashboard.dart';
 import '../screens/trainer/trainer_members_screen.dart';
 import '../screens/trainer/trainer_profile_screen.dart';
 import '../screens/trainer/trainer_member_profile_screen.dart';
 import '../screens/trainer/trainer_schedule_screen.dart';
-import '../routes/auth_middleware.dart';
-import '../screens/dashboard/member_profile.dart';
-import '../screens/dashboard/member_membership.dart';
-import '../screens/dashboard/member_trainer.dart';
-import '../screens/admin/admin_trainers_screen.dart';
-import '../screens/admin/admin_profile/admin_profile_screen.dart';
-import '../screens/admin/payments/manage_payments_screen.dart'; // ← NEW
 
 // routess
 class AppRoutes {
-  // ── Existing routes ──────────────────────────────────────────
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
@@ -32,40 +35,34 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String adminDashboard = '/admin-dashboard';
   static const String adminMembers = '/admin/members';
-  static const String adminPackages = '/admin/packages';
+  static const String adminPackages = '/admin/packages'; // for packges
   static const String addMembers = '/add_members';
   static const String adminTrainers = '/admin/trainers'; // for the trainerss
   static const String adminProfile = '/admin/profile'; // for the profile
   static const String adminPayments = '/admin/payments'; // ← NEW
+  // nimra
+  static const String memberProfile = '/member_profile';
+  static const String memberMembership = '/member_membership';
+  static const String memberTrainer = '/member_trainer';
 
+  //eman
   // ── Trainer routes ───────────────────────────────────────────
   static const String trainerDashboard = '/trainer-dashboard';
   static const String trainerMembers = '/trainer/members';
   static const String trainerProfile = '/trainer/profile';
   static const String trainerMemberProfile = '/trainer/member-profile';
   static const String trainerSchedule = '/trainer/schedule';
-  static const String memberProfile = '/member_profile';
-  static const String memberMembership = '/member_membership';
-  static const String memberTrainer = '/member_trainer';
 
   // pages list
   static final List<GetPage<dynamic>> pages = [
-    // ── Public ──────────────────────────────────────────────────
     GetPage(name: splash, page: () => SplashScreen()),
     GetPage(name: login, page: () => LoginScreen()),
     GetPage(name: register, page: () => RegisterScreen()),
-
-    // ── Member ──────────────────────────────────────────────────
-    GetPage(name: memberProfile, page: () => MemberProfileScreen()),
-    GetPage(name: memberMembership, page: () => MemberMembershipScreen()),
-    GetPage(name: memberTrainer, page: () => MemberTrainerScreen()),
     GetPage(
       name: dashboard,
       page: () => MemberDashboard(),
       middlewares: [AuthMiddleware()],
     ),
-
-    // ── Admin ────────────────────────────────────────────────────
     GetPage(
       name: adminDashboard,
       page: () => AdminDashboard(),
@@ -103,30 +100,31 @@ class AppRoutes {
       middlewares: [AuthMiddleware()],
     ),
 
-    // ── Trainer ──────────────────────────────────────────────────
+    // nimra
+    // ── Member ──────────────────────────────────────────────────
+    GetPage(name: memberProfile, page: () => MemberProfileScreen()),
+    GetPage(name: memberMembership, page: () => MemberMembershipScreen()),
+    GetPage(name: memberTrainer, page: () => MemberTrainerScreen()),
     GetPage(
-      name: trainerDashboard,
-      page: () => TrainerDashboard(),
+      name: dashboard,
+      page: () => MemberDashboard(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    //member
+    GetPage(
+      name: memberProfile,
+      page: () => MemberProfileScreen(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
-      name: trainerMembers,
-      page: () => TrainerMembersScreen(),
+      name: memberMembership,
+      page: () => MemberMembershipScreen(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
-      name: trainerProfile,
-      page: () => TrainerProfileScreen(),
-      middlewares: [AuthMiddleware()],
-    ),
-    GetPage(
-      name: trainerMemberProfile,
-      page: () => TrainerMemberProfileScreen(),
-      middlewares: [AuthMiddleware()],
-    ),
-    GetPage(
-      name: trainerSchedule,
-      page: () => TrainerScheduleScreen(),
+      name: memberTrainer,
+      page: () => MemberTrainerScreen(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
@@ -144,6 +142,8 @@ class AppRoutes {
       page: () => MemberTrainerScreen(),
       middlewares: [AuthMiddleware()],
     ),
+
+    //eman
 
     // ── Trainer ──────────────────────────────────────────────────
     GetPage(
