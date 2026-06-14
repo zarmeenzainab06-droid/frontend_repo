@@ -14,6 +14,8 @@ import '../routes/auth_middleware.dart';
 import '../screens/admin/admin_trainers_screen.dart';
 import '../screens/admin/admin_profile/admin_profile_screen.dart';
 import '../screens/admin/payments/manage_payments_screen.dart';
+import '../screens/admin/admin_slots_screen.dart';
+
 // nimra
 import '../screens/dashboard/member_profile.dart';
 import '../screens/dashboard/member_membership.dart';
@@ -40,6 +42,8 @@ class AppRoutes {
   static const String adminTrainers = '/admin/trainers'; // for the trainerss
   static const String adminProfile = '/admin/profile'; // for the profile
   static const String adminPayments = '/admin/payments'; // ← NEW
+  static const String adminSlots = '/admin/slots'; // ← NEW
+
   // nimra
   static const String memberProfile = '/member_profile';
   static const String memberMembership = '/member_membership';
@@ -97,6 +101,13 @@ class AppRoutes {
       // ← NEW
       name: adminPayments,
       page: () => const ManagePaymentsScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    // Add to pages list
+    GetPage(
+      name: adminSlots,
+      page: () => const AdminSlotsScreen(),
       middlewares: [AuthMiddleware()],
     ),
 

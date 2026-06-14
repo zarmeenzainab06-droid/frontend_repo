@@ -154,6 +154,15 @@ class AppDrawer extends StatelessWidget {
           Get.toNamed(AppRoutes.adminTrainers);
         },
       ),
+
+      _item(
+        Icons.access_time_outlined,
+        'Time Slots',
+        onTap: () {
+          Get.back(); // close drawer
+          Get.toNamed(AppRoutes.adminSlots);
+        },
+      ),
       _item(
         Icons.bar_chart_outlined,
         'Reports Settings',
