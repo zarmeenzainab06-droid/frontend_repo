@@ -47,30 +47,17 @@ class PaymentFormPage extends StatelessWidget {
                         items: c.members.map((m) {
                           final name = m['name']?.toString() ?? '';
                           final phone = m['phone']?.toString() ?? '';
-                          return DropdownMenuItem(
+
+                          return DropdownMenuItem<Map<String, dynamic>>(
                             value: m,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textDark,
-                                  ),
-                                ),
-                                if (phone.isNotEmpty)
-                                  Text(
-                                    phone,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppTheme.textSecondary,
-                                    ),
-                                  ),
-                              ],
+                            child: Text(
+                              phone.isNotEmpty ? '$name • $phone' : name,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textDark,
+                              ),
                             ),
                           );
                         }).toList(),
@@ -182,6 +169,7 @@ class PaymentFormPage extends StatelessWidget {
                     () => DropdownButtonFormField<String>(
                       value:
                           [
+                            'Pending',
                             'Paid',
                             'Partial',
                             'Unpaid',
@@ -191,7 +179,7 @@ class PaymentFormPage extends StatelessWidget {
                       hint: const Text('Select status'),
                       isExpanded: true,
                       decoration: _decor(Icons.check_circle_outline),
-                      items: ['Paid', 'Partial', 'Unpaid']
+                      items: ['Pending', 'Paid', 'Partial', 'Unpaid']
                           .map(
                             (s) => DropdownMenuItem(
                               value: s,

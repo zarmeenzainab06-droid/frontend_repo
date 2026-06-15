@@ -13,8 +13,11 @@ class ManagePaymentsScreen extends StatelessWidget {
     switch (s.toLowerCase()) {
       case 'paid':
         return 'Paid';
+      case 'partial':
+        return 'Partial';
+
       case 'pending':
-        return 'pending';
+        return 'Pending';
       case 'unpaid':
         return 'Unpaid';
       default:
@@ -26,8 +29,10 @@ class ManagePaymentsScreen extends StatelessWidget {
     switch (s.toLowerCase()) {
       case 'paid':
         return AppTheme.active;
-      case 'pending':
+      case 'partial':
         return AppTheme.pending;
+      case 'pending':
+        return const Color.fromARGB(255, 17, 0, 255);
       default:
         return AppTheme.expired;
     }
@@ -37,8 +42,16 @@ class ManagePaymentsScreen extends StatelessWidget {
     switch (s.toLowerCase()) {
       case 'paid':
         return AppTheme.activeLight;
+
+      case 'partial':
+        return AppTheme.pendingLight;
+
       case 'pending':
         return AppTheme.pendingLight;
+
+      case 'unpaid':
+        return AppTheme.expiredLight;
+
       default:
         return AppTheme.expiredLight;
     }
@@ -217,7 +230,7 @@ class ManagePaymentsScreen extends StatelessWidget {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: c.filterStatus.value,
-                  items: ['All', 'Paid', 'Unpaid', 'pending']
+                  items: ['All', 'Paid', 'Pending', 'Partial', 'Unpaid']
                       .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                       .toList(),
                   onChanged: (v) => c.filterStatus.value = v!,
@@ -263,6 +276,8 @@ class ManagePaymentsScreen extends StatelessWidget {
   }
 
   // ─── PAYMENT CARD ─────────────────────────────────────────────────────────
+  // ── FOR STATUS UPDATE ───────
+
   Widget _paymentCard(
     BuildContext context,
     PaymentModel payment,
@@ -271,6 +286,7 @@ class ManagePaymentsScreen extends StatelessWidget {
     final label = _statusLabel(payment.paymentStatus);
     final color = _statusColor(payment.paymentStatus);
     final light = _statusLight(payment.paymentStatus);
+    final isPending = payment.paymentStatus.toLowerCase() == 'pending';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -278,13 +294,17 @@ class ManagePaymentsScreen extends StatelessWidget {
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         boxShadow: [AppTheme.cardShadow],
+        // highlight pending cards with a left border
+        border: isPending
+            ? Border(left: BorderSide(color: AppTheme.pending, width: 4))
+            : null,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // ── Header ──
             Row(
               children: [
                 Container(
@@ -333,20 +353,25 @@ class ManagePaymentsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                // Status badge
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: light,
+                    color: isPending ? AppTheme.pendingLight : light,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: color.withOpacity(0.35)),
+                    border: Border.all(
+                      color: isPending
+                          ? AppTheme.pending.withOpacity(0.4)
+                          : color.withOpacity(0.35),
+                    ),
                   ),
                   child: Text(
-                    label,
+                    isPending ? 'Pending' : label,
                     style: TextStyle(
-                      color: color,
+                      color: isPending ? AppTheme.pending : color,
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
                     ),
@@ -354,8 +379,10 @@ class ManagePaymentsScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const Divider(height: 20, color: AppTheme.border),
-            // Details
+
+            // ── Details ──
             Wrap(
               spacing: 10,
               runSpacing: 6,
@@ -386,13 +413,169 @@ class ManagePaymentsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+
+            const SizedBox(height: 12),
+
+            // ── Pending: show approve buttons ────────────────────────────
+            if (isPending) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.pendingLight,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  border: Border.all(color: AppTheme.pending.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 14,
+                          color: AppTheme.pending,
+                        ),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Payment pending approval',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.pending,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        // Mark as Paid
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _confirmStatusChange(
+                              context,
+                              payment,
+                              c,
+                              'paid',
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.active,
+                              minimumSize: const Size(0, 38),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusSm,
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.check_circle_outline,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Mark Paid',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Mark as Partial
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _confirmStatusChange(
+                              context,
+                              payment,
+                              c,
+                              'partial',
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.pending,
+                              minimumSize: const Size(0, 38),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusSm,
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.access_time,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Partial',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Reject
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _confirmStatusChange(
+                              context,
+                              payment,
+                              c,
+                              'unpaid',
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 38),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              side: BorderSide(
+                                color: AppTheme.expired.withOpacity(0.5),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusSm,
+                                ),
+                              ),
+                            ),
+                            icon: Icon(
+                              Icons.cancel_outlined,
+                              size: 16,
+                              color: AppTheme.expired,
+                            ),
+                            label: Text(
+                              'Reject',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.expired,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+
+            // ── Normal actions ────────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 _actionBtn(Icons.edit_outlined, 'Edit', AppTheme.primary, () {
                   c.openEditForm(payment);
-                  Get.to(() => const PaymentFormPage()); // ← full page
+                  Get.to(() => const PaymentFormPage());
                 }),
                 const SizedBox(width: 8),
                 _actionBtn(
@@ -405,6 +588,77 @@ class ManagePaymentsScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Add this confirm dialog method to ManagePaymentsScreen ────────────────
+
+  void _confirmStatusChange(
+    BuildContext context,
+    PaymentModel payment,
+    PaymentController c,
+    String newStatus,
+  ) {
+    final color = newStatus == 'paid'
+        ? AppTheme.active
+        : newStatus == 'partial'
+        ? AppTheme.pending
+        : AppTheme.expired;
+    final label = newStatus == 'paid'
+        ? 'Paid'
+        : newStatus == 'partial'
+        ? 'Partial'
+        : 'Unpaid (Reject)';
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        ),
+        title: Text(
+          'Mark as $label',
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textDark,
+          ),
+        ),
+        content: Text(
+          'Mark ${payment.memberName}\'s payment of '
+          'Rs ${payment.amountReceived.toStringAsFixed(0)} as $label?',
+          style: const TextStyle(color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              c.updateStatus(payment.id!, newStatus);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              minimumSize: Size.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              ),
+            ),
+            child: Text(
+              'Confirm',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

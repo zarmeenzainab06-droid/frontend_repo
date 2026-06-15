@@ -65,6 +65,7 @@ class PaymentController extends GetxController {
     }).toList();
   }
 
+  // total stats of payment
   int get totalPaid =>
       payments.where((p) => p.paymentStatus.toLowerCase() == 'paid').length;
   int get totalUnpaid =>
@@ -374,6 +375,55 @@ class PaymentController extends GetxController {
       }
     } catch (e) {
       debugPrint('deletePayment error: $e');
+    }
+  }
+
+  // ── Add this method to PaymentController ──────────────────────────────────
+  // FOR UPDATE STATUS
+
+  Future<void> updateStatus(int id, String newStatus) async {
+    try {
+      final success = await PaymentService.updateStatus(id, newStatus);
+      if (success) {
+        // Update locally without full reload for instant UI feedback
+        final idx = payments.indexWhere((p) => p.id == id);
+        if (idx != -1) {
+          final old = payments[idx];
+          payments[idx] = PaymentModel(
+            id: old.id,
+            memberId: old.memberId,
+            memberName: old.memberName,
+            packageId: old.packageId,
+            packageName: old.packageName,
+            membershipMonth: old.membershipMonth,
+            packageAmount: old.packageAmount,
+            amountReceived: old.amountReceived,
+            paymentStatus: _capitalize(newStatus),
+            paymentDate: old.paymentDate,
+            createdAt: old.createdAt,
+            method: old.method,
+            screenshot: old.screenshot,
+            transactionId: old.transactionId,
+          );
+          payments.refresh();
+        }
+        Get.snackbar(
+          'Updated',
+          'Payment marked as ${_capitalize(newStatus)}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: newStatus.toLowerCase() == 'paid'
+              ? const Color(0xFF4CAF50)
+              : const Color(0xFFFF9800),
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      debugPrint('updateStatus error: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to update status',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 

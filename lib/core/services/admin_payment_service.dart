@@ -56,6 +56,7 @@ class PaymentService {
             (e) => {
               'id': e['id'],
               'name': e['name'] ?? '',
+              'phone': e['phone'] ?? '', // TO COMES NAME + PHONE NO
               'package_id': e['package_id'],
               'package_name': e['package_name'],
               'package_amount': e['package_price'] ?? 0,
@@ -130,6 +131,19 @@ class PaymentService {
       Uri.parse('$baseUrl$_path/$id'),
       headers: _headers,
     );
+    return response.statusCode == 200;
+  }
+
+  // ── Add this method to PaymentService ────────────────────────────────────
+  // FOR UPDATE STATUS
+
+  static Future<bool> updateStatus(int id, String status) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl$_path/$id/status'),
+      headers: _headers,
+      body: jsonEncode({'status': status.toLowerCase()}),
+    );
+    debugPrint('updateStatus: ${response.statusCode} ${response.body}');
     return response.statusCode == 200;
   }
 
