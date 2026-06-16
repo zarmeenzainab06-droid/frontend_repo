@@ -78,6 +78,7 @@ class AdminService {
     required String endTime,
     required int capacity,
     required String status,
+    String scheduleDays = 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', // ← ADD
   }) async {
     try {
       final response = await http.post(
@@ -89,6 +90,7 @@ class AdminService {
           'end_time': endTime,
           'capacity': capacity,
           'status': status,
+          'schedule_days': scheduleDays, // ← ADD
         }),
       );
       final data = json.decode(response.body);
@@ -110,6 +112,7 @@ class AdminService {
     required String endTime,
     required int capacity,
     required String status,
+    String scheduleDays = 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', // ← ADD
   }) async {
     try {
       final response = await http.put(
@@ -121,6 +124,7 @@ class AdminService {
           'end_time': endTime,
           'capacity': capacity,
           'status': status,
+          'schedule_days': scheduleDays, // ← ADD
         }),
       );
       final data = json.decode(response.body);

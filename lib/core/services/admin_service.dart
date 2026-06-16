@@ -350,6 +350,58 @@ class AdminService {
     }
   }
 
+  // for resolving dup issue
+
+  static Future<Map<String, dynamic>> updateMembership({
+    required int userId,
+    required int packageId,
+    required String startDate,
+    required String endDate,
+    required double amount,
+    required String paymentMethod,
+    Uint8List? screenshotBytes,
+    String? screenshotName,
+    String? existingScreenshotPath,
+  }) async {
+    try {
+      var request = http.MultipartRequest(
+        'PUT',
+        Uri.parse('$baseUrl/admin/members/$userId/membership'),
+      );
+
+      final token = box.read('token');
+
+      request.headers.addAll({'Authorization': 'Bearer $token'});
+      request.fields['packageId'] = packageId.toString();
+      request.fields['startDate'] = startDate;
+      request.fields['endDate'] = endDate;
+      request.fields['amount'] = amount.toString();
+      request.fields['paymentMethod'] = paymentMethod;
+
+      if (existingScreenshotPath != null) {
+        request.fields['existing_screenshot'] = existingScreenshotPath;
+      }
+
+      if (screenshotBytes != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'screenshot',
+            screenshotBytes,
+            filename: screenshotName ?? 'payment.jpg',
+          ),
+        );
+      }
+
+      final response = await request.send();
+
+      final body = await response.stream.bytesToString();
+
+      return jsonDecode(body);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   // ── Delete Member ──────────────────────────────────────────
   static Future<Map<String, dynamic>> deleteMember(int userId) async {
     try {

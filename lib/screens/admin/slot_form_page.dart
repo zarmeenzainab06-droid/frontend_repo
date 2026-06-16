@@ -21,8 +21,34 @@ class _SlotFormPageState extends State<SlotFormPage> {
   final _nameCtrl = TextEditingController();
   final _startTimeCtrl = TextEditingController();
   final _endTimeCtrl = TextEditingController();
-  final _capacityCtrl = TextEditingController(text: '30');
+  final _capacityCtrl = TextEditingController();
   String _status = 'active';
+  bool _timeError = false; // end time before start time
+
+  // Schedule days
+  final List<String> _allDays = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
+  final Set<String> _selectedDays = {
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  };
+  bool _daysError = false;
+
+  // Store raw TimeOfDay for comparison
+  TimeOfDay? _startTOD;
+  TimeOfDay? _endTOD;
 
   @override
   void initState() {
@@ -51,15 +77,33 @@ class _SlotFormPageState extends State<SlotFormPage> {
         _endTimeCtrl.text = slot['end_time'] ?? '';
         _capacityCtrl.text = slot['capacity'].toString();
         _status = (slot['status'] ?? 'active').toString().toLowerCase();
+
+        // Load schedule days if saved
+        final days = slot['schedule_days'];
+        if (days != null && days.toString().isNotEmpty) {
+          _selectedDays.clear();
+          _selectedDays.addAll(days.toString().split(','));
+        }
       });
     }
     setState(() => _isFetching = false);
   }
 
-  Future<void> _pickTime(TextEditingController ctrl) async {
+  String _formatTOD(TimeOfDay tod) {
+    final hour = tod.hourOfPeriod == 0 ? 12 : tod.hourOfPeriod;
+    final minute = tod.minute.toString().padLeft(2, '0');
+    final period = tod.period == DayPeriod.am ? 'AM' : 'PM';
+    return '${hour.toString().padLeft(2, '0')}:$minute $period';
+  }
+
+  Future<void> _pickTime({required bool isStart}) async {
+    final initial = isStart
+        ? (_startTOD ?? const TimeOfDay(hour: 6, minute: 0))
+        : (_endTOD ?? const TimeOfDay(hour: 8, minute: 0));
+
     final picked = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: initial,
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(primary: AppTheme.primary),
@@ -67,19 +111,37 @@ class _SlotFormPageState extends State<SlotFormPage> {
         child: child!,
       ),
     );
-    if (picked != null) {
-      final hour = picked.hourOfPeriod == 0 ? 12 : picked.hourOfPeriod;
-      final minute = picked.minute.toString().padLeft(2, '0');
-      final period = picked.period == DayPeriod.am ? 'AM' : 'PM';
-      ctrl.text = '${hour.toString().padLeft(2, '0')}:$minute $period';
-    }
+    if (picked == null) return;
+
+    setState(() {
+      if (isStart) {
+        _startTOD = picked;
+        _startTimeCtrl.text = _formatTOD(picked);
+      } else {
+        _endTOD = picked;
+        _endTimeCtrl.text = _formatTOD(picked);
+      }
+      // Validate end > start
+      _timeError =
+          _startTOD != null &&
+          _endTOD != null &&
+          (_endTOD!.hour < _startTOD!.hour ||
+              (_endTOD!.hour == _startTOD!.hour &&
+                  _endTOD!.minute <= _startTOD!.minute));
+    });
   }
 
   Future<void> _submit() async {
+    // Validate days
+    setState(() => _daysError = _selectedDays.isEmpty);
+    if (_selectedDays.isEmpty) return;
     if (!_formKey.currentState!.validate()) return;
+    if (_timeError) return;
+
     setState(() => _isLoading = true);
 
     final cap = int.tryParse(_capacityCtrl.text.trim()) ?? 30;
+    final scheduleDays = _selectedDays.join(',');
 
     Map<String, dynamic> result;
     if (_isEdit) {
@@ -90,6 +152,7 @@ class _SlotFormPageState extends State<SlotFormPage> {
         endTime: _endTimeCtrl.text.trim(),
         capacity: cap,
         status: _status,
+        scheduleDays: scheduleDays,
       );
     } else {
       result = await AdminService.createSlot(
@@ -98,6 +161,7 @@ class _SlotFormPageState extends State<SlotFormPage> {
         endTime: _endTimeCtrl.text.trim(),
         capacity: cap,
         status: _status,
+        scheduleDays: scheduleDays,
       );
     }
 
@@ -137,106 +201,224 @@ class _SlotFormPageState extends State<SlotFormPage> {
                     child: CircularProgressIndicator(color: AppTheme.primary),
                   )
                 : SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _label('Slot Name *'),
-                          _textField(
-                            controller: _nameCtrl,
-                            hint: 'e.g. Morning Batch',
-                            validator: (v) =>
-                                v!.isEmpty ? 'Slot name is required' : null,
+                          // ── Slot Information Section ──────────────────
+                          _sectionCard(
+                            title: 'Slot Information',
+                            children: [
+                              _label('Slot Name *'),
+                              _textField(
+                                controller: _nameCtrl,
+                                hint: 'e.g. Morning Cardio, HIIT Training',
+                                validator: (v) =>
+                                    v!.isEmpty ? 'Slot name is required' : null,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
 
-                          _label('Start Time *'),
-                          GestureDetector(
-                            onTap: () => _pickTime(_startTimeCtrl),
-                            child: AbsorbPointer(
-                              child: _textField(
+                          // ── Schedule Section ──────────────────────────
+                          _sectionCard(
+                            title: 'Schedule',
+                            children: [
+                              _label('Start Time *'),
+                              _timeField(
                                 controller: _startTimeCtrl,
-                                hint: '06:00 AM',
-                                suffixIcon: const Icon(
-                                  Icons.access_time_outlined,
-                                  size: 18,
-                                  color: AppTheme.textSecondary,
-                                ),
+                                hint: '07:01 PM',
+                                onTap: () => _pickTime(isStart: true),
                                 validator: (v) => v!.isEmpty
                                     ? 'Start time is required'
                                     : null,
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
+                              const SizedBox(height: 12),
 
-                          _label('End Time *'),
-                          GestureDetector(
-                            onTap: () => _pickTime(_endTimeCtrl),
-                            child: AbsorbPointer(
-                              child: _textField(
+                              _label('End Time *'),
+                              _timeField(
                                 controller: _endTimeCtrl,
-                                hint: '09:00 AM',
-                                suffixIcon: const Icon(
-                                  Icons.access_time_outlined,
-                                  size: 18,
-                                  color: AppTheme.textSecondary,
-                                ),
+                                hint: '07:01 PM',
+                                onTap: () => _pickTime(isStart: false),
                                 validator: (v) =>
                                     v!.isEmpty ? 'End time is required' : null,
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
 
-                          _label('Capacity (max members) *'),
-                          _textField(
-                            controller: _capacityCtrl,
-                            hint: '30',
-                            keyboardType: TextInputType.number,
-                            validator: (v) {
-                              if (v!.isEmpty) return 'Capacity is required';
-                              if (int.tryParse(v) == null || int.parse(v) < 1)
-                                return 'Enter a valid number';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          _label('Status *'),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _status = 'active'),
-                                  child: _statusBtn(
-                                    label: 'Active',
-                                    icon: Icons.check_circle_outline,
-                                    isSelected: _status == 'active',
-                                    color: AppTheme.active,
+                              // ── Time error banner ──
+                              if (_timeError) ...[
+                                const SizedBox(height: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.expiredLight,
+                                    borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusSm,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: const [
+                                      Icon(
+                                        Icons.error_outline,
+                                        color: AppTheme.expired,
+                                        size: 18,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'End time must be after start time',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: AppTheme.expired,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              ],
+                              const SizedBox(height: 16),
+
+                              // ── Schedule Days ──
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Schedule Days *',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        if (_selectedDays.length ==
+                                            _allDays.length) {
+                                          _selectedDays.clear();
+                                        } else {
+                                          _selectedDays.addAll(_allDays);
+                                        }
+                                        _daysError = _selectedDays.isEmpty;
+                                      });
+                                    },
+                                    child: Text(
+                                      _selectedDays.length == _allDays.length
+                                          ? 'Deselect All'
+                                          : 'Select All',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _status = 'inactive'),
-                                  child: _statusBtn(
-                                    label: 'Inactive',
-                                    icon: Icons.pause_circle_outline,
-                                    isSelected: _status == 'inactive',
-                                    color: AppTheme.textSecondary,
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _allDays.map((day) {
+                                  final isSelected = _selectedDays.contains(
+                                    day,
+                                  );
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        if (isSelected) {
+                                          _selectedDays.remove(day);
+                                        } else {
+                                          _selectedDays.add(day);
+                                        }
+                                        _daysError = _selectedDays.isEmpty;
+                                      });
+                                    },
+                                    child: Container(
+                                      width: 44,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppTheme.primary
+                                            : AppTheme.background,
+                                        borderRadius: BorderRadius.circular(
+                                          AppTheme.radiusSm,
+                                        ),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? AppTheme.primary
+                                              : AppTheme.border,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          day,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : AppTheme.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              if (_daysError) ...[
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Please select at least one day',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.expired,
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 12),
 
+                          // ── Capacity & Status Section ─────────────────
+                          _sectionCard(
+                            title: 'Capacity & Status',
+                            children: [
+                              _label('Maximum Capacity *'),
+                              _textField(
+                                controller: _capacityCtrl,
+                                hint: 'e.g. 20',
+                                keyboardType: TextInputType.number,
+                                prefixIcon: const Icon(
+                                  Icons.people_outline,
+                                  size: 18,
+                                  color: AppTheme.textSecondary,
+                                ),
+                                helperText:
+                                    'Maximum number of members per session',
+                                validator: (v) {
+                                  if (v!.isEmpty) return 'Capacity is required';
+                                  if (int.tryParse(v) == null ||
+                                      int.parse(v) < 1)
+                                    return 'Enter a valid number';
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              _label('Status *'),
+                              _statusDropdown(),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          // ── Submit Buttons ────────────────────────────
                           Row(
                             children: [
                               Expanded(
@@ -316,69 +498,163 @@ class _SlotFormPageState extends State<SlotFormPage> {
     );
   }
 
-  Widget _buildTopBar() {
+  // ── Section card wrapper ────────────────────────────────────
+  Widget _sectionCard({required String title, required List<Widget> children}) {
     return Container(
-      color: AppTheme.primary,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 12,
-        left: 8,
-        right: 16,
-        bottom: 12,
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: [AppTheme.cardShadow],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
           Text(
-            _isEdit ? 'Edit Slot' : 'Add New Slot',
+            title,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: AppTheme.textSecondary,
+              letterSpacing: 0.3,
             ),
           ),
+          const SizedBox(height: 14),
+          ...children,
         ],
       ),
     );
   }
 
-  Widget _statusBtn({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required Color color,
+  // ── Time field with clock icon ──────────────────────────────
+  Widget _timeField({
+    required TextEditingController controller,
+    required String hint,
+    required VoidCallback onTap,
+    String? Function(String?)? validator,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        color: isSelected ? color.withOpacity(0.1) : AppTheme.background,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: isSelected ? color : AppTheme.border),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isSelected ? color : AppTheme.textSecondary,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isSelected ? color : AppTheme.textSecondary,
+    return GestureDetector(
+      onTap: onTap,
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: controller,
+          validator: validator,
+          style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 14),
+            prefixIcon: const Icon(
+              Icons.access_time_outlined,
+              size: 18,
+              color: AppTheme.textSecondary,
+            ),
+            filled: true,
+            fillColor: AppTheme.background,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              borderSide: const BorderSide(color: AppTheme.expired, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              borderSide: const BorderSide(color: AppTheme.expired, width: 1.5),
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  // ── Status dropdown ─────────────────────────────────────────
+  Widget _statusDropdown() {
+    final isActive = _status == 'active';
+    return GestureDetector(
+      onTap: () async {
+        final picked = await showMenu<String>(
+          context: context,
+          color: AppTheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          ),
+          position: RelativeRect.fromLTRB(
+            16,
+            MediaQuery.of(context).size.height * 0.72,
+            16,
+            0,
+          ),
+          items: [
+            PopupMenuItem(
+              value: 'active',
+              child: Row(
+                children: const [
+                  Icon(Icons.circle, size: 10, color: AppTheme.active),
+                  SizedBox(width: 10),
+                  Text(
+                    'Active',
+                    style: TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'inactive',
+              child: Row(
+                children: const [
+                  Icon(Icons.circle, size: 10, color: AppTheme.textSecondary),
+                  SizedBox(width: 10),
+                  Text(
+                    'Inactive',
+                    style: TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+        if (picked != null) setState(() => _status = picked);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.background,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.circle,
+              size: 10,
+              color: isActive ? AppTheme.active : AppTheme.textSecondary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isActive ? 'Active' : 'Inactive',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 18,
+              color: AppTheme.textSecondary,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -401,7 +677,8 @@ class _SlotFormPageState extends State<SlotFormPage> {
     required TextEditingController controller,
     required String hint,
     TextInputType? keyboardType,
-    Widget? suffixIcon,
+    Widget? prefixIcon,
+    String? helperText,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
@@ -412,7 +689,12 @@ class _SlotFormPageState extends State<SlotFormPage> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 14),
-        suffixIcon: suffixIcon,
+        prefixIcon: prefixIcon,
+        helperText: helperText,
+        helperStyle: const TextStyle(
+          fontSize: 11,
+          color: AppTheme.textSecondary,
+        ),
         filled: true,
         fillColor: AppTheme.background,
         contentPadding: const EdgeInsets.symmetric(
@@ -435,6 +717,47 @@ class _SlotFormPageState extends State<SlotFormPage> {
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           borderSide: const BorderSide(color: AppTheme.expired, width: 1.5),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Container(
+      color: AppTheme.primary,
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 12,
+        left: 8,
+        right: 16,
+        bottom: 12,
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isEdit ? 'Edit Time Slot' : 'Add Time Slot',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              const Text(
+                'Configure a new gym session slot',
+                style: TextStyle(fontSize: 11, color: Colors.white70),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

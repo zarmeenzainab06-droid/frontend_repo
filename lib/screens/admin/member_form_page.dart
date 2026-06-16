@@ -263,6 +263,19 @@ class _MemberFormPageState extends State<MemberFormPage> {
       screenshotName: _screenshotName,
     );
 
+    // fix dup
+    // final membershipResult = await AdminService.updateMembership(
+    //   userId: widget.memberId!,
+    //   packageId: int.parse(_packageId!),
+    //   startDate: startDate,
+    //   endDate: endDate,
+    //   amount: double.tryParse(_feeCtrl.text) ?? _packagePrice(_packageId),
+    //   paymentMethod: _paymentType,
+    //   screenshotBytes: _screenshotBytes,
+    //   screenshotName: _screenshotName,
+    //   existingScreenshotPath: _existingScreenshotPath,
+    // );
+
     setState(() => _isLoading = false);
 
     if (membershipResult['success']) {
@@ -274,6 +287,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
       );
+
       // get.back chnage for added member
 
       Navigator.pop(context, true);
@@ -304,29 +318,56 @@ class _MemberFormPageState extends State<MemberFormPage> {
 
     // ✅ FIX: Pass existingScreenshotPath so backend can keep old screenshot
     // when user didn't pick a new one
-    print(_existingScreenshotPath);
-    await AdminService.assignMembership(
+    // print(_existingScreenshotPath);
+    // await AdminService.assignMembership(
+    //   userId: widget.memberId!,
+    //   packageId: int.parse(_packageId!),
+    //   startDate: startDate,
+    //   endDate: endDate,
+    //   amount: double.tryParse(_feeCtrl.text) ?? _packagePrice(_packageId),
+    //   paymentMethod: _paymentType,
+    //   screenshotBytes: _screenshotBytes, // null if not changed
+    //   screenshotName: _screenshotName, // null if not changed
+    //   existingScreenshotPath: _existingScreenshotPath, // ✅ NEW: keep old path
+    // );
+
+    // setState(() => _isLoading = false);
+    // Get.snackbar(
+    //   'Updated',
+    //   'Member updated successfully!',
+    //   backgroundColor: AppTheme.active,
+    //   colorText: Colors.white,
+    //   snackPosition: SnackPosition.BOTTOM,
+    //   margin: const EdgeInsets.all(16),
+    // );
+    // Navigator.pop(context, true); //Get.back(result: true); edit member
+    final membershipResult = await AdminService.updateMembership(
       userId: widget.memberId!,
       packageId: int.parse(_packageId!),
       startDate: startDate,
       endDate: endDate,
       amount: double.tryParse(_feeCtrl.text) ?? _packagePrice(_packageId),
       paymentMethod: _paymentType,
-      screenshotBytes: _screenshotBytes, // null if not changed
-      screenshotName: _screenshotName, // null if not changed
-      existingScreenshotPath: _existingScreenshotPath, // ✅ NEW: keep old path
+      screenshotBytes: _screenshotBytes,
+      screenshotName: _screenshotName,
+      existingScreenshotPath: _existingScreenshotPath,
     );
 
     setState(() => _isLoading = false);
-    Get.snackbar(
-      'Updated',
-      'Member updated successfully!',
-      backgroundColor: AppTheme.active,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-    );
-    Navigator.pop(context, true); //Get.back(result: true); edit member
+
+    if (membershipResult['success'] == true) {
+      Get.snackbar(
+        'Updated',
+        'Member updated successfully!',
+        backgroundColor: AppTheme.active,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+      Navigator.pop(context, true);
+    } else {
+      _showError(membershipResult['message'] ?? 'Failed to update membership');
+    }
   }
 
   void _showError(String msg) {
