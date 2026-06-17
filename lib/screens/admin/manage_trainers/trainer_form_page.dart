@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../../core/services/admin_service.dart';
-import '../../core/utils/theme.dart';
+import '../../../core/services/admin_service.dart';
+import '../../../core/utils/theme.dart';
 
 class TrainerFormPage extends StatefulWidget {
   final int? trainerId;

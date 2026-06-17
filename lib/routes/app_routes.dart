@@ -11,7 +11,7 @@ import '../screens/admin/admin_members_screen.dart';
 import '../screens/admin/admin_packages_screen.dart';
 import '../screens/admin/member_form_page.dart';
 import '../routes/auth_middleware.dart';
-import '../screens/admin/admin_trainers_screen.dart';
+import '../screens/admin/manage_trainers/admin_trainers_screen.dart';
 import '../screens/admin/admin_profile/admin_profile_screen.dart';
 import '../screens/admin/payments/manage_payments_screen.dart';
 import '../screens/admin/admin_slots_screen.dart';

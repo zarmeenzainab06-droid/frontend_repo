@@ -478,7 +478,7 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                 Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
                 SizedBox(width: 4),
                 Text(
-                  'GymSwift',
+                  'GymFitex',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

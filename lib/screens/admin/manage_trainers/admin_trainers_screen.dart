@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../core/services/admin_service.dart';
-import '../../core/utils/theme.dart';
-import '../../core/widgets/app_shell.dart';
+import '../../../core/services/admin_service.dart';
+import '../../../core/utils/theme.dart';
+import '../../../core/widgets/app_shell.dart';
 import 'trainer_form_page.dart';
 
 class AdminTrainersScreen extends StatefulWidget {
@@ -71,9 +71,13 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
     // BUG FIX 3 (slot filter): _applyFilter uses the current _slotFilter value
     // which is preserved in state — we never reset it here, so the user's
     // chosen filter survives every reload triggered by search or pull-to-refresh.
-    _applyFilter();
+    // _applyFilter();
 
-    setState(() => _isLoading = false);
+    // setState(() => _isLoading = false);
+    setState(() {
+      _applyFilter();
+      _isLoading = false;
+    });
   }
 
   void _applyFilter() {
@@ -391,11 +395,12 @@ class _AdminTrainersScreenState extends State<AdminTrainersScreen> {
     // We handle int, bool, and string forms so it works regardless of how
     // the HTTP client deserialises the JSON number.
     final rawActive = trainer['is_active'];
-    final isActive =
-        rawActive == 1 || rawActive == true || rawActive.toString() == '1';
+    print(trainer['is_active']);
+    final isActive = rawActive == 1;
 
     final statusColor = isActive ? AppTheme.active : AppTheme.expired;
     final statusBg = isActive ? AppTheme.activeLight : AppTheme.expiredLight;
+    print(isActive);
     final statusLabel = isActive ? 'Active' : 'Inactive';
 
     return Container(

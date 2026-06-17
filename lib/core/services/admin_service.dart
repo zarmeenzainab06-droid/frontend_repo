@@ -93,6 +93,27 @@ class AdminService {
     }
   }
 
+  // foe status in member module
+  static Future<Map<String, dynamic>> freezeMembership({
+    required int userId,
+    required String action, // 'freeze' or 'unfreeze'
+  }) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/admin/members/$userId/freeze'),
+        headers: _headers,
+        body: json.encode({'action': action}),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
   // ── Get Trainers ───────────────────────────────────────────
   static Future<Map<String, dynamic>> getTrainers() async {
     try {
@@ -213,7 +234,7 @@ class AdminService {
           'gender': gender,
           'training_slot': trainingSlot,
           if (trainerId != null) 'trainer_id': int.tryParse(trainerId),
-          'password': 'GymSwift@123',
+          'password': password,
         }),
       );
       final data = json.decode(response.body);
@@ -426,9 +447,13 @@ class AdminService {
       print("TOKEN: $token");
 
       final uri = Uri.parse('$baseUrl/admin/trainers').replace(
-        queryParameters: search != null && search.isNotEmpty
-            ? {'search': search}
-            : null,
+        // queryParameters: search != null && search.isNotEmpty
+        //     ? {'search': search}
+        //     : null,
+        queryParameters: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          '_': DateTime.now().millisecondsSinceEpoch.toString(), // ← add this
+        },
       );
 
       print("REQUEST URL: $uri"); // debug

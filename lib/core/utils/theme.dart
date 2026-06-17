@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // ── Brand Colors ──────────────────────────────────────────
-  static const Color primary = Color(0xFFE53935); // GymSwift red
+  static const Color primary = Color(0xFFE53935); // GymFitex red
   static const Color primaryDark = Color(0xFFC62828); // pressed red
   static const Color primaryLight = Color(0xFFFFEBEE); // red tint bg
 
@@ -17,6 +17,8 @@ class AppTheme {
   static const Color expiredLight = Color(0xFFFFEBEE);
   static const Color pending = Color(0xFFFF9800); // orange
   static const Color pendingLight = Color(0xFFFFF3E0);
+  static const Color frozen = Color.fromARGB(255, 185, 34, 24); // ← add this
+  static const Color frozenLight = Color(0xFFE3F2FD);
 
   // ── Text Colors ───────────────────────────────────────────
   static const Color textPrimary = Color(0xFF212121);

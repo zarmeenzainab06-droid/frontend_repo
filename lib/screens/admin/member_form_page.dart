@@ -602,10 +602,10 @@ class _MemberFormPageState extends State<MemberFormPage> {
                             const SizedBox(height: 16),
                           ],
 
-                          _label('Amount Paid (\$) *'),
+                          _label('Amount Paid (PKR) *'),
                           _textField(
                             controller: _feeCtrl,
-                            hint: '99.00',
+                            hint: '0.00',
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),

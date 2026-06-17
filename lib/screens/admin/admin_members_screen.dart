@@ -21,7 +21,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     'All Status',
     'Active',
     'Expired',
-    'Pending',
+    'Frozen',
   ];
 
   @override
@@ -334,13 +334,14 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     final packageName = (member['package_name'] ?? '').toString();
     final endDate = member['end_date'] ?? '';
     final trainer = member['trainer_name'] ?? '';
-    final rawStatus = (member['membership_status'] ?? 'pending')
+    // final rawStatus = (member['membership_status'] ?? 'pending')
+    final rawStatus = (member['membership_status'] ?? 'no plan')
         .toString()
         .toLowerCase();
     final duration = member['package_duration']?.toString() ?? '';
     final fee = member['membership_fee'];
     final feeStr = fee != null
-        ? '\$${double.tryParse(fee.toString())?.toStringAsFixed(0) ?? fee}'
+        ? 'PKR ${double.tryParse(fee.toString())?.toStringAsFixed(0) ?? fee}'
         : '';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     final statusColor = AppColors.statusColor(rawStatus);
@@ -422,13 +423,85 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
             _infoRow(Icons.card_membership_outlined, planLabel),
             if (endDate.isNotEmpty) ...[
               const SizedBox(height: 6),
-              _infoRow(Icons.calendar_today_outlined, 'Expires: $endDate'),
+              _infoRow(
+                Icons.calendar_today_outlined,
+                'Expires: ${endDate.toString().split('T')[0]}',
+              ),
             ],
             if (trainer.isNotEmpty) ...[
               const SizedBox(height: 6),
               _infoRow(Icons.person_outline, 'Trainer: $trainer'),
             ],
             const SizedBox(height: 14),
+            //forrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+            // Add this ABOVE the Edit/Delete row
+            if (rawStatus == 'active' || rawStatus == 'frozen') ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: rawStatus == 'frozen'
+                        ? AppTheme.active
+                        : AppTheme.frozen,
+                    side: BorderSide(
+                      color: rawStatus == 'frozen'
+                          ? AppTheme.active
+                          : const Color.fromARGB(255, 185, 24, 24),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                    ),
+                    minimumSize: const Size(0, 40),
+                  ),
+                  onPressed: () async {
+                    final action = rawStatus == 'frozen'
+                        ? 'unfreeze'
+                        : 'freeze';
+                    final result = await AdminService.freezeMembership(
+                      userId: member['id'],
+                      action: action,
+                    );
+                    if (result['success'] == true) {
+                      Get.snackbar(
+                        'Success',
+                        'Membership ${action}d successfully',
+                        backgroundColor: AppTheme.active,
+                        colorText: Colors.white,
+                        snackPosition: SnackPosition.BOTTOM,
+                        margin: const EdgeInsets.all(16),
+                      );
+                      _loadMembers(); // refresh list
+                    } else {
+                      Get.snackbar(
+                        'Error',
+                        result['message'] ?? 'Failed',
+                        backgroundColor: AppTheme.expired,
+                        colorText: Colors.white,
+                        snackPosition: SnackPosition.BOTTOM,
+                        margin: const EdgeInsets.all(16),
+                      );
+                    }
+                  },
+                  icon: Icon(
+                    rawStatus == 'frozen'
+                        ? Icons.play_circle_outline
+                        : Icons.pause_circle_outline,
+                    size: 18,
+                  ),
+                  label: Text(
+                    rawStatus == 'frozen'
+                        ? 'Unfreeze Membership'
+                        : 'Freeze Membership',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             Row(
               children: [
                 Expanded(
@@ -451,6 +524,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       );
                       if (result == true) await _loadMembers();
                     },
+
                     child: const Text(
                       'Edit',
                       style: TextStyle(
@@ -460,6 +534,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton(
