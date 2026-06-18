@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../core/services/admin_service.dart';
-import '../../core/utils/theme.dart';
-import '../../core/widgets/app_shell.dart';
+import '../../../core/services/admin_service.dart';
+import '../../../core/utils/theme.dart';
+import '../../../core/widgets/app_shell.dart';
 import 'member_form_page.dart';
 
 class AdminMembersScreen extends StatefulWidget {
@@ -433,8 +433,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
               _infoRow(Icons.person_outline, 'Trainer: $trainer'),
             ],
             const SizedBox(height: 14),
-            //forrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-            // Add this ABOVE the Edit/Delete row
+            //forrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr frozen button
             if (rawStatus == 'active' || rawStatus == 'frozen') ...[
               const SizedBox(height: 8),
               SizedBox(
@@ -442,11 +441,11 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: rawStatus == 'frozen'
-                        ? AppTheme.active
+                        ? const Color.fromARGB(255, 135, 206, 235)
                         : AppTheme.frozen,
                     side: BorderSide(
                       color: rawStatus == 'frozen'
-                          ? AppTheme.active
+                          ? const Color.fromARGB(255, 135, 206, 235)
                           : const Color.fromARGB(255, 185, 24, 24),
                     ),
                     shape: RoundedRectangleBorder(

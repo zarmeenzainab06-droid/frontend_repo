@@ -257,6 +257,7 @@ class AdminService {
     required String gender,
     required String trainingSlot,
     String? trainerId,
+    String? password, // ← add this
   }) async {
     try {
       final response = await http.put(

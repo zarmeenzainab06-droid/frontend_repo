@@ -2,8 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../core/services/admin_service.dart';
-import '../../core/utils/theme.dart';
+import '../../../core/services/admin_service.dart';
+import '../../../core/utils/theme.dart';
 
 class MemberFormPage extends StatefulWidget {
   final int? memberId; // null = ADD, not null = EDIT
@@ -15,6 +15,10 @@ class MemberFormPage extends StatefulWidget {
 }
 
 class _MemberFormPageState extends State<MemberFormPage> {
+  // two bool for add and edit screen
+  bool _hidePassword = true;
+  bool _hideEditPassword = true;
+
   bool get _isEdit => widget.memberId != null;
 
   final _formKey = GlobalKey<FormState>();
@@ -305,6 +309,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
       gender: _gender ?? 'male',
       trainingSlot: _trainingSlot ?? 'morning',
       trainerId: _trainerId,
+      password: _passwordCtrl.text.trim(), // ← add this
     );
     if (!mounted) return; // ← ADD THIS
     if (!updateResult['success']) {
@@ -414,7 +419,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
                             controller: _emailCtrl,
                             hint: 'member@example.com',
                             keyboardType: TextInputType.emailAddress,
-                            readOnly: _isEdit,
+                            readOnly: false,
                             validator: (v) {
                               if (v!.isEmpty) return 'Email is required';
                               if (!v.contains('@'))
@@ -435,21 +440,95 @@ class _MemberFormPageState extends State<MemberFormPage> {
                           const SizedBox(height: 16),
                           // for password
                           const SizedBox(height: 16),
-                          if (!_isEdit) ...[
-                            _label('Password *'),
-                            _textField(
-                              controller: _passwordCtrl,
-                              hint: 'Assign a password',
-                              obscureText: true,
-                              validator: (v) {
+                          // for password eye
+                          _label(
+                            _isEdit
+                                ? 'New Password (leave empty to keep current)'
+                                : 'Password *',
+                          ),
+                          TextFormField(
+                            controller: _passwordCtrl,
+                            obscureText: _isEdit
+                                ? _hideEditPassword
+                                : _hidePassword,
+                            validator: (v) {
+                              if (!_isEdit) {
                                 if (v == null || v.trim().isEmpty)
                                   return 'Password is required';
                                 if (v.trim().length < 6)
                                   return 'Minimum 6 characters';
-                                return null;
-                              },
+                              } else {
+                                // edit mode — optional but if filled must be 6+ chars
+                                if (v != null &&
+                                    v.trim().isNotEmpty &&
+                                    v.trim().length < 6) {
+                                  return 'Minimum 6 characters';
+                                }
+                              }
+                              return null;
+                            },
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textPrimary,
                             ),
-                          ],
+                            decoration: InputDecoration(
+                              hintText: _isEdit
+                                  ? 'Leave empty to keep current password'
+                                  : 'Assign a password',
+                              hintStyle: const TextStyle(
+                                color: AppTheme.textHint,
+                                fontSize: 14,
+                              ),
+                              filled: true,
+                              fillColor: AppTheme.background,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusMd,
+                                ),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusMd,
+                                ),
+                                borderSide: const BorderSide(
+                                  color: AppTheme.primary,
+                                  width: 1.5,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusMd,
+                                ),
+                                borderSide: const BorderSide(
+                                  color: AppTheme.expired,
+                                  width: 1.5,
+                                ),
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  (_isEdit ? _hideEditPassword : _hidePassword)
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  size: 18,
+                                  color: AppTheme.textSecondary,
+                                ),
+                                onPressed: () => setState(() {
+                                  if (_isEdit) {
+                                    _hideEditPassword = !_hideEditPassword;
+                                  } else {
+                                    _hidePassword = !_hidePassword;
+                                  }
+                                }),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
                           _label('Gender *'),
                           _dropdownField(
                             hint: 'Select gender',

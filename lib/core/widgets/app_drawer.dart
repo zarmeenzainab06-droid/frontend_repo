@@ -133,6 +133,15 @@ class AppDrawer extends StatelessWidget {
   // ── Admin Drawer Items ──────────────────────────────────────
   List<Widget> _adminItems() {
     return [
+      // try
+      _item(
+        Icons.home_outlined,
+        'Dashboard',
+        onTap: () {
+          Get.back();
+          Get.toNamed('/admin-dashboard');
+        },
+      ),
       _item(
         Icons.card_membership_outlined,
         'Manage Packages',
@@ -161,6 +170,15 @@ class AppDrawer extends StatelessWidget {
         onTap: () {
           Get.back(); // close drawer
           Get.toNamed(AppRoutes.adminSlots);
+        },
+      ),
+      //try
+      _item(
+        Icons.person_outline,
+        'Profile',
+        onTap: () {
+          Get.back(); // close drawer
+          Get.toNamed('/admin/profile');
         },
       ),
       _item(
