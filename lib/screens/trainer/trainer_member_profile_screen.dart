@@ -12,24 +12,40 @@ class TrainerMemberProfileScreen extends StatefulWidget {
 
 class _TrainerMemberProfileScreenState
     extends State<TrainerMemberProfileScreen> {
-  // ── Member passed via Get.toNamed arguments ────────────────
-  // Basic info comes from the members list (no extra API call needed)
   late Map<String, dynamic> member;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Arguments passed from TrainerMembersScreen → _buildMemberCard
-    // Get.toNamed('/trainer/member-profile', arguments: member)
-    member = (Get.arguments as Map<String, dynamic>?) ?? {};
+    final args = Get.arguments;
+
+    // ── Accept arguments from BOTH sources ────────────────────
+    // 1. From Members screen: full member map
+    // 2. From Diet Plans screen: { 'id': x, 'name': y } — fetch full data
+    if (args is Map<String, dynamic>) {
+      member = args;
+      // If only id + name passed (from diet plans), fetch full profile
+      if (!member.containsKey('email') && member.containsKey('id')) {
+        _fetchMember(member['id']);
+      }
+    } else {
+      member = {};
+    }
   }
 
-  // ── Helpers ────────────────────────────────────────────────
+  Future<void> _fetchMember(int id) async {
+    setState(() => _isLoading = true);
+    final result = await TrainerService.getMemberById(id);
+    if (result['success']) {
+      setState(() => member = result['member']);
+    }
+    setState(() => _isLoading = false);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────
   String get _name => member['name'] ?? 'Member';
-
   String get _initial => _name.isNotEmpty ? _name[0].toUpperCase() : 'M';
-
   String get _email => member['email'] ?? 'N/A';
 
   String get _phone =>
@@ -75,6 +91,11 @@ class _TrainerMemberProfileScreenState
       ? _formatDate(member['created_at'].toString())
       : 'N/A';
 
+  String get _workoutType =>
+      member['workout_type'] ?? member['diet_plan_title'] ?? '';
+
+  String get _dietPlanTitle => member['diet_plan_title'] ?? '';
+
   String _formatDate(String raw) {
     try {
       final dt = DateTime.parse(raw);
@@ -99,7 +120,6 @@ class _TrainerMemberProfileScreenState
     }
   }
 
-  // Status badge colors
   Color get _statusColor {
     switch (_membershipStatus) {
       case 'active':
@@ -128,6 +148,7 @@ class _TrainerMemberProfileScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
+      drawer: const TrainerDrawer(),
       body: Column(
         children: [
           _buildTopBar(context),
@@ -141,7 +162,6 @@ class _TrainerMemberProfileScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Title ──────────────────────────
                         const Text(
                           'Member Profile',
                           style: TextStyle(
@@ -151,25 +171,24 @@ class _TrainerMemberProfileScreenState
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // ── Red Profile Card ───────────────
                         _buildProfileCard(),
                         const SizedBox(height: 14),
-
-                        // ── Membership Status Card ─────────
                         _buildMembershipCard(),
                         const SizedBox(height: 14),
-
-                        // ── Joined Date Card ───────────────
                         _buildJoinedCard(),
                         const SizedBox(height: 14),
-
-                        // ── Contact Information ────────────
                         _buildContactCard(),
                         const SizedBox(height: 14),
-
-                        // ── Training Info ──────────────────
                         _buildTrainingCard(),
+                        // ── Diet Plan Info (if assigned) ───────
+                        if (_dietPlanTitle.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          _buildDietCard(),
+                        ],
+                        const SizedBox(height: 14),
+
+                        // ── Contact Button ─────────────────────
+                        _buildContactButton(),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -250,7 +269,6 @@ class _TrainerMemberProfileScreenState
       ),
       child: Column(
         children: [
-          // Avatar
           Container(
             width: 72,
             height: 72,
@@ -270,8 +288,6 @@ class _TrainerMemberProfileScreenState
             ),
           ),
           const SizedBox(height: 14),
-
-          // Name
           Text(
             _name,
             style: const TextStyle(
@@ -281,15 +297,11 @@ class _TrainerMemberProfileScreenState
             ),
           ),
           const SizedBox(height: 6),
-
-          // Gender
           Text(
             _gender,
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 12),
-
-          // Status badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
             decoration: BoxDecoration(
@@ -327,7 +339,7 @@ class _TrainerMemberProfileScreenState
     );
   }
 
-  // ── Membership Status Card ────────────────────────────────────
+  // ── Membership Card ───────────────────────────────────────────
   Widget _buildMembershipCard() {
     return Container(
       width: double.infinity,
@@ -349,16 +361,12 @@ class _TrainerMemberProfileScreenState
             ),
           ),
           const SizedBox(height: 14),
-
-          // Package row
           _infoTile(
             icon: Icons.card_membership_outlined,
             label: 'Package',
             value: _plan,
           ),
           const SizedBox(height: 10),
-
-          // Status row
           _infoTile(
             icon: Icons.circle,
             label: 'Status',
@@ -366,8 +374,6 @@ class _TrainerMemberProfileScreenState
             valueColor: _statusColor,
           ),
           const SizedBox(height: 10),
-
-          // Expiry row
           _infoTile(
             icon: Icons.event_outlined,
             label: 'Expires',
@@ -422,7 +428,7 @@ class _TrainerMemberProfileScreenState
     );
   }
 
-  // ── Contact Information Card ──────────────────────────────────
+  // ── Contact Card ──────────────────────────────────────────────
   Widget _buildContactCard() {
     return Container(
       width: double.infinity,
@@ -460,7 +466,7 @@ class _TrainerMemberProfileScreenState
     );
   }
 
-  // ── Training Info Card ────────────────────────────────────────
+  // ── Training Card ─────────────────────────────────────────────
   Widget _buildTrainingCard() {
     return Container(
       width: double.infinity,
@@ -489,6 +495,46 @@ class _TrainerMemberProfileScreenState
           ),
           const SizedBox(height: 12),
           _contactRow(icon: Icons.wc_outlined, label: 'Gender', value: _gender),
+          if (_workoutType.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _contactRow(
+              icon: Icons.fitness_center_outlined,
+              label: 'Workout Type',
+              value: _workoutType,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Diet Plan Card (shown if diet assigned) ───────────────────
+  Widget _buildDietCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: [AppTheme.cardShadow],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Diet Plan',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _contactRow(
+            icon: Icons.restaurant_menu_outlined,
+            label: 'Assigned Plan',
+            value: _dietPlanTitle,
+          ),
         ],
       ),
     );
@@ -566,7 +612,67 @@ class _TrainerMemberProfileScreenState
     );
   }
 
-  // ── Bottom Nav ────────────────────────────────────────────────
+  // ── Contact Button ────────────────────────────────────────────
+  Widget _buildContactButton() {
+    return GestureDetector(
+      onTap: () {
+        final phone = _phone != 'N/A' ? _phone : '';
+        if (phone.isNotEmpty) {
+          Get.snackbar(
+            'Contact $_name',
+            'Phone: $phone',
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
+            icon: const Icon(Icons.phone_rounded, color: Colors.white),
+          );
+        } else {
+          Get.snackbar(
+            'No Phone',
+            'No contact number available for $_name',
+            backgroundColor: AppTheme.expired,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(16),
+          );
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.green,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.phone_rounded, color: Colors.white, size: 22),
+            const SizedBox(width: 10),
+            Text(
+              _phone != 'N/A' ? 'Call $_phone' : 'Contact Member',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Bottom Nav (5 items) ──────────────────────────────────────
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -589,6 +695,11 @@ class _TrainerMemberProfileScreenState
                 'Members',
                 isActive: true,
                 onTap: () => Get.offNamed('/trainer/members'),
+              ),
+              _navItem(
+                Icons.restaurant_menu_outlined,
+                'Diet Plans',
+                onTap: () => Get.toNamed('/trainer/diet-plans'),
               ),
               _navItem(
                 Icons.calendar_month_outlined,
@@ -627,7 +738,7 @@ class _TrainerMemberProfileScreenState
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               color: isActive ? AppTheme.primary : AppTheme.textSecondary,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),

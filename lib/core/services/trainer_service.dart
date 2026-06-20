@@ -57,6 +57,23 @@ class TrainerService {
     }
   }
 
+  // ── Get Single Member by ID ────────────────────────────────
+  static Future<Map<String, dynamic>> getMemberById(int memberId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/trainer/members/$memberId'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'member': data['member']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
   // ── Today's Schedule ───────────────────────────────────────
   static Future<Map<String, dynamic>> getTodaySchedule() async {
     try {

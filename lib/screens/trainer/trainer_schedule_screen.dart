@@ -14,14 +14,13 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _schedule = [];
 
-  // ── Slot config — hardcoded time ranges ────────────────────
   static const Map<String, Map<String, dynamic>> _slotConfig = {
     'morning': {
       'label': 'Morning Sessions',
       'timeRange': '6:00 AM - 7:00 AM',
       'endHour': 7,
       'endMin': 0,
-      'iconBg': Color(0xFFFF6B35), // orange
+      'iconBg': Color(0xFFFF6B35),
       'sectionBg': Color(0xFFFF6B35),
     },
     'midday': {
@@ -29,7 +28,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
       'timeRange': '12:00 PM - 1:00 PM',
       'endHour': 13,
       'endMin': 0,
-      'iconBg': Color(0xFF2196F3), // blue
+      'iconBg': Color(0xFF2196F3),
       'sectionBg': Color(0xFF2196F3),
     },
     'evening': {
@@ -37,7 +36,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
       'timeRange': '6:00 PM - 7:00 PM',
       'endHour': 19,
       'endMin': 0,
-      'iconBg': Color(0xFF9C27B0), // purple
+      'iconBg': Color(0xFF9C27B0),
       'sectionBg': Color(0xFF9C27B0),
     },
     'night': {
@@ -45,19 +44,22 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
       'timeRange': '8:00 PM - 9:00 PM',
       'endHour': 21,
       'endMin': 0,
-      'iconBg': Color(0xFF607D8B), // blue grey
+      'iconBg': Color(0xFF607D8B),
       'sectionBg': Color(0xFF607D8B),
     },
   };
 
-  // ── Is this slot's time already passed? ───────────────────
   bool _isSlotCompleted(String slot) {
     final now = DateTime.now();
     final config = _slotConfig[slot];
     if (config == null) return false;
-    final endHour = config['endHour'] as int;
-    final endMin = config['endMin'] as int;
-    final slotEnd = DateTime(now.year, now.month, now.day, endHour, endMin);
+    final slotEnd = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      config['endHour'] as int,
+      config['endMin'] as int,
+    );
     return now.isAfter(slotEnd);
   }
 
@@ -78,7 +80,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     setState(() => _isLoading = false);
   }
 
-  // ── Group members by slot ──────────────────────────────────
   Map<String, List<Map<String, dynamic>>> get _grouped {
     final Map<String, List<Map<String, dynamic>>> map = {
       'morning': [],
@@ -89,22 +90,20 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     for (final m in _schedule) {
       final slot = (m['training_slot'] ?? '').toString().toLowerCase();
       if (map.containsKey(slot)) {
-        map[slot]!.add(m);
+        map[slot]!.add(Map<String, dynamic>.from(m));
       }
     }
     return map;
   }
 
-  // ── Today's date formatted ─────────────────────────────────
-  String get _todayLabel {
-    return DateFormat('EEEE, MMMM d, y').format(DateTime.now());
-  }
+  String get _todayLabel =>
+      DateFormat('EEEE, MMMM d, y').format(DateTime.now());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const TrainerDrawer(),
       backgroundColor: AppTheme.background,
+      drawer: const TrainerDrawer(),
       body: Column(
         children: [
           _buildTopBar(),
@@ -122,7 +121,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ── Title ────────────────────────
                           const Text(
                             'Schedule',
                             style: TextStyle(
@@ -132,12 +130,8 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                             ),
                           ),
                           const SizedBox(height: 14),
-
-                          // ── Date display ─────────────────
                           _buildDateDisplay(),
                           const SizedBox(height: 20),
-
-                          // ── Slot sections ─────────────────
                           ..._buildSlotSections(),
                         ],
                       ),
@@ -150,7 +144,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     );
   }
 
-  // ── Top Bar ───────────────────────────────────────────────────
   Widget _buildTopBar() {
     return Container(
       color: AppTheme.primary,
@@ -206,7 +199,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     );
   }
 
-  // ── Date Display ──────────────────────────────────────────────
   Widget _buildDateDisplay() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -237,19 +229,14 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     );
   }
 
-  // ── Build all slot sections ───────────────────────────────────
   List<Widget> _buildSlotSections() {
     final grouped = _grouped;
     final List<Widget> sections = [];
-    final slotOrder = ['morning', 'midday', 'evening', 'night'];
-
-    for (final slot in slotOrder) {
+    for (final slot in ['morning', 'midday', 'evening', 'night']) {
       final members = grouped[slot] ?? [];
       if (members.isEmpty) continue;
-
       final config = _slotConfig[slot]!;
       final completed = _isSlotCompleted(slot);
-
       sections.add(
         _buildSlotSection(
           slot: slot,
@@ -260,15 +247,10 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
       );
       sections.add(const SizedBox(height: 16));
     }
-
-    if (sections.isEmpty) {
-      sections.add(_buildEmptyState());
-    }
-
+    if (sections.isEmpty) sections.add(_buildEmptyState());
     return sections;
   }
 
-  // ── Single Slot Section ───────────────────────────────────────
   Widget _buildSlotSection({
     required String slot,
     required Map<String, dynamic> config,
@@ -278,11 +260,9 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     final upcomingCount = completed ? 0 : members.length;
     final iconBg = config['iconBg'] as Color;
     final sectionColor = config['sectionBg'] as Color;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Section Header ──────────────────────────────────
         Row(
           children: [
             Container(
@@ -310,8 +290,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
           ],
         ),
         const SizedBox(height: 10),
-
-        // ── Slot Card ───────────────────────────────────────
         Container(
           decoration: BoxDecoration(
             color: AppTheme.surface,
@@ -321,12 +299,10 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Time + members count + location
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
                 child: Row(
                   children: [
-                    // Orange/colored clock icon box
                     Container(
                       width: 44,
                       height: 44,
@@ -391,8 +367,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                   ],
                 ),
               ),
-
-              // Upcoming badge
               Padding(
                 padding: const EdgeInsets.only(left: 16, bottom: 10),
                 child: Container(
@@ -416,10 +390,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                   ),
                 ),
               ),
-
               const Divider(height: 1, color: AppTheme.border),
-
-              // Member rows
               ...members.map(
                 (m) => _buildMemberRow(
                   m,
@@ -434,7 +405,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     );
   }
 
-  // ── Member Row inside slot card ───────────────────────────────
   Widget _buildMemberRow(
     Map<String, dynamic> member, {
     required bool completed,
@@ -443,14 +413,12 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     final name = member['memberName'] ?? '';
     final workoutType = member['workout_type'] ?? 'General Fitness';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              // Red avatar
               Container(
                 width: 40,
                 height: 40,
@@ -470,8 +438,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Name + workout type
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,8 +461,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                   ],
                 ),
               ),
-
-              // Status badge — time-based
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -529,7 +493,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     );
   }
 
-  // ── Empty state ───────────────────────────────────────────────
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -550,18 +513,12 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 6),
-            const Text(
-              'Members will appear here when assigned',
-              style: TextStyle(fontSize: 13, color: AppTheme.textHint),
-            ),
           ],
         ),
       ),
     );
   }
 
-  // ── Bottom Nav ────────────────────────────────────────────────
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -583,6 +540,11 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                 Icons.people_outline_rounded,
                 'Members',
                 onTap: () => Get.offNamed('/trainer/members'),
+              ),
+              _navItem(
+                Icons.restaurant_menu_outlined,
+                'Diet Plans',
+                onTap: () => Get.toNamed('/trainer/diet-plans'),
               ),
               _navItem(
                 Icons.calendar_month_outlined,
@@ -621,7 +583,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               color: isActive ? AppTheme.primary : AppTheme.textSecondary,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),
