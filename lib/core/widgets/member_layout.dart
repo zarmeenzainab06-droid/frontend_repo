@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../utils/theme.dart';
 import 'app_drawer.dart';
+import '../../screens/dashboard/member_payment_screen.dart';
+import '../../screens/dashboard/member_plans_screen.dart';
+import '../../screens/dashboard/member_trainer.dart';
+import '../../screens/dashboard/member_profile.dart';
 
 class MemberLayout extends StatelessWidget {
   final Widget body;
@@ -75,9 +79,7 @@ class MemberLayout extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: AppTheme.border, width: 0.5),
-        ),
+        border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
       ),
       child: SafeArea(
         child: Padding(
@@ -86,9 +88,10 @@ class MemberLayout extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(Icons.home_outlined, 'Home', 0),
-              _navItem(Icons.card_membership_outlined, 'Membership', 1),
-              _navItem(Icons.fitness_center_outlined, 'Trainer', 2),
-              _navItem(Icons.account_circle_outlined, 'Profile', 3),
+              _navItem(Icons.card_membership, 'Membership', 1),
+              _navItem(Icons.payment_outlined, 'Payments', 2),
+              _navItem(Icons.fitness_center_outlined, 'Trainer', 3),
+              _navItem(Icons.account_circle_outlined, 'Profile', 4),
             ],
           ),
         ),
@@ -106,13 +109,16 @@ class MemberLayout extends StatelessWidget {
             Get.offAllNamed('/dashboard');
             break;
           case 1:
-            Get.offAllNamed('/member_membership');
+            Get.offNamed('/member_membership');
             break;
           case 2:
-            Get.offAllNamed('/member_trainer');
+            Get.to(() => MemberPaymentScreen());
             break;
           case 3:
-            Get.offAllNamed('/member_profile');
+            Get.to(() => MemberTrainerScreen());
+            break;
+          case 4:
+            Get.to(() => MemberProfileScreen());
             break;
         }
       },
@@ -121,16 +127,20 @@ class MemberLayout extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 24,
-                color: isActive ? AppTheme.primary : AppTheme.textSecondary),
+            Icon(
+              icon,
+              size: 24,
+              color: isActive ? AppTheme.primary : AppTheme.textSecondary,
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                )),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isActive ? AppTheme.primary : AppTheme.textSecondary,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
           ],
         ),
       ),

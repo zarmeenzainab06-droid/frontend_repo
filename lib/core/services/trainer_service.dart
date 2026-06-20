@@ -23,9 +23,9 @@ class TrainerService {
         headers: _headers,
       );
       final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
+      if (response.statusCode == 200 && data['success'] == true)
         return {'success': true, 'stats': data['stats']};
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
+      if (response.statusCode == 401 || response.statusCode == 403) {
         Get.offAllNamed('/login');
         return {'success': false, 'message': 'Access denied'};
       }
@@ -35,7 +35,7 @@ class TrainerService {
     }
   }
 
-  // ── Assigned Members ───────────────────────────────────────
+  // ── Assigned Members (includes diet_plan info) ─────────────
   static Future<Map<String, dynamic>> getMyMembers({String? search}) async {
     try {
       final uri = Uri.parse('$baseUrl/trainer/members').replace(
@@ -45,11 +45,28 @@ class TrainerService {
       );
       final response = await http.get(uri, headers: _headers);
       final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
+      if (response.statusCode == 200 && data['success'] == true)
         return {'success': true, 'members': data['members']};
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
+      if (response.statusCode == 401 || response.statusCode == 403) {
         Get.offAllNamed('/login');
         return {'success': false, 'message': 'Access denied'};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Get Single Member by ID ────────────────────────────────
+  static Future<Map<String, dynamic>> getMemberById(int memberId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/trainer/members/$memberId'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'member': data['member']};
       }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {
@@ -65,16 +82,15 @@ class TrainerService {
         headers: _headers,
       );
       final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
+      if (response.statusCode == 200 && data['success'] == true)
         return {'success': true, 'schedule': data['schedule']};
-      }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {
       return {'success': false, 'message': 'Server error: $e'};
     }
   }
 
-  // ── Recent Member Activity ─────────────────────────────────
+  // ── Recent Activity ────────────────────────────────────────
   static Future<Map<String, dynamic>> getRecentActivity() async {
     try {
       final response = await http.get(
@@ -82,8 +98,27 @@ class TrainerService {
         headers: _headers,
       );
       final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
+      if (response.statusCode == 200 && data['success'] == true)
         return {'success': true, 'activity': data['activity']};
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Trainer Profile ────────────────────────────────────────
+  static Future<Map<String, dynamic>> getProfile() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/trainer/profile'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true)
+        return {'success': true, 'profile': data['profile']};
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        Get.offAllNamed('/login');
+        return {'success': false, 'message': 'Access denied'};
       }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {
@@ -109,8 +144,6 @@ class TrainerService {
       );
       final data = json.decode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        // Update stored user name
-        final box = GetStorage();
         final user = box.read('user') ?? {};
         user['name'] = name;
         box.write('user', user);
@@ -137,8 +170,32 @@ class TrainerService {
         }),
       );
       final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
+      if (response.statusCode == 200 && data['success'] == true)
         return {'success': true};
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // DIET PLAN METHODS
+  // ══════════════════════════════════════════════════════════
+
+  // ── Get all diet plans ─────────────────────────────────────
+  static Future<Map<String, dynamic>> getDietPlans() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/trainer/diet-plans'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'plans': data['plans'],
+          'stats': data['stats'],
+        };
       }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {
@@ -146,20 +203,101 @@ class TrainerService {
     }
   }
 
-  // ── Trainer Profile (full real data from DB) ──────────────
-  static Future<Map<String, dynamic>> getProfile() async {
+  // ── Get single diet plan ───────────────────────────────────
+  static Future<Map<String, dynamic>> getDietPlan(int planId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/trainer/profile'),
+        Uri.parse('$baseUrl/trainer/diet-plans/$planId'),
         headers: _headers,
       );
       final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
-        return {'success': true, 'profile': data['profile']};
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        Get.offAllNamed('/login');
-        return {'success': false, 'message': 'Access denied'};
+      if (response.statusCode == 200 && data['success'] == true)
+        return {'success': true, 'plan': data['plan']};
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Create diet plan ───────────────────────────────────────
+  static Future<Map<String, dynamic>> createDietPlan({
+    required int memberId,
+    required String title,
+    required String assignmentDate,
+    required String breakfast,
+    required String lunch,
+    required String dinner,
+    required String snacks,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/trainer/diet-plans'),
+        headers: _headers,
+        body: json.encode({
+          'member_id': memberId,
+          'title': title,
+          'assignment_date': assignmentDate,
+          'breakfast': breakfast,
+          'lunch': lunch,
+          'dinner': dinner,
+          'snacks': snacks,
+        }),
+      );
+      final data = json.decode(response.body);
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data['success'] == true) {
+        return {'success': true, 'plan_id': data['plan_id']};
       }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Update diet plan ───────────────────────────────────────
+  static Future<Map<String, dynamic>> updateDietPlan({
+    required int planId,
+    required int memberId,
+    required String title,
+    required String assignmentDate,
+    required String breakfast,
+    required String lunch,
+    required String dinner,
+    required String snacks,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/trainer/diet-plans/$planId'),
+        headers: _headers,
+        body: json.encode({
+          'member_id': memberId,
+          'title': title,
+          'assignment_date': assignmentDate,
+          'breakfast': breakfast,
+          'lunch': lunch,
+          'dinner': dinner,
+          'snacks': snacks,
+        }),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true)
+        return {'success': true};
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Delete diet plan ───────────────────────────────────────
+  static Future<Map<String, dynamic>> deleteDietPlan(int planId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/trainer/diet-plans/$planId'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true)
+        return {'success': true};
       return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {
       return {'success': false, 'message': 'Server error: $e'};

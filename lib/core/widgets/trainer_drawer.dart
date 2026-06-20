@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:third_task/core/utils/theme.dart';
+import '../utils/theme.dart';
 
 class TrainerDrawer extends StatelessWidget {
   const TrainerDrawer({Key? key}) : super(key: key);
@@ -19,31 +19,29 @@ class TrainerDrawer extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Logout',
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
         ),
         content: const Text(
           'Are you sure you want to logout?',
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+          style: TextStyle(color: Color(0xFF757575), fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: Color(0xFF757575)),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: const Color(0xFFE53935),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
             onPressed: () {
@@ -64,14 +62,16 @@ class TrainerDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String currentRoute = Get.currentRoute;
+
     return Drawer(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Colors.white,
       child: Column(
         children: [
           // ── Red Header ──────────────────────────────────────
           Container(
             width: double.infinity,
-            color: AppTheme.primary,
+            color: const Color(0xFFE53935),
             padding: EdgeInsets.only(
               top: MediaQuery.of(context).padding.top + 20,
               left: 20,
@@ -80,7 +80,6 @@ class TrainerDrawer extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Avatar
                 Container(
                   width: 54,
                   height: 54,
@@ -100,8 +99,6 @@ class TrainerDrawer extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-
-                // Name + role
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,8 +119,6 @@ class TrainerDrawer extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // Close X
                 GestureDetector(
                   onTap: () => Get.back(),
                   child: const Icon(
@@ -143,33 +138,64 @@ class TrainerDrawer extends StatelessWidget {
               children: [
                 _menuItem(
                   context: context,
-                  icon: Icons.people_outline_rounded,
-                  label: 'My Members',
+                  icon: Icons.home_outlined,
+                  label: 'Dashboard',
+                  isActive: currentRoute == '/trainer-dashboard',
                   onTap: () {
                     Get.back();
-                    Get.toNamed('/trainer/members');
+                    if (currentRoute != '/trainer-dashboard') {
+                      Get.offNamed('/trainer-dashboard');
+                    }
+                  },
+                ),
+                _menuItem(
+                  context: context,
+                  icon: Icons.people_outline_rounded,
+                  label: 'My Members',
+                  isActive: currentRoute == '/trainer/members',
+                  onTap: () {
+                    Get.back();
+                    if (currentRoute != '/trainer/members') {
+                      Get.toNamed('/trainer/members');
+                    }
+                  },
+                ),
+                _menuItem(
+                  context: context,
+                  icon: Icons.restaurant_menu_outlined,
+                  label: 'Diet Plans',
+                  isActive: currentRoute == '/trainer/diet-plans',
+                  onTap: () {
+                    Get.back();
+                    if (currentRoute != '/trainer/diet-plans') {
+                      Get.toNamed('/trainer/diet-plans');
+                    }
                   },
                 ),
                 _menuItem(
                   context: context,
                   icon: Icons.calendar_month_outlined,
                   label: 'Schedule',
+                  isActive: currentRoute == '/trainer/schedule',
                   onTap: () {
                     Get.back();
-                    Get.toNamed('/trainer/schedule');
+                    if (currentRoute != '/trainer/schedule') {
+                      Get.toNamed('/trainer/schedule');
+                    }
                   },
                 ),
                 _menuItem(
                   context: context,
                   icon: Icons.bar_chart_outlined,
                   label: 'Performance Report',
+                  isActive: false,
                   onTap: () {
                     Get.back();
                     Get.snackbar(
                       'Coming Soon',
                       'Performance report will be available soon',
-                      backgroundColor: AppTheme.surface,
-                      colorText: AppTheme.textPrimary,
+                      backgroundColor: Colors.white,
+                      colorText: const Color(0xFF212121),
                       snackPosition: SnackPosition.BOTTOM,
                       margin: const EdgeInsets.all(16),
                     );
@@ -179,13 +205,14 @@ class TrainerDrawer extends StatelessWidget {
                   context: context,
                   icon: Icons.settings_outlined,
                   label: 'Settings',
+                  isActive: false,
                   onTap: () {
                     Get.back();
                     Get.snackbar(
                       'Coming Soon',
                       'Settings will be available soon',
-                      backgroundColor: AppTheme.surface,
-                      colorText: AppTheme.textPrimary,
+                      backgroundColor: Colors.white,
+                      colorText: const Color(0xFF212121),
                       snackPosition: SnackPosition.BOTTOM,
                       margin: const EdgeInsets.all(16),
                     );
@@ -195,16 +222,29 @@ class TrainerDrawer extends StatelessWidget {
                   context: context,
                   icon: Icons.help_outline_rounded,
                   label: 'Help & Support',
+                  isActive: false,
                   onTap: () {
                     Get.back();
                     Get.snackbar(
                       'Coming Soon',
                       'Help & Support will be available soon',
-                      backgroundColor: AppTheme.surface,
-                      colorText: AppTheme.textPrimary,
+                      backgroundColor: Colors.white,
+                      colorText: const Color(0xFF212121),
                       snackPosition: SnackPosition.BOTTOM,
                       margin: const EdgeInsets.all(16),
                     );
+                  },
+                ),
+                _menuItem(
+                  context: context,
+                  icon: Icons.person_outline,
+                  label: 'Profile',
+                  isActive: currentRoute == '/trainer/profile',
+                  onTap: () {
+                    Get.back();
+                    if (currentRoute != '/trainer/profile') {
+                      Get.toNamed('/trainer/profile');
+                    }
                   },
                 ),
               ],
@@ -212,12 +252,12 @@ class TrainerDrawer extends StatelessWidget {
           ),
 
           // ── Logout ──────────────────────────────────────────
-          const Divider(height: 1, color: AppTheme.border),
+          const Divider(height: 1, color: Color(0xFFE0E0E0)),
           ListTile(
             onTap: () => _logout(context),
             leading: const Icon(
               Icons.logout_rounded,
-              color: AppTheme.primary,
+              color: Color(0xFFE53935),
               size: 22,
             ),
             title: const Text(
@@ -225,7 +265,7 @@ class TrainerDrawer extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.primary,
+                color: Color(0xFFE53935),
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(
@@ -243,23 +283,27 @@ class TrainerDrawer extends StatelessWidget {
     required BuildContext context,
     required IconData icon,
     required String label,
+    required bool isActive,
     required VoidCallback onTap,
   }) {
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: AppTheme.textSecondary, size: 22),
+      leading: Icon(
+        icon,
+        color: isActive ? const Color(0xFFE53935) : const Color(0xFF757575),
+        size: 22,
+      ),
       title: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: AppTheme.textPrimary,
+          fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+          color: isActive ? const Color(0xFFE53935) : const Color(0xFF212121),
         ),
       ),
+      tileColor: isActive ? const Color(0xFFFFEBEE) : Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-      ),
     );
   }
 }

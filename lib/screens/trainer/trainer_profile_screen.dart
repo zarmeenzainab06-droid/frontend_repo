@@ -1089,6 +1089,11 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
                 onTap: () => Get.offNamed('/trainer/members'),
               ),
               _navItem(
+                Icons.restaurant_menu_outlined,
+                'Diet Plans',
+                onTap: () => Get.toNamed('/trainer/diet-plans'),
+              ),
+              _navItem(
                 Icons.calendar_month_outlined,
                 'Schedule',
                 onTap: () => Get.toNamed('/trainer/schedule'),

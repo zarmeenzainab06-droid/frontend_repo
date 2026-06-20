@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
-import '../../core/widgets/trainer_drawer.dart';
+import '../../core/widgets/trainer_drawer.dart' show TrainerDrawer;
 
 class TrainerMembersScreen extends StatefulWidget {
   @override
@@ -14,6 +14,9 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _members = [];
   List<Map<String, dynamic>> _filtered = [];
+
+  // Filter: 'all' | 'diet_assigned' | 'no_diet'
+  String _dietFilter = 'all';
 
   @override
   void initState() {
@@ -28,24 +31,36 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
     );
     if (result['success']) {
       _members = List<Map<String, dynamic>>.from(result['members']);
-      _filtered = List.from(_members);
+      _applyFilter();
     }
     setState(() => _isLoading = false);
   }
 
+  void _applyFilter() {
+    List<Map<String, dynamic>> list = List.from(_members);
+    if (_dietFilter == 'diet_assigned') {
+      list = list.where((m) => m['diet_plan_id'] != null).toList();
+    } else if (_dietFilter == 'no_diet') {
+      list = list.where((m) => m['diet_plan_id'] == null).toList();
+    }
+    setState(() => _filtered = list);
+  }
+
   void _applySearch(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filtered = List.from(_members);
-      } else {
-        _filtered = _members.where((m) {
-          final name = (m['name'] ?? '').toString().toLowerCase();
-          final email = (m['email'] ?? '').toString().toLowerCase();
-          return name.contains(query.toLowerCase()) ||
-              email.contains(query.toLowerCase());
-        }).toList();
-      }
-    });
+    List<Map<String, dynamic>> list = List.from(_members);
+    if (_dietFilter == 'diet_assigned')
+      list = list.where((m) => m['diet_plan_id'] != null).toList();
+    else if (_dietFilter == 'no_diet')
+      list = list.where((m) => m['diet_plan_id'] == null).toList();
+    if (query.isNotEmpty) {
+      list = list.where((m) {
+        final name = (m['name'] ?? '').toString().toLowerCase();
+        final email = (m['email'] ?? '').toString().toLowerCase();
+        return name.contains(query.toLowerCase()) ||
+            email.contains(query.toLowerCase());
+      }).toList();
+    }
+    setState(() => _filtered = list);
   }
 
   String _slotLabel(String slot) {
@@ -63,6 +78,18 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
     }
   }
 
+  // Attendance % based on membership status
+  int _progressPercent(Map<String, dynamic> m) {
+    switch ((m['membership_status'] ?? '').toString().toLowerCase()) {
+      case 'active':
+        return 90;
+      case 'expired':
+        return 60;
+      default:
+        return 40;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,7 +100,7 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
           _buildTopBar(),
           _buildHeader(),
           _buildSearchBar(),
-          const SizedBox(height: 8),
+          _buildFilterTabs(),
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -156,16 +183,28 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
   // ── Header ────────────────────────────────────────────────────
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: Row(
         children: [
-          const Text(
-            'My Members',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'My Members',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              Text(
+                '${_members.length} members assigned to you',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ],
           ),
           const Spacer(),
           Container(
@@ -191,7 +230,7 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
   // ── Search Bar ────────────────────────────────────────────────
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
       child: TextField(
         controller: _searchController,
         onChanged: _applySearch,
@@ -226,19 +265,66 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
     );
   }
 
+  // ── Filter Tabs ───────────────────────────────────────────────
+  Widget _buildFilterTabs() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Row(
+        children: [
+          _filterTab('All', 'all'),
+          const SizedBox(width: 8),
+          _filterTab('Diet Assigned', 'diet_assigned'),
+          const SizedBox(width: 8),
+          _filterTab('No Diet Plan', 'no_diet'),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterTab(String label, String value) {
+    final isActive = _dietFilter == value;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _dietFilter = value);
+        _applyFilter();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isActive ? AppTheme.primary : AppTheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? AppTheme.primary : AppTheme.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isActive ? Colors.white : AppTheme.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Member Card ───────────────────────────────────────────────
   Widget _buildMemberCard(Map<String, dynamic> member) {
     final name = member['name'] ?? '';
-    final email = member['email'] ?? '';
-    final phone = member['phone'] ?? 'N/A';
     final slot = member['training_slot'] ?? '';
-    final plan = member['plan'] ?? 'N/A';
+    final plan = member['plan'] ?? '';
+    final planDuration = member['plan_duration'];
     final rawStatus = (member['membership_status'] ?? 'pending')
         .toString()
         .toLowerCase();
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final hasDietPlan = member['diet_plan_id'] != null;
+    final dietTitle = member['diet_plan_title'] ?? '';
+    final dietPlanId = member['diet_plan_id'];
+    final progress = _progressPercent(member);
 
-    // Status badge colors
+    // Status badge
     Color badgeBg;
     String badgeLabel;
     switch (rawStatus) {
@@ -256,148 +342,278 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
         badgeLabel = 'pending';
     }
 
+    // Plan label
+    String planLabel = '';
+    if (plan.isNotEmpty) {
+      planLabel = planDuration != null ? '$plan ${planDuration} Days' : plan;
+    }
+
+    // Workout + slot label
+    final workoutType = member['workout_type'] ?? '';
+    final slotLabel = slot.isNotEmpty
+        ? '${workoutType.isNotEmpty ? workoutType : slot[0].toUpperCase() + slot.substring(1)} (${_slotTime(slot)})'
+        : '';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         boxShadow: [AppTheme.cardShadow],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Avatar + Name + Status badge ──────────────────
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Avatar + Name + Icons ──────────────────────────
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      initial,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Row(
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeBg,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              badgeLabel,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Eye + Edit icons
+                Column(
                   children: [
-                    Flexible(
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
-                        ),
+                    GestureDetector(
+                      onTap: () => Get.toNamed(
+                        '/trainer/member-profile',
+                        arguments: member,
+                      ),
+                      child: const Icon(
+                        Icons.remove_red_eye_outlined,
+                        color: Colors.blue,
+                        size: 20,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: badgeBg,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        badgeLabel,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () => Get.toNamed(
+                        '/trainer/diet-plan-form',
+                        arguments: {'member': member, 'plan_id': dietPlanId},
+                      )?.then((_) => _loadMembers()),
+                      child: Icon(
+                        hasDietPlan ? Icons.edit_outlined : Icons.add,
+                        color: Colors.green,
+                        size: 20,
                       ),
                     ),
                   ],
                 ),
-              ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // ── Info rows ──────────────────────────────────────
+            if (slotLabel.isNotEmpty)
+              _infoRow(Icons.access_time_outlined, slotLabel),
+            if (planLabel.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              _infoRow(Icons.people_outline, planLabel),
             ],
-          ),
-          const SizedBox(height: 12),
 
-          // ── Info rows ──────────────────────────────────────
-          _infoRow(Icons.email_outlined, email),
-          const SizedBox(height: 6),
-          _infoRow(Icons.phone_outlined, phone.isNotEmpty ? phone : 'N/A'),
-          const SizedBox(height: 6),
-          _infoRow(
-            Icons.access_time_outlined,
-            slot.isNotEmpty ? _slotLabel(slot) : 'No slot assigned',
-          ),
-          const SizedBox(height: 6),
-          _infoRow(
-            Icons.card_membership_outlined,
-            'Package: ${plan.isNotEmpty ? plan : 'N/A'}',
-          ),
-          const SizedBox(height: 14),
-
-          // ── Action Buttons ─────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () =>
-                      Get.toNamed('/trainer/member-profile', arguments: member),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    minimumSize: const Size(0, 42),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+            // ── Diet plan badge ────────────────────────────────
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(
+                  Icons.restaurant_menu_outlined,
+                  size: 14,
+                  color: AppTheme.textSecondary,
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: hasDietPlan
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    hasDietPlan ? dietTitle : 'No Diet Plan',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: hasDietPlan
+                          ? Colors.green[700]
+                          : Colors.orange[700],
                     ),
                   ),
-                  child: const Text(
-                    'View Details',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    Get.snackbar(
-                      'Contact',
-                      'Call $name on $phone',
-                      backgroundColor: AppTheme.surface,
-                      colorText: AppTheme.textPrimary,
-                      snackPosition: SnackPosition.BOTTOM,
-                      margin: const EdgeInsets.all(16),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.textPrimary,
-                    side: const BorderSide(color: AppTheme.border),
-                    minimumSize: const Size(0, 42),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // ── Progress Bar ───────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress / 100,
+                      backgroundColor: AppTheme.border,
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.green,
+                      ),
+                      minHeight: 6,
                     ),
                   ),
-                  child: const Text(
-                    'Contact',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  '$progress%',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // ── Action Buttons ─────────────────────────────────
+            Row(
+              children: [
+                // View Details — white outlined
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Get.toNamed(
+                      '/trainer/member-profile',
+                      arguments: member,
+                    ),
+                    icon: const Icon(Icons.remove_red_eye_outlined, size: 16),
+                    label: const Text(
+                      'View Details',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textPrimary,
+                      side: const BorderSide(color: AppTheme.border),
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Edit/Create Diet Plan
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => Get.toNamed(
+                      '/trainer/diet-plan-form',
+                      arguments: {'member': member, 'plan_id': dietPlanId},
+                    )?.then((_) => _loadMembers()),
+                    icon: Icon(
+                      hasDietPlan ? Icons.edit_outlined : Icons.add,
+                      size: 16,
+                    ),
+                    label: Text(
+                      hasDietPlan ? 'Edit Diet Plan' : 'Create Diet Plan',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: hasDietPlan
+                          ? Colors.green
+                          : AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  String _slotTime(String slot) {
+    switch (slot.toLowerCase()) {
+      case 'morning':
+        return '6:00 AM';
+      case 'midday':
+        return '12:00 PM';
+      case 'evening':
+        return '6:00 PM';
+      case 'night':
+        return '8:00 PM';
+      default:
+        return slot;
+    }
   }
 
   Widget _infoRow(IconData icon, String text) {
@@ -415,7 +631,6 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
     );
   }
 
-  // ── Empty State ───────────────────────────────────────────────
   Widget _buildEmpty() {
     return Center(
       child: Column(
@@ -441,7 +656,7 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
     );
   }
 
-  // ── Bottom Nav ────────────────────────────────────────────────
+  // ── Bottom Nav (5 items) ──────────────────────────────────────
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -460,6 +675,11 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
                 onTap: () => Get.offNamed('/trainer-dashboard'),
               ),
               _navItem(Icons.people_outline_rounded, 'Members', isActive: true),
+              _navItem(
+                Icons.restaurant_menu_outlined,
+                'Diet Plans',
+                onTap: () => Get.toNamed('/trainer/diet-plans'),
+              ),
               _navItem(
                 Icons.calendar_month_outlined,
                 'Schedule',
@@ -497,7 +717,7 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               color: isActive ? AppTheme.primary : AppTheme.textSecondary,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),

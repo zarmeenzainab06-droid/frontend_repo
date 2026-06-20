@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:third_task/screens/admin/payments/payment_model.dart'
-    hide ManagePaymentsScreen;
+
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
+
 import '../screens/dashboard/member_dashboard.dart';
 import '../screens/admin/admin_dashboard.dart';
 import '../screens/admin/manage_members/admin_members_screen.dart';
@@ -20,6 +19,10 @@ import '../screens/admin/admin_slots_screen.dart';
 import '../screens/dashboard/member_profile.dart';
 import '../screens/dashboard/member_membership.dart';
 import '../screens/dashboard/member_trainer.dart';
+import '../screens/dashboard/member_payment_screen.dart';
+import '../screens/dashboard/member_plans_screen.dart';
+import '../screens/dashboard/member_edit_profile.dart';
+import '../screens/dashboard/member_change_password.dart';
 
 // eman
 import '../screens/trainer/trainer_dashboard.dart';
@@ -27,6 +30,8 @@ import '../screens/trainer/trainer_members_screen.dart';
 import '../screens/trainer/trainer_profile_screen.dart';
 import '../screens/trainer/trainer_member_profile_screen.dart';
 import '../screens/trainer/trainer_schedule_screen.dart';
+import '../screens/trainer/trainer_diet_plans_screen.dart';
+import '../screens/trainer/trainer_diet_plan_form.dart';
 
 // routess
 class AppRoutes {
@@ -56,6 +61,8 @@ class AppRoutes {
   static const String trainerProfile = '/trainer/profile';
   static const String trainerMemberProfile = '/trainer/member-profile';
   static const String trainerSchedule = '/trainer/schedule';
+  static const String trainerDietPlans = '/trainer/diet-plans';
+  static const String trainerDietPlanForm = '/trainer/diet-plan-form';
 
   // pages list
   static final List<GetPage<dynamic>> pages = [
@@ -116,6 +123,16 @@ class AppRoutes {
     GetPage(name: memberProfile, page: () => MemberProfileScreen()),
     GetPage(name: memberMembership, page: () => MemberMembershipScreen()),
     GetPage(name: memberTrainer, page: () => MemberTrainerScreen()),
+    GetPage(
+      name: '/member-edit-profile',
+      page: () => MemberEditProfileScreen(),
+    ),
+    GetPage(name: '/member-payment-history', page: () => MemberPaymentScreen()),
+    GetPage(
+      name: '/member-change-password',
+      page: () => MemberChangePasswordScreen(),
+    ),
+    GetPage(name: '/member-plans', page: () => MemberPlansScreen()),
     GetPage(
       name: dashboard,
       page: () => MemberDashboard(),
@@ -195,6 +212,17 @@ class AppRoutes {
     GetPage(
       name: memberTrainer,
       page: () => MemberTrainerScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: trainerDietPlans,
+      page: () => TrainerDietPlansScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    GetPage(
+      name: trainerDietPlanForm,
+      page: () => TrainerDietPlanForm(),
       middlewares: [AuthMiddleware()],
     ),
   ];

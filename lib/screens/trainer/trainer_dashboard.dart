@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
+import '../../core/widgets/trainer_drawer.dart';
 
 class TrainerDashboard extends StatefulWidget {
   @override
@@ -13,9 +14,14 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   final box = GetStorage();
   bool _isLoading = true;
 
+  // ── Stats ──────────────────────────────────────────────────
   int assignedMembers = 0;
   int todaySlots = 0;
   int activeMemberships = 0;
+  int totalDietPlans = 0;
+  int activeDietPlans = 0;
+  int pendingDietPlans = 0;
+  int completedToday = 0;
 
   List<Map<String, dynamic>> _sessions = [];
 
@@ -28,10 +34,10 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   String get _trainerInitial =>
       _trainerName.isNotEmpty ? _trainerName[0].toUpperCase() : 'T';
 
-  String get _trainerspecialization {
+  String get _trainerSpecialty {
     final user = box.read('user');
     if (user == null) return '';
-    return user['specialization'] ?? '';
+    return user['specialty'] ?? '';
   }
 
   @override
@@ -45,6 +51,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
 
     final statsResult = await TrainerService.getDashboardStats();
     final scheduleResult = await TrainerService.getTodaySchedule();
+    final dietResult = await TrainerService.getDietPlans();
 
     if (statsResult['success']) {
       final s = statsResult['stats'];
@@ -57,7 +64,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
 
     if (scheduleResult['success']) {
       final list = List<Map<String, dynamic>>.from(scheduleResult['schedule']);
-      // ── Descending slot order: night → evening → midday → morning ──
+      // Descending: night → evening → midday → morning
       const slotOrder = ['night', 'evening', 'midday', 'morning'];
       list.sort((a, b) {
         final ai = slotOrder.indexOf(
@@ -71,22 +78,26 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
       setState(() => _sessions = list);
     }
 
-    setState(() => _isLoading = false);
-  }
+    if (dietResult['success']) {
+      final s = dietResult['stats'];
+      setState(() {
+        totalDietPlans = s['totalPlans'] ?? 0;
+        activeDietPlans = s['activePlans'] ?? 0;
+        pendingDietPlans = s['noPlan'] ?? 0;
+        completedToday = activeMemberships > 0
+            ? (activeMemberships * 0.25).round()
+            : 0;
+      });
+    }
 
-  void _logout() {
-    box.remove('token');
-    box.remove('user');
-    box.remove('role');
-    box.remove('isLoggedIn');
-    Get.offAllNamed('/login');
+    setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      drawer: _buildDrawer(),
+      drawer: const TrainerDrawer(),
       body: Column(
         children: [
           _buildTopBar(),
@@ -104,44 +115,17 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // ── Welcome Banner ──────────────────
                           _buildWelcomeBanner(),
-                          const SizedBox(height: 16),
-
-                          _buildStatCard(
-                            label: 'Assigned Members',
-                            value: assignedMembers,
-                            subtitle: '+3 this month',
-                            subtitleColor: AppTheme.active,
-                            subtitleIcon: Icons.trending_up,
-                            icon: Icons.people_alt_rounded,
-                            iconColor: Colors.blue,
-                            iconBg: Colors.blue.withOpacity(0.12),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildStatCard(
-                            label: "Today's Slots",
-                            value: todaySlots,
-                            subtitle: '$todaySlots sessions scheduled',
-                            subtitleColor: AppTheme.textSecondary,
-                            icon: Icons.access_time_rounded,
-                            iconColor: AppTheme.primary,
-                            iconBg: AppTheme.primaryLight,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildStatCard(
-                            label: 'Active Memberships',
-                            value: activeMemberships,
-                            subtitle: 'currently active',
-                            subtitleColor: AppTheme.textSecondary,
-                            icon: Icons.check_circle_rounded,
-                            iconColor: AppTheme.active,
-                            iconBg: AppTheme.activeLight,
-                          ),
                           const SizedBox(height: 20),
 
-                          // ── Quick Actions — only 2 ───────────
-                          _buildQuickActionsGrid(),
+                          // ── Horizontal Stat Cards ────────────
+                          _buildHorizontalStats(),
                           const SizedBox(height: 20),
+
+                          // ── Quick Action Buttons ─────────────
+                          _buildQuickActions(),
+                          const SizedBox(height: 24),
 
                           // ── Upcoming Sessions ────────────────
                           const Text(
@@ -177,6 +161,10 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                                         .toList(),
                                   ),
                           ),
+                          const SizedBox(height: 24),
+
+                          // ── Diet Plans Overview ───────────────
+                          _buildDietPlansOverview(),
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -288,10 +276,10 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                     height: 1.3,
                   ),
                 ),
-                if (_trainerspecialization.isNotEmpty) ...[
+                if (_trainerSpecialty.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    _trainerspecialization,
+                    _trainerSpecialty,
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ],
@@ -303,134 +291,182 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // ── Stat Card ─────────────────────────────────────────────────
-  Widget _buildStatCard({
-    required String label,
-    required int value,
-    required String subtitle,
-    required Color subtitleColor,
-    IconData? subtitleIcon,
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        boxShadow: [AppTheme.cardShadow],
-      ),
-      child: Row(
+  // ── Horizontal Scrollable Stat Cards ─────────────────────────
+  Widget _buildHorizontalStats() {
+    return SizedBox(
+      height: 160,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '$value',
-                  style: const TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    if (subtitleIcon != null) ...[
-                      Icon(subtitleIcon, size: 13, color: subtitleColor),
-                      const SizedBox(width: 4),
-                    ],
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: subtitleColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          _horizStatCard(
+            icon: Icons.people_alt_rounded,
+            iconBg: Colors.blue,
+            value: '$assignedMembers',
+            label: 'Assigned Members',
+            sub: '+3 this month',
+            subColor: Colors.blue,
           ),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: 24),
+          const SizedBox(width: 12),
+          _horizStatCard(
+            icon: Icons.restaurant_menu_outlined,
+            iconBg: Colors.green,
+            value: '$activeDietPlans',
+            label: 'Active Diet Plans',
+            sub: '$pendingDietPlans need update',
+            subColor: Colors.orange,
+          ),
+          const SizedBox(width: 12),
+          _horizStatCard(
+            icon: Icons.access_time_rounded,
+            iconBg: AppTheme.primary,
+            value: '$todaySlots',
+            label: "Today's Sessions",
+            sub: '${todaySlots - completedToday} remaining',
+            subColor: AppTheme.textSecondary,
+          ),
+          const SizedBox(width: 12),
+          _horizStatCard(
+            icon: Icons.check_circle_outline_rounded,
+            iconBg: Colors.orange,
+            value: '$completedToday',
+            label: 'Completed',
+            sub:
+                '${todaySlots > 0 ? ((completedToday / todaySlots) * 100).toStringAsFixed(0) : 0}% done',
+            subColor: AppTheme.textSecondary,
           ),
         ],
       ),
     );
   }
 
-  // ── Quick Actions — only View Schedule + My Members ───────────
-  Widget _buildQuickActionsGrid() {
+  Widget _horizStatCard({
+    required IconData icon,
+    required Color iconBg,
+    required String value,
+    required String label,
+    required String sub,
+    required Color subColor,
+  }) {
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: [AppTheme.cardShadow],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Icon circle
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            child: Icon(icon, color: Colors.white, size: 18),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            sub,
+            style: TextStyle(
+              fontSize: 10,
+              color: subColor,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Quick Action Buttons (4 colored) ─────────────────────────
+  Widget _buildQuickActions() {
     return Row(
       children: [
         Expanded(
-          child: _actionCard(
-            icon: Icons.calendar_month_rounded,
-            label: 'View Schedule',
-            isActive: true,
+          child: _quickBtn(
+            icon: Icons.people_outline_rounded,
+            label: 'View Members',
+            color: AppTheme.primary,
+            onTap: () => Get.toNamed('/trainer/members'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _quickBtn(
+            icon: Icons.restaurant_menu_outlined,
+            label: 'Diet Plans',
+            color: Colors.green,
+            onTap: () => Get.toNamed('/trainer/diet-plans'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _quickBtn(
+            icon: Icons.calendar_month_outlined,
+            label: 'Schedule',
+            color: Colors.blue,
             onTap: () => Get.toNamed('/trainer/schedule'),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
-          child: _actionCard(
-            icon: Icons.people_outline_rounded,
-            label: 'My Members',
-            isActive: false,
-            onTap: () => Get.toNamed('/trainer/members'),
+          child: _quickBtn(
+            icon: Icons.person_outline_rounded,
+            label: 'Profile',
+            color: Colors.purple,
+            onTap: () => Get.toNamed('/trainer/profile'),
           ),
         ),
       ],
     );
   }
 
-  Widget _actionCard({
+  Widget _quickBtn({
     required IconData icon,
     required String label,
-    required bool isActive,
+    required Color color,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isActive ? AppTheme.primary : AppTheme.surface,
+          color: color,
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-          boxShadow: [AppTheme.cardShadow],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 26,
-              color: isActive ? Colors.white : AppTheme.textSecondary,
-            ),
-            const SizedBox(height: 10),
+            Icon(icon, color: Colors.white, size: 24),
+            const SizedBox(height: 8),
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : AppTheme.textPrimary,
               ),
             ),
           ],
@@ -445,7 +481,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     final slot = (session['training_slot'] ?? '').toString();
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     final time = _slotToTime(slot);
-
     return Column(
       children: [
         Padding(
@@ -542,6 +577,141 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
+  // ── Diet Plans Overview ───────────────────────────────────────
+  Widget _buildDietPlansOverview() {
+    return Column(
+      children: [
+        // Header
+        Row(
+          children: [
+            const Icon(
+              Icons.restaurant_menu_outlined,
+              color: Colors.green,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Diet Plans Overview',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => Get.toNamed('/trainer/diet-plans'),
+              child: Row(
+                children: const [
+                  Text(
+                    'Manage',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.green,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.green, size: 18),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // 3 stat cards
+        Row(
+          children: [
+            Expanded(
+              child: _dietStatCard(
+                '$totalDietPlans',
+                'Total Plans',
+                const Color(0xFFE8F5E9),
+                Colors.green,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _dietStatCard(
+                '$activeDietPlans',
+                'Active',
+                const Color(0xFFE3F2FD),
+                Colors.blue,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _dietStatCard(
+                '$pendingDietPlans',
+                'Pending',
+                const Color(0xFFFFF3E0),
+                Colors.orange,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Manage All button
+        GestureDetector(
+          onTap: () => Get.toNamed('/trainer/diet-plans'),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              border: Border.all(color: Colors.green, width: 1.5),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(
+                  Icons.restaurant_menu_outlined,
+                  color: Colors.green,
+                  size: 20,
+                ),
+                SizedBox(width: 10),
+                Text(
+                  'Manage All Diet Plans',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _dietStatCard(String value, String label, Color bg, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 12, color: textColor)),
+        ],
+      ),
+    );
+  }
+
   String _slotToTime(String slot) {
     switch (slot.toLowerCase()) {
       case 'morning':
@@ -578,165 +748,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // ── Drawer (inline — no external file needed) ─────────────────
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: AppTheme.surface,
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            color: AppTheme.primary,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 24,
-              left: 20,
-              right: 20,
-              bottom: 28,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      _trainerInitial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _trainerName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Trainer',
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => Get.back(),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white70,
-                    size: 20,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          _drawerItem(
-            Icons.home_outlined,
-            'Dashboard',
-            () => Get.back(),
-            isActive: true,
-          ),
-          _drawerItem(Icons.people_outline, 'My Members', () {
-            Get.back();
-            Get.toNamed('/trainer/members');
-          }),
-          _drawerItem(Icons.calendar_month_outlined, 'Schedule', () {
-            Get.back();
-            Get.toNamed('/trainer/schedule');
-          }),
-          _drawerItem(Icons.bar_chart_outlined, 'Performance Report', () {
-            Get.back();
-            Get.snackbar(
-              'Coming Soon',
-              'Performance report will be available soon',
-              backgroundColor: AppTheme.surface,
-              colorText: AppTheme.textPrimary,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(16),
-            );
-          }),
-          _drawerItem(Icons.settings_outlined, 'Settings', () {
-            Get.back();
-            Get.snackbar(
-              'Coming Soon',
-              'Settings will be available soon',
-              backgroundColor: AppTheme.surface,
-              colorText: AppTheme.textPrimary,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(16),
-            );
-          }),
-          _drawerItem(Icons.help_outline_rounded, 'Help & Support', () {
-            Get.back();
-            Get.snackbar(
-              'Coming Soon',
-              'Help & Support will be available soon',
-              backgroundColor: AppTheme.surface,
-              colorText: AppTheme.textPrimary,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(16),
-            );
-          }),
-          _drawerItem(Icons.person_outline, 'Profile', () {
-            Get.back();
-            Get.toNamed('/trainer/profile');
-          }),
-          const Spacer(),
-          const Divider(height: 1, color: AppTheme.border),
-          _drawerItem(Icons.logout, 'Logout', _logout, color: AppTheme.expired),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _drawerItem(
-    IconData icon,
-    String label,
-    VoidCallback onTap, {
-    bool isActive = false,
-    Color? color,
-  }) {
-    return ListTile(
-      onTap: onTap,
-      leading: Icon(
-        icon,
-        color: color ?? (isActive ? AppTheme.primary : AppTheme.textSecondary),
-        size: 22,
-      ),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: color ?? (isActive ? AppTheme.primary : AppTheme.textPrimary),
-          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-          fontSize: 14,
-        ),
-      ),
-      tileColor: isActive ? AppTheme.primaryLight : Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-    );
-  }
-
-  // ── Bottom Nav ────────────────────────────────────────────────
+  // ── Bottom Nav (5 items) ──────────────────────────────────────
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -754,6 +766,11 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                 Icons.people_outline_rounded,
                 'Members',
                 onTap: () => Get.toNamed('/trainer/members'),
+              ),
+              _navItem(
+                Icons.restaurant_menu_outlined,
+                'Diet Plans',
+                onTap: () => Get.toNamed('/trainer/diet-plans'),
               ),
               _navItem(
                 Icons.calendar_month_outlined,
@@ -792,7 +809,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               color: isActive ? AppTheme.primary : AppTheme.textSecondary,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../core/utils/theme.dart';
-import '../../core/widgets/app_drawer.dart';
+import '../../core/widgets/member_layout.dart';
+import 'member_plans_screen.dart';
 
 class MemberDashboard extends StatefulWidget {
   @override
@@ -12,266 +15,494 @@ class MemberDashboard extends StatefulWidget {
 class _MemberDashboardState extends State<MemberDashboard> {
   final box = GetStorage();
   String _userName = '';
-  int _currentIndex = 0; // ✅ Active tab track karne ke liye
+  Map<String, dynamic>? _membership;
+  Map<String, dynamic>? _trainer;
+  Map<String, dynamic>? _dietPlan;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // ✅ Fix - userName sahi se nikalo
     _userName = box.read('userName') ?? 'Member';
+    _loadDashboardData();
+  }
+
+  String _getToken() => box.read('token') ?? '';
+
+  Future<void> _loadDashboardData() async {
+    await Future.wait([_loadMembership(), _loadTrainer(), _loadDietPlan()]);
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _loadMembership() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/api/members/membership'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${_getToken()}',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() => _membership = data['membership']);
+      }
+    } catch (e) {
+      print('Membership error: $e');
+    }
+  }
+
+  Future<void> _loadTrainer() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/api/members/trainer'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${_getToken()}',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() => _trainer = data['trainer']);
+      }
+    } catch (e) {
+      print('Trainer error: $e');
+    }
+  }
+
+  Future<void> _loadDietPlan() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/api/diet/my-plan'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${_getToken()}',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() => _dietPlan = data['diet_plan']);
+      }
+    } catch (e) {
+      print('Diet plan error: $e');
+    }
+  }
+
+  // Calculate days left
+  int _daysLeft() {
+    if (_membership == null || _membership!['end_date'] == null) return 0;
+    try {
+      final endDate = DateTime.parse(_membership!['end_date'].toString());
+      return endDate.difference(DateTime.now()).inDays;
+    } catch (e) {
+      return 0;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      drawer: const AppDrawer(role: 'user'),
-      body: Column(
-        children: [
-          _buildTopBar(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+    return MemberLayout(
+      currentIndex: 0,
+      title: 'Member Portal',
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primary),
+            )
+          : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Welcome back, $_userName!',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                  // ✅ Top Welcome Banner
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(color: Color(0xFF6B1A1A)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Welcome back',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                        Text(
+                          _userName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Plan info row
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.card_membership,
+                              color: Colors.white70,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _membership?['package_name'] ?? 'No Plan',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Colors.white70,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _membership?['end_date'] != null
+                                  ? 'Expires ${_membership!['end_date'].toString().substring(0, 10)}'
+                                  : 'No expiry',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Icon(
+                              Icons.person,
+                              color: Colors.white70,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Trainer: ${_trainer?['name'] ?? 'N/A'}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Days left badge
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: Column(
+                            children: [
+                              Text(
+                                '${_daysLeft()}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Text(
+                                'days left',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Here's your fitness journey overview",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
 
-                  // ✅ Cards clickable hain
-                  GestureDetector(
-                    onTap: () => Get.toNamed('/member-membership'),
-                    onLongPress: () => Get.toNamed('/member-profile'),
-                    onDoubleTap: () => Get.toNamed('/member-trainer'),
-                    child: _placeholderCard(
-                      'Membership Status',
-                      Icons.card_membership_outlined,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  GestureDetector(
-                    onDoubleTap: () => Get.toNamed('/member-trainer'),
-                    child: _placeholderCard('My Trainer', Icons.person_outline),
-                  ),
-                  const SizedBox(height: 12),
-                  _placeholderCard('Next Payment', Icons.attach_money_outlined),
-                  const SizedBox(height: 12),
-                  _placeholderCard(
-                    'Workout Sessions',
-                    Icons.fitness_center_outlined,
-                  ),
-                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ✅ Quick Access Buttons
+                        const Text(
+                          'Quick Access',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _quickButton(
+                                'Membership',
+                                Icons.card_membership,
+                                Colors.blue,
+                                () => Get.toNamed('/member_membership'),
+                              ),
+                              const SizedBox(width: 8),
+                              _quickButton(
+                                'Trainer',
+                                Icons.fitness_center,
+                                Colors.purple,
+                                () => Get.toNamed('/member_trainer'),
+                              ),
+                              const SizedBox(width: 8),
+                              _quickButton(
+                                'Payments',
+                                Icons.payment,
+                                Colors.green,
+                                () => Get.toNamed('/member-payment'),
+                              ),
+                              const SizedBox(width: 8),
+                              _quickButton(
+                                'Diet Plan',
+                                Icons.restaurant,
+                                Colors.orange,
+                                () => Get.toNamed('/member-diet'),
+                              ),
+                              const SizedBox(width: 8),
+                              _quickButton(
+                                'Profile',
+                                Icons.person,
+                                Colors.grey[800]!,
+                                () => Get.toNamed('/member_profile'),
+                              ),
+                            ],
+                          ),
+                        ),
 
-                  const Text(
-                    'Recent Activity',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
+                        const SizedBox(height: 20),
+
+                        // ✅ Next Payment Card
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [AppTheme.cardShadow],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Next Payment',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Rs. ${_membership?['price'] ?? '0'}',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 44,
+                                child: ElevatedButton(
+                                  onPressed: () =>
+                                      Get.toNamed('/member-payment'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Pay Now',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // ✅ My Diet Plan Card
+                        if (_dietPlan != null) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [AppTheme.cardShadow],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: const [
+                                        Icon(
+                                          Icons.restaurant,
+                                          color: Colors.green,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'My Diet Plan',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.activeLight,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: const Text(
+                                        'Active',
+                                        style: TextStyle(
+                                          color: AppTheme.active,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _dietPlan!['title'] ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Assigned by ${_trainer?['name'] ?? 'Trainer'}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                // Meal icons row
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    _mealIcon('🍳', 'Breakfast'),
+                                    _mealIcon('☀️', 'Lunch'),
+                                    _mealIcon('🌙', 'Dinner'),
+                                    _mealIcon('🥤', 'Snacks'),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                // View full plan button
+                                InkWell(
+                                  onTap: () => Get.toNamed('/member-diet'),
+                                  child: const Center(
+                                    child: Text(
+                                      'View Full Plan →',
+                                      style: TextStyle(
+                                        color: AppTheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          // No diet plan card
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [AppTheme.cardShadow],
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(
+                                  Icons.restaurant_outlined,
+                                  color: AppTheme.textSecondary,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'No diet plan assigned yet',
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _placeholderCard(
-                    'Activity will appear here',
-                    Icons.history_outlined,
                   ),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  // ── Top Bar ─────────────────────────────────────────
-  Widget _buildTopBar() {
-    return Container(
-      color: AppTheme.primary,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 12,
-        left: 4,
-        right: 16,
-        bottom: 12,
-      ),
-      child: Row(
-        children: [
-          Builder(
-            builder: (ctx) => IconButton(
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-              icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
-                SizedBox(width: 4),
-                Text(
-                  'GymFitex',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Member Portal',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.white70,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _placeholderCard(String label, IconData icon) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        boxShadow: [AppTheme.cardShadow],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              color: AppTheme.primaryLight,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: AppTheme.primary, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Bottom Nav ───────────────────────────────────────
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // ✅ Home - Active
-              _navItem(
-                Icons.home_outlined,
-                'Home',
-                isActive: _currentIndex == 0,
-                onTap: () => setState(() => _currentIndex = 0),
-              ),
-              _navItem(
-                Icons.card_membership_outlined,
-                'Membership',
-                isActive: _currentIndex == 1,
-                onTap: () {
-                  setState(() => _currentIndex = 1);
-                  Get.toNamed('/member_membership');
-                },
-              ),
-              _navItem(
-                Icons.person_outline,
-                'Trainer',
-                isActive: _currentIndex == 2,
-                onTap: () {
-                  setState(() => _currentIndex = 2);
-                  Get.toNamed('/member_trainer');
-                },
-              ),
-              _navItem(
-                Icons.account_circle_outlined,
-                'Profile',
-                isActive: _currentIndex == 3,
-                onTap: () {
-                  setState(() => _currentIndex = 3);
-                  Get.toNamed('/member_profile');
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(
+  // Quick access button
+  Widget _quickButton(
+    String label,
     IconData icon,
-    String label, {
-    bool isActive = false,
-    VoidCallback? onTap, // ✅ onTap parameter
-  }) {
+    Color color,
+    VoidCallback onTap,
+  ) {
     return InkWell(
-      onTap: onTap, // ✅ Ab kaam karega
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-            ),
+            Icon(icon, color: Colors.white, size: 22),
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
+                color: Colors.white,
                 fontSize: 11,
-                color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // Meal icon widget
+  Widget _mealIcon(String emoji, String label) {
+    return Column(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 24)),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+        ),
+      ],
     );
   }
 }
