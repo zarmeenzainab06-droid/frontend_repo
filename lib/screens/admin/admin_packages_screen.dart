@@ -406,6 +406,14 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
     if (result['success']) _loadPackages();
   }
 
+  // ── Color helper (used only by the header gradient) ───────────
+  Color _darken(Color c, [double amount = .2]) {
+    final hsl = HSLColor.fromColor(c);
+    return hsl
+        .withLightness((hsl.lightness - amount).clamp(0.0, 1.0))
+        .toColor();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -446,15 +454,33 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
     );
   }
 
-  // ── Top Bar ──────────────────────────────────────────────────
+  // ── Top Bar (only this changed — gradient + rounded corners to
+  // match the rest of the app's header style) ────────────────────
   Widget _buildTopBar() {
     return Container(
-      color: AppTheme.primary,
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 12,
-        left: 8,
+        left: 4,
         right: 16,
-        bottom: 12,
+        bottom: 16,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primary, _darken(AppTheme.primary, 0.18)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -467,34 +493,45 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
+              color: Colors.white.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
-                SizedBox(width: 4),
-                Text(
-                  'GymFitex',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ],
+            child: const Icon(
+              Icons.fitness_center_rounded,
+              size: 18,
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 10),
-          const Text(
-            'Admin Panel',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white70,
-              fontWeight: FontWeight.w400,
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'GymFitex',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'Manage Packages',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

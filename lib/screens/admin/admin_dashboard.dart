@@ -46,6 +46,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
     setState(() => _isLoading = false);
   }
 
+  Color _darken(Color c, [double amount = .2]) {
+    final hsl = HSLColor.fromColor(c);
+    return hsl
+        .withLightness((hsl.lightness - amount).clamp(0.0, 1.0))
+        .toColor();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppShell(
@@ -65,59 +72,59 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  // Dashboard label
                   children: [
-                    const Text(
-                      'Dashboard',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    // cardsss on dashboard
-                    const SizedBox(height: 16),
-                    _statCard(
-                      'Total Members',
-                      totalMembers,
-                      Icons.people_alt_outlined,
-                      Colors.blue,
-                      Colors.blue.withOpacity(0.1),
-                    ),
-                    const SizedBox(height: 12),
-                    _statCard(
-                      'Active',
-                      activeMembers,
-                      Icons.check_circle_outline,
-                      AppTheme.active,
-                      AppTheme.activeLight,
-                    ),
-                    const SizedBox(height: 12),
-                    _statCard(
-                      'Expired',
-                      expiredMembers,
-                      Icons.cancel_outlined,
-                      AppTheme.expired,
-                      AppTheme.expiredLight,
+                    _sectionLabel('OVERVIEW'),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _statCard(
+                            'Total Members',
+                            totalMembers,
+                            Icons.people_alt_outlined,
+                            AppTheme.primary,
+                            AppTheme.primaryLight,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _statCard(
+                            'Active',
+                            activeMembers,
+                            Icons.check_circle_outline,
+                            AppTheme.active,
+                            AppTheme.activeLight,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
-                    _statCard(
-                      'Pending Payments',
-                      pendingPayments,
-                      Icons.access_time_outlined,
-                      AppTheme.pending,
-                      AppTheme.pendingLight,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _statCard(
+                            'Expired',
+                            expiredMembers,
+                            Icons.cancel_outlined,
+                            AppTheme.expired,
+                            AppTheme.expiredLight,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _statCard(
+                            'Pending Payments',
+                            pendingPayments,
+                            Icons.access_time_outlined,
+                            AppTheme.pending,
+                            AppTheme.pendingLight,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Recent Activity',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    _sectionLabel('RECENT ACTIVITY'),
+                    const SizedBox(height: 10),
                     if (recentActivity.isEmpty)
                       Center(
                         child: Padding(
@@ -142,71 +149,66 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  /// dashboard statss
+  Widget _sectionLabel(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 11.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.4,
+        color: AppTheme.textSecondary.withOpacity(0.8),
+      ),
+    );
+  }
+
+  /// compact stat card (2-column grid)
   Widget _statCard(
     String label,
     int value,
     IconData icon,
-    Color iconColor,
-    Color iconBg,
+    Color color,
+    Color bg,
   ) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         boxShadow: [AppTheme.cardShadow],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$value',
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: const [
-                    Icon(Icons.trending_up, size: 14, color: AppTheme.active),
-                    SizedBox(width: 4),
-                    Text(
-                      '+12% this month',
-                      style: TextStyle(fontSize: 12, color: AppTheme.active),
-                    ),
-                  ],
-                ),
-              ],
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '$value',
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
             ),
           ),
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: 26),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: AppTheme.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
     );
   }
 
-  /// activityyy itemmmmm
+  /// recent activity row
   Widget _activityItem(Map<String, dynamic> item) {
     final name = item['memberName'] ?? '';
     final action = item['action'] ?? '';
@@ -229,9 +231,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Container(
             width: 42,
             height: 42,
-            decoration: const BoxDecoration(
-              color: AppTheme.primary,
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [AppTheme.primary, _darken(AppTheme.primary, 0.18)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
             child: Center(
               child: Text(
@@ -239,7 +245,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),

@@ -221,8 +221,6 @@ class PaymentController extends GetxController {
   void openEditForm(PaymentModel payment) {
     editingPayment = payment;
 
-    print('Screenshot from API: ${payment.screenshot}');
-
     final matched = members.firstWhereOrNull(
       (m) => m['id'] == payment.memberId,
     );
@@ -236,7 +234,12 @@ class PaymentController extends GetxController {
           'package_amount': payment.packageAmount,
         };
 
-    packageAmount.value = payment.packageAmount;
+    // ← FIX: use payment's stored amount, but fall back to member's current package amount if 0
+    final storedAmount = payment.packageAmount;
+    final memberAmount =
+        double.tryParse(matched?['package_amount']?.toString() ?? '0') ?? 0.0;
+    packageAmount.value = storedAmount > 0 ? storedAmount : memberAmount;
+
     selectedMonth.value = payment.membershipMonth.isNotEmpty
         ? payment.membershipMonth
         : _currentMonth();

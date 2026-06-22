@@ -4,14 +4,19 @@ import '../utils/theme.dart';
 import 'app_drawer.dart';
 
 /// AppShell wraps every screen with:
-/// - Red top bar (GymFitex logo + hamburger + optional badge)
+/// - Gradient top bar (hamburger + optional brand name + subtitle + optional badge)
 /// - Shared drawer (role-based via AppDrawer)
 /// - Bottom nav (passed per screen since items differ)
+///
+/// The top bar no longer hard-codes a brand/gym name — pass [brandName] if
+/// you want one shown, or omit it to keep AppShell generic and reusable
+/// across different apps/clients without editing this file.
 ///
 /// Usage:
 /// return AppShell(
 ///   role: 'admin',
 ///   subtitle: 'Admin Panel',
+///   brandName: 'GymFitex', // optional
 ///   showLiveUpdates: true,
 ///   body: _buildBody(),
 ///   bottomNav: _buildBottomNav(),
@@ -24,6 +29,7 @@ class AppShell extends StatelessWidget {
   final Widget? bottomNav; // bottom navigation bar
   final bool showLiveUpdates; // show live updates badge (admin only)
   final List<AppShellAction>? actions; // optional right side actions
+  final String? brandName; // optional brand/gym name shown in the top bar
 
   const AppShell({
     Key? key,
@@ -33,7 +39,15 @@ class AppShell extends StatelessWidget {
     this.bottomNav,
     this.showLiveUpdates = false,
     this.actions,
+    this.brandName,
   }) : super(key: key);
+
+  Color _darken(Color c, [double amount = .2]) {
+    final hsl = HSLColor.fromColor(c);
+    return hsl
+        .withLightness((hsl.lightness - amount).clamp(0.0, 1.0))
+        .toColor();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,13 +65,32 @@ class AppShell extends StatelessWidget {
   }
 
   Widget _buildTopBar(BuildContext context) {
+    final hasBrand = brandName != null && brandName!.trim().isNotEmpty;
+
     return Container(
-      color: AppTheme.primary,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primary, _darken(AppTheme.primary, 0.18)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 12,
+        top: MediaQuery.of(context).padding.top + 8,
         left: 4,
-        right: 16,
-        bottom: 12,
+        right: 12,
+        bottom: 14,
       ),
       child: Row(
         children: [
@@ -65,50 +98,67 @@ class AppShell extends StatelessWidget {
           Builder(
             builder: (ctx) => IconButton(
               onPressed: () => Scaffold.of(ctx).openDrawer(),
-              icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+              icon: const Icon(
+                Icons.menu_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
           ),
 
-          // Logo pill
+          // Generic icon badge — no hardcoded app/gym name baked in
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
+              color: Colors.white.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Row(
+            child: const Icon(
+              Icons.fitness_center_rounded,
+              size: 18,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          // Brand name (only if provided) + subtitle
+          Expanded(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.fitness_center, size: 14, color: AppTheme.primary),
-                SizedBox(width: 4),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasBrand)
+                  Text(
+                    brandName!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                 Text(
-                  'GymFitex',
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
+                    fontSize: hasBrand ? 12 : 14,
+                    color: hasBrand
+                        ? Colors.white.withOpacity(0.8)
+                        : Colors.white,
+                    fontWeight: hasBrand ? FontWeight.w500 : FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-
-          // Subtitle e.g. 'Admin Panel'
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.white70,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-
-          const Spacer(),
 
           // Live Updates badge (admin dashboard only)
           if (showLiveUpdates)
             Container(
+              margin: const EdgeInsets.only(left: 8),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.15),
@@ -117,7 +167,7 @@ class AppShell extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: const [
-                  Icon(Icons.bolt, size: 14, color: Colors.white),
+                  Icon(Icons.bolt_rounded, size: 14, color: Colors.white),
                   SizedBox(width: 4),
                   Text(
                     'Live Updates',

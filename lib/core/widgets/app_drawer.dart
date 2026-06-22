@@ -18,6 +18,13 @@ class AppDrawer extends StatelessWidget {
     Get.offAllNamed('/login');
   }
 
+  Color _darken(Color c, [double amount = .2]) {
+    final hsl = HSLColor.fromColor(c);
+    return hsl
+        .withLightness((hsl.lightness - amount).clamp(0.0, 1.0))
+        .toColor();
+  }
+
   @override
   Widget build(BuildContext context) {
     final box = GetStorage();
@@ -32,96 +39,23 @@ class AppDrawer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ─────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-              color: AppTheme.primary,
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        initial,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white70,
-                      size: 20,
-                    ),
-                  ),
-                ],
+            _buildHeader(userName, initial, subtitle),
+            const SizedBox(height: 6),
+            // Scrollable so the item list never overflows on shorter screens
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                children: role == 'admin' ? _adminItems() : _memberItems(),
               ),
             ),
-
-            const SizedBox(height: 8),
-
-            // ── Menu Items (role-based) ─────────────────────────
-            if (role == 'admin') ..._adminItems(),
-            if (role == 'user') ..._memberItems(),
-
-            const Spacer(),
-
-            // ── Logout ─────────────────────────────────────────
+            const Divider(height: 1, color: AppTheme.border),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-              child: ListTile(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              child: _item(
+                Icons.logout_outlined,
+                'Logout',
+                color: AppTheme.expired,
                 onTap: _logout,
-                leading: const Icon(
-                  Icons.logout_outlined,
-                  color: AppTheme.expired,
-                  size: 22,
-                ),
-                title: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: AppTheme.expired,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                ),
               ),
             ),
           ],
@@ -130,10 +64,85 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  // ── Admin Drawer Items ──────────────────────────────────────
+  // ── Header ─────────────────────────────────────────
+  Widget _buildHeader(String userName, String initial, String subtitle) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 22, 16, 22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primary, _darken(AppTheme.primary, 0.18)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.4)),
+            ),
+            child: Center(
+              child: Text(
+                initial,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  userName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Admin Drawer Items (same routes/logic as before) ───────
   List<Widget> _adminItems() {
     return [
-      // try
       _item(
         Icons.home_outlined,
         'Dashboard',
@@ -159,94 +168,100 @@ class AppDrawer extends StatelessWidget {
         Icons.people_outline,
         'Manage Trainers',
         onTap: () {
-          Get.back(); // close drawer
+          Get.back();
           Get.toNamed(AppRoutes.adminTrainers);
         },
       ),
-
       _item(
         Icons.access_time_outlined,
         'Time Slots',
         onTap: () {
-          Get.back(); // close drawer
+          Get.back();
           Get.toNamed(AppRoutes.adminSlots);
         },
       ),
-      //try
       _item(
         Icons.person_outline,
         'Profile',
         onTap: () {
-          Get.back(); // close drawer
+          Get.back();
           Get.toNamed('/admin/profile');
         },
       ),
       _item(
         Icons.bar_chart_outlined,
         'Reports Settings',
-        onTap: () => Get.back(), // placeholder
+        onTap: () => Get.back(),
       ),
-      _item(
-        Icons.settings_outlined,
-        'App Settings',
-        onTap: () => Get.back(), // placeholder
-      ),
-      _item(
-        Icons.help_outline,
-        'Help & About',
-        onTap: () => Get.back(), // placeholder
-      ),
+      _item(Icons.settings_outlined, 'App Settings', onTap: () => Get.back()),
+      _item(Icons.help_outline, 'Help & About', onTap: () => Get.back()),
     ];
   }
 
-  // ── Member Drawer Items ─────────────────────────────────────
+  // ── Member Drawer Items (same routes/logic as before) ──────
   List<Widget> _memberItems() {
     return [
       _item(
         Icons.calendar_month_outlined,
         'My Schedule',
-        onTap: () => Get.back(), // placeholder
+        onTap: () => Get.back(),
       ),
       _item(
         Icons.emoji_events_outlined,
         'Achievements',
-        onTap: () => Get.back(), // placeholder
+        onTap: () => Get.back(),
       ),
       _item(
         Icons.bar_chart_outlined,
         'Progress Tracker',
-        onTap: () => Get.back(), // placeholder
+        onTap: () => Get.back(),
       ),
-      _item(
-        Icons.settings_outlined,
-        'Settings',
-        onTap: () => Get.back(), // placeholder
-      ),
-      _item(
-        Icons.help_outline,
-        'Help & Support',
-        onTap: () => Get.back(), // placeholder
-      ),
+      _item(Icons.settings_outlined, 'Settings', onTap: () => Get.back()),
+      _item(Icons.help_outline, 'Help & Support', onTap: () => Get.back()),
     ];
   }
 
   // ── Single Item ─────────────────────────────────────────────
-  Widget _item(IconData icon, String label, {VoidCallback? onTap}) {
+  Widget _item(
+    IconData icon,
+    String label, {
+    VoidCallback? onTap,
+    Color? color,
+  }) {
+    final tint = color ?? AppTheme.primary;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(icon, color: AppTheme.textSecondary, size: 22),
-        title: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            color: AppTheme.textPrimary,
-            fontWeight: FontWeight.w500,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: tint.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 18, color: tint),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    color: color ?? AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         ),
       ),
     );
