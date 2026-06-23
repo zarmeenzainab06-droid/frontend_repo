@@ -218,7 +218,7 @@ class _AdminSlotsScreenState extends State<AdminSlotsScreen> {
     return AppShell(
       role: 'admin',
       subtitle: 'Admin Panel',
-      bottomNav: const AdminBottomNav(activeIndex: 2),
+      bottomNav: const AdminBottomNav(activeIndex: 3),
       body: Column(
         children: [
           _buildHeader(),

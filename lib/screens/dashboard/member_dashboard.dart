@@ -106,104 +106,126 @@ class _MemberDashboardState extends State<MemberDashboard> {
       title: 'Member Portal',
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primary),
+              child: CircularProgressIndicator(
+                color: Color.fromARGB(255, 143, 110, 110),
+              ),
             )
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(
+                    height: 16,
+                  ), // gap between MemberLayout top bar and welcome card
                   // ✅ Top Welcome Banner
                   Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
                     width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: const BoxDecoration(color: Color(0xFF6B1A1A)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primary,
+                          HSLColor.fromColor(AppTheme.primary)
+                              .withLightness(
+                                (HSLColor.fromColor(
+                                          AppTheme.primary,
+                                        ).lightness -
+                                        0.18)
+                                    .clamp(0.0, 1.0),
+                              )
+                              .toColor(),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(26),
+                        bottomRight: Radius.circular(26),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primary.withOpacity(0.30),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
                       children: [
-                        const Text(
-                          'Welcome back',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                        Text(
-                          _userName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Plan info row
-                        Row(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.card_membership,
-                              color: Colors.white70,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _membership?['package_name'] ?? 'No Plan',
-                              style: const TextStyle(
+                            const Text(
+                              'Welcome back',
+                              style: TextStyle(
                                 color: Colors.white70,
-                                fontSize: 12,
+                                fontSize: 13,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            const Icon(
-                              Icons.calendar_today,
-                              color: Colors.white70,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
+                            const SizedBox(height: 4),
                             Text(
+                              _userName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            _bannerInfoRow(
+                              Icons.card_membership,
+                              _membership?['package_name'] ?? 'No Plan',
+                            ),
+                            const SizedBox(height: 6),
+                            _bannerInfoRow(
+                              Icons.calendar_today,
                               _membership?['end_date'] != null
                                   ? 'Expires ${_membership!['end_date'].toString().substring(0, 10)}'
                                   : 'No expiry',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
                             ),
-                            const SizedBox(width: 12),
-                            const Icon(
+                            const SizedBox(height: 6),
+                            _bannerInfoRow(
                               Icons.person,
-                              color: Colors.white70,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
                               'Trainer: ${_trainer?['name'] ?? 'N/A'}',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
+                            ),
+                            const SizedBox(height: 16),
+                            // days left badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.18),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${_daysLeft()}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'days left',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 8),
-                        // Days left badge
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: Column(
-                            children: [
-                              Text(
-                                '${_daysLeft()}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Text(
-                                'days left',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                       ],
                     ),
@@ -456,6 +478,16 @@ class _MemberDashboardState extends State<MemberDashboard> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _bannerInfoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white70, size: 14),
+        const SizedBox(width: 6),
+        Text(text, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      ],
     );
   }
 
