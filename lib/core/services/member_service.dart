@@ -4,7 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:third_task/models/member_model.dart';
 
 class MemberService {
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = 'http://gym.sandbox.pk/api';
 
   static String _getToken() {
     final box = GetStorage();
