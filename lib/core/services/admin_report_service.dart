@@ -6,7 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import '../../screens/admin/reports/report_model.dart';
 
 class ReportService {
-  static const String baseUrl = "http://gym.sandbox.pk";
+  static const String baseUrl = "http://localhost:3000";
   static const String _path = "/admin/reports";
   static final box = GetStorage();
 
