@@ -135,7 +135,41 @@ class AdminService {
     }
   }
 
-  // ── Get All Packages ───────────────────────────────────────
+  // ── Get Slots (for dropdowns — active only by default) ────────────
+  static Future<Map<String, dynamic>> getSlots({bool activeOnly = true}) async {
+    try {
+      final uri = Uri.parse(
+        '$baseUrl/admin/slots',
+      ).replace(queryParameters: activeOnly ? {'active': '1'} : null);
+      final response = await http.get(uri, headers: _headers);
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'slots': data['slots']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: \$e'};
+    }
+  }
+
+  // ── Get slots linked to a specific package (for member form) ──
+  static Future<Map<String, dynamic>> getPackageSlots(int packageId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/packages/$packageId/slots'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'slots': data['slots']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Get All Packages (updated — returns slot_id + slot_name) ──────
   static Future<Map<String, dynamic>> getPackages({
     bool activeOnly = false,
   }) async {
@@ -150,11 +184,11 @@ class AdminService {
       }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {
-      return {'success': false, 'message': 'Server error: $e'};
+      return {'success': false, 'message': 'Server error: \$e'};
     }
   }
 
-  // ── Create Package ─────────────────────────────────────────
+  // ── Create Package (updated — sends slot_id instead of from/to time) ──
   static Future<Map<String, dynamic>> createPackage(
     Map<String, dynamic> data,
   ) async {
@@ -171,11 +205,11 @@ class AdminService {
       }
       return {'success': false, 'message': res['message'] ?? 'Failed'};
     } catch (e) {
-      return {'success': false, 'message': 'Server error: $e'};
+      return {'success': false, 'message': 'Server error: \$e'};
     }
   }
 
-  // ── Update Package ─────────────────────────────────────────
+  // ── Update Package (updated — sends slot_id instead of from/to time) ──
   static Future<Map<String, dynamic>> updatePackage({
     required int id,
     required Map<String, dynamic> data,
@@ -192,7 +226,7 @@ class AdminService {
       }
       return {'success': false, 'message': res['message'] ?? 'Failed'};
     } catch (e) {
-      return {'success': false, 'message': 'Server error: $e'};
+      return {'success': false, 'message': 'Server error: \$e'};
     }
   }
 

@@ -11,6 +11,7 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   bool _isLoading = true;
   int totalMembers = 0;
+  int totalTrainers = 0;
   int activeMembers = 0;
   int expiredMembers = 0;
   int pendingPayments = 0;
@@ -31,6 +32,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       final s = statsResult['stats'];
       setState(() {
         totalMembers = s['totalMembers'] ?? 0;
+        totalTrainers = s['totalTrainers'] ?? 0;
         activeMembers = s['active'] ?? 0;
         expiredMembers = s['expired'] ?? 0;
         pendingPayments = s['pendingPayments'] ?? 0;
@@ -73,54 +75,69 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Stat cards
                     _sectionLabel('OVERVIEW'),
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _statCard(
-                            'Total Members',
-                            totalMembers,
-                            Icons.people_alt_outlined,
-                            AppTheme.primary,
-                            AppTheme.primaryLight,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _statCard(
-                            'Active',
-                            activeMembers,
-                            Icons.check_circle_outline,
-                            AppTheme.active,
-                            AppTheme.activeLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _statCard(
-                            'Expired',
-                            expiredMembers,
-                            Icons.cancel_outlined,
-                            AppTheme.expired,
-                            AppTheme.expiredLight,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _statCard(
-                            'Pending Payments',
-                            pendingPayments,
-                            Icons.access_time_outlined,
-                            AppTheme.pending,
-                            AppTheme.pendingLight,
-                          ),
-                        ),
-                      ],
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final cardWidth = (constraints.maxWidth - 12) / 2;
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            SizedBox(
+                              width: cardWidth,
+                              child: _statCard(
+                                'Total Members',
+                                totalMembers,
+                                Icons.people_alt_outlined,
+                                AppTheme.primary,
+                                AppTheme.primaryLight,
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _statCard(
+                                'Total Trainers',
+                                totalTrainers,
+                                Icons.sports_gymnastics_outlined,
+                                const Color.fromARGB(255, 15, 124, 226),
+                                const Color.fromARGB(255, 250, 250, 245),
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _statCard(
+                                'Active',
+                                activeMembers,
+                                Icons.check_circle_outline,
+                                AppTheme.active,
+                                AppTheme.activeLight,
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _statCard(
+                                'Expired',
+                                expiredMembers,
+                                Icons.cancel_outlined,
+                                AppTheme.expired,
+                                AppTheme.expiredLight,
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _statCard(
+                                'Pending Payments',
+                                pendingPayments,
+                                Icons.access_time_outlined,
+                                AppTheme.pending,
+                                AppTheme.pendingLight,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     _sectionLabel('RECENT ACTIVITY'),

@@ -6,8 +6,7 @@ import '../../../core/services/admin_service.dart';
 import '../../../core/utils/theme.dart';
 
 class MemberFormPage extends StatefulWidget {
-  final int? memberId; // null = ADD, not null = EDIT
-
+  final int? memberId;
   const MemberFormPage({super.key, this.memberId});
 
   @override
@@ -15,7 +14,6 @@ class MemberFormPage extends StatefulWidget {
 }
 
 class _MemberFormPageState extends State<MemberFormPage> {
-  // two bool for add and edit screen
   bool _hidePassword = true;
   bool _hideEditPassword = true;
 
@@ -25,7 +23,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
   bool _isLoading = false;
   bool _isFetching = false;
 
-  final _passwordCtrl = TextEditingController(); // for password
+  final _passwordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -34,15 +32,20 @@ class _MemberFormPageState extends State<MemberFormPage> {
 
   String? _gender;
   String? _packageId;
-  String? _trainingSlot;
+
+  // Training slot chosen manually from the package's slots
+  String? _selectedSlotId; // slot id (string)
+  String? _selectedSlotName; // slot name — saved to users.training_slot
+
+  // Slots that belong to the currently selected package
+  List<Map<String, dynamic>> _packageSlots = [];
+  bool _loadingSlots = false;
+
   String? _trainerId;
   String _paymentType = 'cash';
 
-  // New screenshot picked by user
   Uint8List? _screenshotBytes;
   String? _screenshotName;
-
-  // Existing screenshot path from server (edit mode) — NEVER cleared unless user picks new
   String? _existingScreenshotPath;
 
   List<Map<String, dynamic>> _trainers = [];
@@ -52,13 +55,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
     {'value': 'male', 'label': 'Male'},
     {'value': 'female', 'label': 'Female'},
     {'value': 'other', 'label': 'Other'},
-  ];
-
-  final List<Map<String, String>> _slots = [
-    {'value': 'morning', 'label': 'Morning (6:00 AM - 9:00 AM)'},
-    {'value': 'midday', 'label': 'Mid-Day (10:00 AM - 2:00 PM)'},
-    {'value': 'evening', 'label': 'Evening (4:00 PM - 8:00 PM)'},
-    {'value': 'night', 'label': 'Night (8:00 PM - 10:00 PM)'},
   ];
 
   @override
@@ -73,7 +69,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
     });
   }
 
-  // DISPOSE
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -82,7 +77,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     _feeCtrl.dispose();
     _startDateCtrl.dispose();
     _passwordCtrl.dispose();
-    super.dispose(); // always last
+    super.dispose();
   }
 
   Future<void> _loadDropdowns() async {
@@ -90,23 +85,48 @@ class _MemberFormPageState extends State<MemberFormPage> {
       AdminService.getTrainers(),
       AdminService.getPackages(activeOnly: false),
     ]);
-    if (!mounted) return; // ← ADD THIS
+    if (!mounted) return;
     if (results[0]['success']) {
-      setState(() {
-        _trainers = List<Map<String, dynamic>>.from(results[0]['trainers']);
-      });
+      setState(
+        () =>
+            _trainers = List<Map<String, dynamic>>.from(results[0]['trainers']),
+      );
     }
     if (results[1]['success']) {
-      setState(() {
-        _packages = List<Map<String, dynamic>>.from(results[1]['packages']);
-      });
+      setState(
+        () =>
+            _packages = List<Map<String, dynamic>>.from(results[1]['packages']),
+      );
     }
+  }
+
+  // Called when admin picks a package → fetch that package's slots
+  Future<void> _onPackageSelected(String? packageId) async {
+    setState(() {
+      _packageId = packageId;
+      _feeCtrl.text = _packagePrice(packageId).toStringAsFixed(2);
+      _packageSlots = [];
+      _selectedSlotId = null;
+      _selectedSlotName = null;
+    });
+
+    if (packageId == null) return;
+
+    setState(() => _loadingSlots = true);
+    final result = await AdminService.getPackageSlots(int.parse(packageId));
+    if (!mounted) return;
+    setState(() {
+      _loadingSlots = false;
+      if (result['success']) {
+        _packageSlots = List<Map<String, dynamic>>.from(result['slots'] ?? []);
+      }
+    });
   }
 
   Future<void> _fetchMemberData() async {
     setState(() => _isFetching = true);
     final result = await AdminService.getMemberById(widget.memberId!);
-    if (!mounted) return; // ← ADD THIS
+    if (!mounted) return;
 
     if (!result['success']) {
       setState(() => _isFetching = false);
@@ -114,36 +134,47 @@ class _MemberFormPageState extends State<MemberFormPage> {
       return;
     }
     final data = result['member'];
-    setState(() {
-      _nameCtrl.text = data['name'] ?? '';
-      _emailCtrl.text = data['email'] ?? '';
-      _phoneCtrl.text = data['phone'] ?? '';
-      _feeCtrl.text = (data['membership_fee'] ?? '99.00').toString();
 
-      final g = (data['gender'] ?? '').toString().toLowerCase();
-      if (['male', 'female', 'other'].contains(g)) _gender = g;
+    _nameCtrl.text = data['name'] ?? '';
+    _emailCtrl.text = data['email'] ?? '';
+    _phoneCtrl.text = data['phone'] ?? '';
+    _feeCtrl.text = (data['membership_fee'] ?? '99.00').toString();
 
-      final s = (data['training_slot'] ?? '').toString().toLowerCase();
-      if (['morning', 'midday', 'evening', 'night'].contains(s)) {
-        _trainingSlot = s;
+    final g = (data['gender'] ?? '').toString().toLowerCase();
+    if (['male', 'female', 'other'].contains(g)) _gender = g;
+
+    final tid = data['trainer_id'];
+    if (tid != null) _trainerId = tid.toString();
+
+    final pm = (data['payment_method'] ?? 'cash').toString().toLowerCase();
+    _paymentType = ['cash', 'online'].contains(pm) ? pm : 'cash';
+    _existingScreenshotPath = data['payment_screenshot'];
+
+    setState(() => _isFetching = false);
+
+    // Load slots for the member's current package, then restore slot selection
+    final pid = data['package_id'];
+    if (pid != null) {
+      await _onPackageSelected(pid.toString());
+
+      // Try to match stored training_slot name to one of the package's slots
+      final storedSlot = (data['training_slot'] ?? '').toString().trim();
+      if (mounted && storedSlot.isNotEmpty) {
+        final matched = _packageSlots.firstWhere(
+          (s) =>
+              s['id'].toString() == storedSlot ||
+              (s['name'] ?? '').toString().toLowerCase() ==
+                  storedSlot.toLowerCase(),
+          orElse: () => {},
+        );
+        if (matched.isNotEmpty) {
+          setState(() {
+            _selectedSlotId = matched['id'].toString();
+            _selectedSlotName = matched['name']?.toString();
+          });
+        }
       }
-
-      final tid = data['trainer_id'];
-      if (tid != null) _trainerId = tid.toString();
-
-      final pid = data['package_id'];
-      if (pid != null) _packageId = pid.toString();
-
-      // ✅ FIX: Set payment type from DB — this drives whether screenshot section shows
-      final pm = (data['payment_method'] ?? 'cash').toString().toLowerCase();
-      _paymentType = ['cash', 'online'].contains(pm) ? pm : 'cash';
-
-      // ✅ FIX: Always load existing screenshot — NEVER cleared when switching to cash/online
-      // It is only replaced when user explicitly picks a new image
-      _existingScreenshotPath = data['payment_screenshot'];
-
-      _isFetching = false;
-    });
+    }
   }
 
   double _packagePrice(String? packageId) {
@@ -177,7 +208,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
       setState(() {
         _screenshotBytes = bytes;
         _screenshotName = picked.name;
-        // ✅ FIX: Clear old path only when user picks a NEW image (replacing it)
         _existingScreenshotPath = null;
       });
     }
@@ -214,13 +244,10 @@ class _MemberFormPageState extends State<MemberFormPage> {
       _showError('Please select a membership plan');
       return;
     }
-    if (_trainingSlot == null) {
+    if (_packageSlots.isNotEmpty && _selectedSlotId == null) {
       _showError('Please select a training slot');
       return;
     }
-
-    // ✅ FIX: Screenshot required only on ADD with online payment
-    // On EDIT: existing path counts as having a screenshot
     if (_paymentType == 'online' && !_isEdit && _screenshotBytes == null) {
       _showError('Please upload a payment screenshot');
       return;
@@ -240,13 +267,13 @@ class _MemberFormPageState extends State<MemberFormPage> {
       email: _emailCtrl.text.trim(),
       phone: _phoneCtrl.text.trim(),
       gender: _gender!,
-      trainingSlot: _trainingSlot!,
+      trainingSlot: _selectedSlotName ?? 'morning',
       trainerId: _trainerId,
       password: _passwordCtrl.text.trim(),
     );
 
     if (!signupResult['success']) {
-      if (!mounted) return; // ← ADD THIS
+      if (!mounted) return;
       setState(() => _isLoading = false);
       _showError(signupResult['message'] ?? 'Failed to create member');
       return;
@@ -267,19 +294,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
       screenshotName: _screenshotName,
     );
 
-    // fix dup
-    // final membershipResult = await AdminService.updateMembership(
-    //   userId: widget.memberId!,
-    //   packageId: int.parse(_packageId!),
-    //   startDate: startDate,
-    //   endDate: endDate,
-    //   amount: double.tryParse(_feeCtrl.text) ?? _packagePrice(_packageId),
-    //   paymentMethod: _paymentType,
-    //   screenshotBytes: _screenshotBytes,
-    //   screenshotName: _screenshotName,
-    //   existingScreenshotPath: _existingScreenshotPath,
-    // );
-
     setState(() => _isLoading = false);
 
     if (membershipResult['success']) {
@@ -291,9 +305,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
       );
-
-      // get.back chnage for added member
-
       Navigator.pop(context, true);
     } else {
       _showError(membershipResult['message'] ?? 'Failed to assign membership');
@@ -307,11 +318,11 @@ class _MemberFormPageState extends State<MemberFormPage> {
       email: _emailCtrl.text.trim(),
       phone: _phoneCtrl.text.trim(),
       gender: _gender ?? 'male',
-      trainingSlot: _trainingSlot ?? 'morning',
+      trainingSlot: _selectedSlotName ?? 'morning',
       trainerId: _trainerId,
-      password: _passwordCtrl.text.trim(), // ← add this
+      password: _passwordCtrl.text.trim(),
     );
-    if (!mounted) return; // ← ADD THIS
+    if (!mounted) return;
     if (!updateResult['success']) {
       setState(() => _isLoading = false);
       _showError(updateResult['message'] ?? 'Failed to update member');
@@ -321,31 +332,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
     final startDate = _startDateCtrl.text;
     final endDate = _calcEndDate(startDate, _packageId!);
 
-    // ✅ FIX: Pass existingScreenshotPath so backend can keep old screenshot
-    // when user didn't pick a new one
-    // print(_existingScreenshotPath);
-    // await AdminService.assignMembership(
-    //   userId: widget.memberId!,
-    //   packageId: int.parse(_packageId!),
-    //   startDate: startDate,
-    //   endDate: endDate,
-    //   amount: double.tryParse(_feeCtrl.text) ?? _packagePrice(_packageId),
-    //   paymentMethod: _paymentType,
-    //   screenshotBytes: _screenshotBytes, // null if not changed
-    //   screenshotName: _screenshotName, // null if not changed
-    //   existingScreenshotPath: _existingScreenshotPath, // ✅ NEW: keep old path
-    // );
-
-    // setState(() => _isLoading = false);
-    // Get.snackbar(
-    //   'Updated',
-    //   'Member updated successfully!',
-    //   backgroundColor: AppTheme.active,
-    //   colorText: Colors.white,
-    //   snackPosition: SnackPosition.BOTTOM,
-    //   margin: const EdgeInsets.all(16),
-    // );
-    // Navigator.pop(context, true); //Get.back(result: true); edit member
     final membershipResult = await AdminService.updateMembership(
       userId: widget.memberId!,
       packageId: int.parse(_packageId!),
@@ -419,7 +405,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
                             controller: _emailCtrl,
                             hint: 'member@example.com',
                             keyboardType: TextInputType.emailAddress,
-                            readOnly: false,
                             validator: (v) {
                               if (v!.isEmpty) return 'Email is required';
                               if (!v.contains('@'))
@@ -438,9 +423,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
                                 v!.isEmpty ? 'Phone is required' : null,
                           ),
                           const SizedBox(height: 16),
-                          // for password
-                          const SizedBox(height: 16),
-                          // for password eye
+
                           _label(
                             _isEdit
                                 ? 'New Password (leave empty to keep current)'
@@ -458,7 +441,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
                                 if (v.trim().length < 6)
                                   return 'Minimum 6 characters';
                               } else {
-                                // edit mode — optional but if filled must be 6+ chars
                                 if (v != null &&
                                     v.trim().isNotEmpty &&
                                     v.trim().length < 6) {
@@ -538,6 +520,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
                           ),
                           const SizedBox(height: 16),
 
+                          // ── Membership Plan ─────────────────────────────
                           _label('Membership Plan *'),
                           _dropdownField(
                             hint: _packages.isEmpty
@@ -553,15 +536,13 @@ class _MemberFormPageState extends State<MemberFormPage> {
                                   },
                                 )
                                 .toList(),
-                            onChanged: (val) {
-                              setState(() {
-                                _packageId = val;
-                                _feeCtrl.text = _packagePrice(
-                                  val,
-                                ).toStringAsFixed(2);
-                              });
-                            },
+                            onChanged: (val) => _onPackageSelected(val),
                           ),
+                          const SizedBox(height: 16),
+
+                          // ── Training Slot (manual dropdown from package slots) ──
+                          _label('Training Slot *'),
+                          _buildSlotDropdown(),
                           const SizedBox(height: 16),
 
                           _label('Assign Trainer'),
@@ -581,16 +562,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
                             onChanged: _trainers.isEmpty
                                 ? null
                                 : (val) => setState(() => _trainerId = val),
-                          ),
-                          const SizedBox(height: 16),
-
-                          _label('Training Slot *'),
-                          _dropdownField(
-                            hint: 'Select time slot',
-                            value: _trainingSlot,
-                            items: _slots,
-                            onChanged: (val) =>
-                                setState(() => _trainingSlot = val),
                           ),
                           const SizedBox(height: 16),
 
@@ -619,12 +590,10 @@ class _MemberFormPageState extends State<MemberFormPage> {
                             children: [
                               Expanded(
                                 child: GestureDetector(
-                                  // ✅ FIX: Switching to Cash no longer clears _existingScreenshotPath
                                   onTap: () => setState(() {
                                     _paymentType = 'cash';
                                     _screenshotBytes = null;
                                     _screenshotName = null;
-                                    // Do NOT clear _existingScreenshotPath here
                                   }),
                                   child: _paymentBtn(
                                     label: 'Cash',
@@ -651,7 +620,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
 
                           if (_paymentType == 'online') ...[
                             _label(
-                              'Payment Screenshot${_isEdit ? ' (optional — keep old if not changed)' : ' *'}',
+                              'Payment Screenshot${_isEdit ? ' (optional)' : ' *'}',
                             ),
                             GestureDetector(
                               onTap: _pickScreenshot,
@@ -750,10 +719,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
                                     ),
                                   ),
                                 ),
-
-                                //onPressed: () => Get.back()has chnge,
                                 onPressed: () => Navigator.pop(context),
-
                                 child: const Text(
                                   'Cancel',
                                   style: TextStyle(
@@ -771,6 +737,124 @@ class _MemberFormPageState extends State<MemberFormPage> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Slot dropdown (populated from selected package's slots) ──
+  Widget _buildSlotDropdown() {
+    // No package selected yet
+    if (_packageId == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.background,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        ),
+        child: const Text(
+          'Select a membership plan first',
+          style: TextStyle(color: AppTheme.textHint, fontSize: 14),
+        ),
+      );
+    }
+
+    // Loading slots
+    if (_loadingSlots) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.background,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppTheme.primary,
+              ),
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Loading slots...',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Package has no slots linked
+    if (_packageSlots.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.background,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        ),
+        child: const Text(
+          'No slots linked to this package',
+          style: TextStyle(color: AppTheme.textHint, fontSize: 14),
+        ),
+      );
+    }
+
+    // Normal dropdown
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedSlotId,
+          isExpanded: true,
+          hint: const Text(
+            'Select a time slot',
+            style: TextStyle(color: AppTheme.textHint, fontSize: 14),
+          ),
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            color: AppTheme.textSecondary,
+            size: 20,
+          ),
+          dropdownColor: AppTheme.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppTheme.textPrimary,
+            fontFamily: 'Poppins',
+          ),
+          items: _packageSlots.map((slot) {
+            final id = slot['id'].toString();
+            final name = slot['name'] ?? '';
+            final start = slot['start_time'] ?? '';
+            final end = slot['end_time'] ?? '';
+            final label = start.isNotEmpty && end.isNotEmpty
+                ? '$name  ($start – $end)'
+                : name;
+            return DropdownMenuItem<String>(value: id, child: Text(label));
+          }).toList(),
+          onChanged: (val) {
+            setState(() {
+              _selectedSlotId = val;
+              if (val != null) {
+                final slot = _packageSlots.firstWhere(
+                  (s) => s['id'].toString() == val,
+                  orElse: () => {},
+                );
+                _selectedSlotName = slot.isNotEmpty
+                    ? slot['name']?.toString()
+                    : null;
+              } else {
+                _selectedSlotName = null;
+              }
+            });
+          },
+        ),
       ),
     );
   }
@@ -808,7 +892,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
         ),
       );
     }
-
     if (_existingScreenshotPath != null) {
       final url =
           '${AdminService.baseUrl}/${_existingScreenshotPath!.replaceAll('\\', '/')}';
@@ -853,7 +936,6 @@ class _MemberFormPageState extends State<MemberFormPage> {
         ),
       );
     }
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -959,8 +1041,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     TextInputType? keyboardType,
     Widget? suffixIcon,
     bool readOnly = false,
-    bool obscureText = false, // for password
-
+    bool obscureText = false,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
@@ -968,8 +1049,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
       keyboardType: keyboardType,
       validator: validator,
       readOnly: readOnly,
-      obscureText: obscureText, // for password
-
+      obscureText: obscureText,
       style: TextStyle(
         fontSize: 14,
         color: readOnly ? AppTheme.textSecondary : AppTheme.textPrimary,

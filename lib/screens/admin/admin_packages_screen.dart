@@ -11,20 +11,30 @@ class AdminPackagesScreen extends StatefulWidget {
 class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _packages = [];
+  List<Map<String, dynamic>> _allSlots = []; // every slot from DB
 
   @override
   void initState() {
     super.initState();
-    _loadPackages();
+    _loadData();
   }
 
-  Future<void> _loadPackages() async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final result = await AdminService.getPackages();
-    if (result['success']) {
-      setState(() {
-        _packages = List<Map<String, dynamic>>.from(result['packages']);
-      });
+    final results = await Future.wait([
+      AdminService.getPackages(),
+      AdminService.getSlots(activeOnly: false),
+    ]);
+    if (results[0]['success']) {
+      setState(
+        () =>
+            _packages = List<Map<String, dynamic>>.from(results[0]['packages']),
+      );
+    }
+    if (results[1]['success']) {
+      setState(
+        () => _allSlots = List<Map<String, dynamic>>.from(results[1]['slots']),
+      );
     }
     setState(() => _isLoading = false);
   }
@@ -39,15 +49,16 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
     final priceCtrl = TextEditingController(
       text: package?['price']?.toString() ?? '',
     );
-
-    ///for the Frommm time to
     final descCtrl = TextEditingController(text: package?['description'] ?? '');
-    final fromTimeCtrl = TextEditingController(
-      text: package?['from_time']?.toString().substring(0, 5) ?? '',
+
+    // Pre-populate selected slot ids from existing package slots
+    final existingSlots = List<Map<String, dynamic>>.from(
+      package?['slots'] ?? [],
     );
-    final toTimeCtrl = TextEditingController(
-      text: package?['to_time']?.toString().substring(0, 5) ?? '',
-    );
+    final Set<int> selectedSlotIds = existingSlots
+        .map<int>((s) => s['id'] as int)
+        .toSet();
+
     bool isActive = (package?['is_active'] ?? 1) == 1;
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
@@ -57,32 +68,7 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        /// for the from time to to timeeeeeeeee
         builder: (ctx, setSheet) {
-          Future<void> pickTime(TextEditingController ctrl) async {
-            final picked = await showTimePicker(
-              context: context,
-              initialTime: TimeOfDay.now(),
-              builder: (ctx, child) => Theme(
-                data: Theme.of(ctx).copyWith(
-                  colorScheme: const ColorScheme.light(
-                    primary: AppTheme.primary,
-                  ),
-                ),
-                child: child!,
-              ),
-            );
-
-            if (picked != null) {
-              final h = picked.hour.toString().padLeft(2, '0');
-              final m = picked.minute.toString().padLeft(2, '0');
-
-              ctrl.text = '$h:$m';
-
-              setSheet(() {});
-            }
-          }
-
           return Container(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(ctx).viewInsets.bottom,
@@ -113,8 +99,6 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Title
                     Text(
                       isEdit ? 'Edit Package' : 'Add New Package',
                       style: const TextStyle(
@@ -169,29 +153,81 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                       hint: 'Brief description of what is included',
                       maxLines: 3,
                     ),
-                    // for the timeee
                     const SizedBox(height: 14),
-                    _sheetLabel('From Time'),
-                    GestureDetector(
-                      onTap: () => pickTime(fromTimeCtrl),
-                      child: AbsorbPointer(
-                        child: _sheetField(
-                          controller: fromTimeCtrl,
-                          hint: 'e.g. 06:00',
+
+                    // ── Multi-select slots ─────────────────────────────
+                    _sheetLabel('Time Slots (select one or more)'),
+                    if (_allSlots.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.background,
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
+                        ),
+                        child: const Text(
+                          'No slots available — create slots first',
+                          style: TextStyle(
+                            color: AppTheme.textHint,
+                            fontSize: 13,
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.background,
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
+                        ),
+                        child: Column(
+                          children: _allSlots.map((slot) {
+                            final slotId = slot['id'] as int;
+                            final isChecked = selectedSlotIds.contains(slotId);
+                            final label = slot['name'] ?? '';
+                            final time =
+                                '${slot['start_time'] ?? ''} – ${slot['end_time'] ?? ''}';
+                            return CheckboxListTile(
+                              dense: true,
+                              activeColor: AppTheme.primary,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              title: Text(
+                                label,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              subtitle: Text(
+                                time,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                              value: isChecked,
+                              onChanged: (val) {
+                                setSheet(() {
+                                  if (val == true) {
+                                    selectedSlotIds.add(slotId);
+                                  } else {
+                                    selectedSlotIds.remove(slotId);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    _sheetLabel('To Time'),
-                    GestureDetector(
-                      onTap: () => pickTime(toTimeCtrl),
-                      child: AbsorbPointer(
-                        child: _sheetField(
-                          controller: toTimeCtrl,
-                          hint: 'e.g. 09:00',
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 14),
 
                     // Active toggle
@@ -256,12 +292,8 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                                   'price': double.parse(priceCtrl.text.trim()),
                                   'description': descCtrl.text.trim(),
                                   'is_active': isActive ? 1 : 0,
-                                  'from_time': fromTimeCtrl.text.isNotEmpty
-                                      ? fromTimeCtrl.text
-                                      : null, // for timeee
-                                  'to_time': toTimeCtrl.text.isNotEmpty
-                                      ? toTimeCtrl.text
-                                      : null,
+                                  // send as list of ints
+                                  'slot_ids': selectedSlotIds.toList(),
                                 };
 
                                 final result = isEdit
@@ -278,14 +310,14 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                                   Get.snackbar(
                                     'Success',
                                     isEdit
-                                        ? 'Package updated successfully'
-                                        : 'Package created successfully',
+                                        ? 'Package updated'
+                                        : 'Package created',
                                     backgroundColor: AppTheme.active,
                                     colorText: Colors.white,
                                     snackPosition: SnackPosition.TOP,
                                     margin: const EdgeInsets.all(16),
                                   );
-                                  _loadPackages();
+                                  _loadData();
                                 } else {
                                   Get.snackbar(
                                     'Error',
@@ -325,7 +357,7 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
     );
   }
 
-  // ── Delete confirmation ──────────────────────────────────────
+  // ── Delete ───────────────────────────────────────────────────
   Future<void> _deletePackage(int id, String name) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -376,11 +408,11 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
           snackPosition: SnackPosition.BOTTOM,
           margin: const EdgeInsets.all(16),
         );
-        _loadPackages();
+        _loadData();
       } else {
         Get.snackbar(
           'Error',
-          result['message'] ?? 'Failed to delete package',
+          result['message'] ?? 'Failed',
           backgroundColor: AppTheme.expired,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
@@ -391,22 +423,24 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
   }
 
   // ── Toggle active ────────────────────────────────────────────
-  Future<void> _toggleActive(Map<String, dynamic> package) async {
-    final newVal = (package['is_active'] == 1) ? 0 : 1;
-    final result = await AdminService.updatePackage(
-      id: package['id'],
+  Future<void> _toggleActive(Map<String, dynamic> pkg) async {
+    final newVal = (pkg['is_active'] == 1) ? 0 : 1;
+    final slots = List<Map<String, dynamic>>.from(pkg['slots'] ?? []);
+    final slotIds = slots.map<int>((s) => s['id'] as int).toList();
+    await AdminService.updatePackage(
+      id: pkg['id'],
       data: {
-        'name': package['name'],
-        'duration': package['duration'],
-        'price': package['price'],
-        'description': package['description'] ?? '',
+        'name': pkg['name'],
+        'duration': pkg['duration'],
+        'price': pkg['price'],
+        'description': pkg['description'] ?? '',
         'is_active': newVal,
+        'slot_ids': slotIds,
       },
     );
-    if (result['success']) _loadPackages();
+    _loadData();
   }
 
-  // ── Color helper (used only by the header gradient) ───────────
   Color _darken(Color c, [double amount = .2]) {
     final hsl = HSLColor.fromColor(c);
     return hsl
@@ -430,7 +464,7 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                 ? _buildEmpty()
                 : RefreshIndicator(
                     color: AppTheme.primary,
-                    onRefresh: _loadPackages,
+                    onRefresh: _loadData,
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                       itemCount: _packages.length,
@@ -454,8 +488,6 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
     );
   }
 
-  // ── Top Bar (only this changed — gradient + rounded corners to
-  // match the rest of the app's header style) ────────────────────
   Widget _buildTopBar() {
     return Container(
       padding: EdgeInsets.only(
@@ -539,13 +571,13 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
     );
   }
 
-  // ── Package Card ─────────────────────────────────────────────
   Widget _buildPackageCard(Map<String, dynamic> pkg) {
     final name = pkg['name'] ?? '';
     final duration = pkg['duration'] ?? 0;
     final price = pkg['price'] ?? 0;
     final description = pkg['description'] ?? '';
     final isActive = (pkg['is_active'] ?? 1) == 1;
+    final slots = List<Map<String, dynamic>>.from(pkg['slots'] ?? []);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -563,10 +595,9 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Name + active badge + toggle
+            // Header row
             Row(
               children: [
-                // Icon circle
                 Container(
                   width: 44,
                   height: 44,
@@ -607,7 +638,6 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                     ],
                   ),
                 ),
-                // Active toggle
                 GestureDetector(
                   onTap: () => _toggleActive(pkg),
                   child: Container(
@@ -639,7 +669,6 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
               ],
             ),
 
-            // Description
             if (description.isNotEmpty) ...[
               const SizedBox(height: 12),
               const Divider(height: 1, color: AppTheme.border),
@@ -652,27 +681,59 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
                 ),
               ),
             ],
-            //// forrr the timeeee
-            if (pkg['from_time'] != null || pkg['to_time'] != null) ...[
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.access_time,
-                    size: 14,
-                    color: AppTheme.textSecondary,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${pkg['from_time'] ?? '--:--'}  →  ${pkg['to_time'] ?? '--:--'}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
+
+            // ── Slots chips ──────────────────────────────────────
+            if (slots.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: AppTheme.border),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: slots.map((s) {
+                  final sName = s['name'] ?? '';
+                  final start = s['start_time'] ?? '';
+                  final end = s['end_time'] ?? '';
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
                     ),
-                  ),
-                ],
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppTheme.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.access_time,
+                          size: 12,
+                          color: AppTheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          start.isNotEmpty && end.isNotEmpty
+                              ? '$sName ($start–$end)'
+                              : sName,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
             ],
+
+            const SizedBox(height: 14),
+
             // Action buttons
             Row(
               children: [
@@ -756,7 +817,6 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
     );
   }
 
-  // ── Bottom Nav ────────────────────────────────────────────────
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -826,7 +886,6 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
     );
   }
 
-  // ── Sheet helpers ─────────────────────────────────────────────
   Widget _sheetLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

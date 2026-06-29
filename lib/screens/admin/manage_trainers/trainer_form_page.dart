@@ -6,7 +6,6 @@ import '../../../core/utils/theme.dart';
 
 class TrainerFormPage extends StatefulWidget {
   final int? trainerId;
-
   const TrainerFormPage({super.key, this.trainerId});
 
   @override
@@ -24,23 +23,40 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
   final _passwordCtrl = TextEditingController();
 
   String? _gender;
-  String _trainingSlot = 'morning';
+  // training_slot is now a slot NAME from the real slots table
+  String? _trainingSlotId; // selected slot id (as string)
   bool _isActive = true;
   bool _isLoading = false;
   bool _isFetching = false;
-
-  // FIX 4: state variable to toggle password visibility
   bool _passwordVisible = false;
+
+  // Real slots fetched from the DB
+  List<Map<String, dynamic>> _slots = [];
 
   bool get _isEditing => widget.trainerId != null;
 
   final List<String> _genders = ['male', 'female'];
-  final List<String> _slots = ['morning', 'midday', 'evening', 'night'];
 
   @override
   void initState() {
     super.initState();
-    if (_isEditing) _loadTrainer();
+    _loadSlots().then((_) {
+      if (_isEditing) _loadTrainer();
+    });
+  }
+
+  Future<void> _loadSlots() async {
+    final result = await AdminService.getSlots(activeOnly: false);
+    if (!mounted) return;
+    if (result['success']) {
+      setState(() {
+        _slots = List<Map<String, dynamic>>.from(result['slots']);
+        // Default to first slot if none selected yet
+        if (_trainingSlotId == null && _slots.isNotEmpty) {
+          _trainingSlotId = _slots[0]['id'].toString();
+        }
+      });
+    }
   }
 
   Future<void> _loadTrainer() async {
@@ -54,8 +70,27 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
       _specCtrl.text = t['specialization'] ?? '';
       _expCtrl.text = t['experience']?.toString() ?? '';
       _gender = t['gender'];
-      _trainingSlot = t['training_slot'] ?? 'morning';
-      // FIX: same normalisation as the card — handles int 1/0 and bool
+
+      // Match the stored training_slot string to a slot id
+      // The trainer's training_slot stores the slot NAME (e.g. "Morning Batch")
+      // or the old enum value (e.g. "morning") — handle both
+      final storedSlot = (t['training_slot'] ?? '')
+          .toString()
+          .toLowerCase()
+          .trim();
+      final matched = _slots.firstWhere(
+        (s) =>
+            s['id'].toString() == storedSlot ||
+            (s['name'] ?? '').toString().toLowerCase().trim() == storedSlot ||
+            _slotNameMatchesEnum(s['name'] ?? '', storedSlot),
+        orElse: () => {},
+      );
+      if (matched.isNotEmpty) {
+        _trainingSlotId = matched['id'].toString();
+      } else if (_slots.isNotEmpty) {
+        _trainingSlotId = _slots[0]['id'].toString();
+      }
+
       _isActive =
           t['is_active'] == 1 ||
           t['is_active'] == true ||
@@ -64,6 +99,36 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
     setState(() => _isFetching = false);
   }
 
+  // Maps old hardcoded enum values to slot name keywords
+  bool _slotNameMatchesEnum(String slotName, String enumVal) {
+    final n = slotName.toLowerCase();
+    switch (enumVal) {
+      case 'morning':
+        return n.contains('morning');
+      case 'midday':
+        return n.contains('mid') || n.contains('midday');
+      case 'evening':
+        return n.contains('evening');
+      case 'night':
+        return n.contains('night');
+      default:
+        return false;
+    }
+  }
+
+  // for real slot
+  String get _resolvedSlotName {
+    if (_trainingSlotId == null)
+      return _slots.isNotEmpty ? (_slots[0]['name'] ?? 'morning') : 'morning';
+    final slot = _slots.firstWhere(
+      (s) => s['id'].toString() == _trainingSlotId,
+      orElse: () => {},
+    );
+    if (slot.isEmpty) return 'morning';
+    return (slot['name'] ?? 'morning').toString();
+  }
+
+  //
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
@@ -79,7 +144,7 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
         gender: _gender,
         specialization: _specCtrl.text.trim(),
         experience: int.tryParse(_expCtrl.text.trim()),
-        trainingSlot: _trainingSlot,
+        trainingSlot: _resolvedSlotName, // for real slot
         isActive: _isActive ? 1 : 0,
       );
     } else {
@@ -90,7 +155,7 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
         gender: _gender,
         specialization: _specCtrl.text.trim(),
         experience: int.tryParse(_expCtrl.text.trim()),
-        trainingSlot: _trainingSlot,
+        trainingSlot: _resolvedSlotName, // for real slot
         password: _passwordCtrl.text.trim(),
       );
     }
@@ -196,7 +261,6 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
                     const SizedBox(height: 12),
                     _buildGenderDropdown(),
 
-                    // Password field — create mode only
                     if (!_isEditing) ...[
                       const SizedBox(height: 12),
                       _buildPasswordField(),
@@ -221,7 +285,9 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
                     const SizedBox(height: 12),
-                    _buildSlotDropdown(),
+
+                    // ── Real slots dropdown ──────────────────────────
+                    _buildRealSlotDropdown(),
 
                     if (_isEditing) ...[
                       const SizedBox(height: 20),
@@ -273,12 +339,65 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
     );
   }
 
-  // ── Password field with eye toggle ─────────────────────────────────────────
+  // ── Real Slots Dropdown ─────────────────────────────────────
+  Widget _buildRealSlotDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _trainingSlotId,
+      decoration: InputDecoration(
+        labelText: 'Training Slot',
+        prefixIcon: const Icon(
+          Icons.schedule_outlined,
+          size: 18,
+          color: AppTheme.textSecondary,
+        ),
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          color: AppTheme.textSecondary,
+        ),
+        filled: true,
+        fillColor: AppTheme.surface,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: const BorderSide(color: AppTheme.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: const BorderSide(color: AppTheme.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+        ),
+      ),
+      hint: Text(
+        _slots.isEmpty ? 'Loading slots...' : 'Select a slot',
+        style: const TextStyle(fontSize: 14, color: AppTheme.textHint),
+      ),
+      items: _slots.map((slot) {
+        final id = slot['id'].toString();
+        final name = slot['name'] ?? '';
+        final start = slot['start_time'] ?? '';
+        final end = slot['end_time'] ?? '';
+        final label = start.isNotEmpty && end.isNotEmpty
+            ? '$name  ($start – $end)'
+            : name;
+        return DropdownMenuItem<String>(
+          value: id,
+          child: Text(label, style: const TextStyle(fontSize: 14)),
+        );
+      }).toList(),
+      onChanged: (v) => setState(() => _trainingSlotId = v),
+    );
+  }
 
+  // ── Password field ──────────────────────────────────────────
   Widget _buildPasswordField() {
     return TextFormField(
       controller: _passwordCtrl,
-      // FIX 4: driven by _passwordVisible state, not hardcoded true
       obscureText: !_passwordVisible,
       validator: (v) => v == null || v.trim().isEmpty
           ? 'Password is required'
@@ -293,7 +412,6 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
           size: 18,
           color: AppTheme.textSecondary,
         ),
-        // Eye icon suffix button
         suffixIcon: IconButton(
           onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
           icon: Icon(
@@ -335,8 +453,7 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
+  // ── Helpers ─────────────────────────────────────────────────
   Widget _sectionLabel(String label) {
     return Text(
       label,
@@ -444,52 +561,6 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
         );
       }).toList(),
       onChanged: (v) => setState(() => _gender = v),
-    );
-  }
-
-  Widget _buildSlotDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _trainingSlot,
-      decoration: InputDecoration(
-        labelText: 'Training Slot',
-        prefixIcon: const Icon(
-          Icons.schedule_outlined,
-          size: 18,
-          color: AppTheme.textSecondary,
-        ),
-        labelStyle: const TextStyle(
-          fontSize: 14,
-          color: AppTheme.textSecondary,
-        ),
-        filled: true,
-        fillColor: AppTheme.surface,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          borderSide: const BorderSide(color: AppTheme.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          borderSide: const BorderSide(color: AppTheme.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-        ),
-      ),
-      items: _slots.map((s) {
-        return DropdownMenuItem(
-          value: s,
-          child: Text(
-            s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}',
-            style: const TextStyle(fontSize: 14),
-          ),
-        );
-      }).toList(),
-      onChanged: (v) => setState(() => _trainingSlot = v ?? 'morning'),
     );
   }
 
