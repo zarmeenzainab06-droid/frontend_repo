@@ -503,7 +503,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
         .toString()
         .toLowerCase();
     final duration = member['package_duration']?.toString() ?? '';
-    final fee = member['membership_fee'];
+    final fee = member['amount_received'];
     final feeStr = fee != null
         ? 'PKR ${double.tryParse(fee.toString())?.toStringAsFixed(0) ?? fee}'
         : '';

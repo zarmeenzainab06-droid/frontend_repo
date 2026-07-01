@@ -101,10 +101,15 @@ class _MemberFormPageState extends State<MemberFormPage> {
   }
 
   // Called when admin picks a package → fetch that package's slots
-  Future<void> _onPackageSelected(String? packageId) async {
+  Future<void> _onPackageSelected(
+    String? packageId, {
+    bool resetFee = true,
+  }) async {
     setState(() {
       _packageId = packageId;
-      _feeCtrl.text = _packagePrice(packageId).toStringAsFixed(2);
+      if (resetFee) {
+        _feeCtrl.text = _packagePrice(packageId).toStringAsFixed(2);
+      }
       _packageSlots = [];
       _selectedSlotId = null;
       _selectedSlotName = null;
@@ -138,7 +143,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     _nameCtrl.text = data['name'] ?? '';
     _emailCtrl.text = data['email'] ?? '';
     _phoneCtrl.text = data['phone'] ?? '';
-    _feeCtrl.text = (data['membership_fee'] ?? '99.00').toString();
+    _feeCtrl.text = (data['amount_received'] ?? '99.00').toString();
 
     final g = (data['gender'] ?? '').toString().toLowerCase();
     if (['male', 'female', 'other'].contains(g)) _gender = g;
@@ -155,7 +160,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     // Load slots for the member's current package, then restore slot selection
     final pid = data['package_id'];
     if (pid != null) {
-      await _onPackageSelected(pid.toString());
+      await _onPackageSelected(pid.toString(), resetFee: false);
 
       // Try to match stored training_slot name to one of the package's slots
       final storedSlot = (data['training_slot'] ?? '').toString().trim();
