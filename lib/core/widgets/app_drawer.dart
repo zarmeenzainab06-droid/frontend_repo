@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../screens/dashboard/member_plans_screen.dart';
 import '../utils/theme.dart';
 import 'package:third_task/routes/app_routes.dart';
 
@@ -202,22 +203,61 @@ class AppDrawer extends StatelessWidget {
   List<Widget> _memberItems() {
     return [
       _item(
-        Icons.calendar_month_outlined,
-        'My Schedule',
-        onTap: () => Get.back(),
+        Icons.home_outlined,
+        'Home',
+        onTap: () {
+          Get.back();
+          Get.offAllNamed('/dashboard');
+        },
       ),
       _item(
-        Icons.emoji_events_outlined,
-        'Achievements',
-        onTap: () => Get.back(),
+        Icons.card_membership_outlined,
+        'My Membership',
+        onTap: () {
+          Get.back();
+          Get.toNamed('/member_membership');
+        },
       ),
       _item(
-        Icons.bar_chart_outlined,
-        'Progress Tracker',
-        onTap: () => Get.back(),
+        Icons.payment_outlined,
+        'Payments',
+        onTap: () {
+          Get.back();
+          Get.toNamed('/member-payment');
+        },
       ),
-      _item(Icons.settings_outlined, 'Settings', onTap: () => Get.back()),
-      _item(Icons.help_outline, 'Help & Support', onTap: () => Get.back()),
+      _item(
+        Icons.fitness_center_outlined,
+        'My Trainer',
+        onTap: () {
+          Get.back();
+          Get.toNamed('/member_trainer');
+        },
+      ),
+      _item(
+        Icons.restaurant_outlined,
+        'My Diet Plan',
+        onTap: () {
+          Get.back();
+          Get.toNamed('/member_diet');
+        },
+      ),
+      _item(
+        Icons.card_membership_outlined,
+        'Plans',
+        onTap: () {
+          Get.back();
+          Get.to(() => const MemberPlansScreen());
+        },
+      ),
+      _item(
+        Icons.person_outline,
+        'My Profile',
+        onTap: () {
+          Get.back();
+          Get.toNamed('/member_profile');
+        },
+      ),
     ];
   }
 

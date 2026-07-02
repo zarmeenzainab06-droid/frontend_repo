@@ -24,6 +24,7 @@ import '../screens/dashboard/member_payment_screen.dart';
 import '../screens/dashboard/member_plans_screen.dart';
 import '../screens/dashboard/member_edit_profile.dart';
 import '../screens/dashboard/member_change_password.dart';
+import '../screens/dashboard/member_diet_screen.dart';
 
 // eman
 import '../screens/trainer/trainer_dashboard.dart';
@@ -130,6 +131,7 @@ class AppRoutes {
     GetPage(name: memberProfile, page: () => MemberProfileScreen()),
     GetPage(name: memberMembership, page: () => MemberMembershipScreen()),
     GetPage(name: memberTrainer, page: () => MemberTrainerScreen()),
+    GetPage(name: '/member_diet', page: () => const MemberDietScreen()),
     GetPage(
       name: '/member-edit-profile',
       page: () => MemberEditProfileScreen(),

@@ -812,7 +812,7 @@ class _MemberPaymentHistoryScreenState
                       Expanded(
                         child: _summaryCard(
                           'Total Paid',
-                          'Rs. ${_totalPaid.toStringAsFixed(0)}',
+                          'PKR ${_totalPaid.toStringAsFixed(0)}',
                           Icons.check_circle,
                           AppTheme.active,
                           AppTheme.activeLight,
@@ -917,7 +917,7 @@ class _MemberPaymentHistoryScreenState
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        'Rs. ${payment['amount']}',
+                                        'PKR ${payment['amount']}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15,

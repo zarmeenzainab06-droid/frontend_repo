@@ -236,60 +236,6 @@ class _MemberDashboardState extends State<MemberDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ✅ Quick Access Buttons
-                        const Text(
-                          'Quick Access',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _quickButton(
-                                'Membership',
-                                Icons.card_membership,
-                                Colors.blue,
-                                () => Get.toNamed('/member_membership'),
-                              ),
-                              const SizedBox(width: 8),
-                              _quickButton(
-                                'Trainer',
-                                Icons.fitness_center,
-                                Colors.purple,
-                                () => Get.toNamed('/member_trainer'),
-                              ),
-                              const SizedBox(width: 8),
-                              _quickButton(
-                                'Payments',
-                                Icons.payment,
-                                Colors.green,
-                                () => Get.toNamed('/member-payment'),
-                              ),
-                              const SizedBox(width: 8),
-                              _quickButton(
-                                'Diet Plan',
-                                Icons.restaurant,
-                                Colors.orange,
-                                () => Get.toNamed('/member-diet'),
-                              ),
-                              const SizedBox(width: 8),
-                              _quickButton(
-                                'Profile',
-                                Icons.person,
-                                Colors.grey[800]!,
-                                () => Get.toNamed('/member_profile'),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
                         // ✅ Next Payment Card
                         Container(
                           width: double.infinity,
@@ -311,7 +257,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Rs. ${_membership?['price'] ?? '0'}',
+                                'PKR ${_membership?['price'] ?? '0'}',
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
