@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../core/services/auth_service.dart';
 import '../core/utils/theme.dart';
@@ -20,6 +21,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   final List<String> _genderOptions = ['Male', 'Female'];
 
+  bool _isValidGmail(String email) {
+    final regex = RegExp(r'^[\w\.\-]+@gmail\.com$', caseSensitive: false);
+    return regex.hasMatch(email.trim());
+  }
+
   Future<void> _register() async {
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
@@ -27,6 +33,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Get.snackbar(
         "Error",
         "Please fill all required fields",
+        backgroundColor: AppTheme.expiredLight,
+        colorText: AppTheme.expired,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (!_isValidGmail(_emailController.text)) {
+      Get.snackbar(
+        "Error",
+        "Please enter a valid @gmail.com address",
         backgroundColor: AppTheme.expiredLight,
         colorText: AppTheme.expired,
         snackPosition: SnackPosition.BOTTOM,
@@ -49,13 +66,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final body = {
       'name': _nameController.text.trim(),
-      'phone': _phoneController.text.trim(),
+      'phone': '+92${_phoneController.text.trim()}',
       'gender': (_selectedGender ?? 'male').toLowerCase(),
       'email': _emailController.text.trim(),
       'password': _passwordController.text,
     };
 
     final result = await AuthService.register(body);
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (result['success']) {
@@ -66,7 +84,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         colorText: AppTheme.active,
         snackPosition: SnackPosition.BOTTOM,
       );
-      Get.back();
+      Get.offAllNamed('/login');
     } else {
       Get.snackbar(
         "Registration Failed",
@@ -107,12 +125,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 18),
 
               // Phone
-              _label('Phone Number'),
-              const SizedBox(height: 8),
               _textField(
                 controller: _phoneController,
-                hint: '+1 234 567 8900',
+                hint: '3001234567',
                 keyboardType: TextInputType.phone,
+                prefixText: '+92 ',
+                maxLength: 10,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
               const SizedBox(height: 18),
 
@@ -291,11 +310,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required TextEditingController controller,
     required String hint,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    String? prefixText,
+    int? maxLength,
   }) => TextField(
     controller: controller,
     keyboardType: keyboardType,
     style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
     decoration: InputDecoration(
+      prefixText: prefixText,
+      counterText: '',
       hintText: hint,
       hintStyle: TextStyle(color: AppTheme.textHint, fontSize: 14),
       filled: true,
@@ -322,6 +346,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+
     super.dispose();
   }
 }

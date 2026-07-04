@@ -17,11 +17,27 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   final box = GetStorage();
 
+  bool _isValidGmail(String email) {
+    final regex = RegExp(r'^[\w\.\-]+@gmail\.com$', caseSensitive: false);
+    return regex.hasMatch(email.trim());
+  }
+
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       Get.snackbar(
         "Error",
         "Email and Password are required",
+        backgroundColor: AppTheme.expiredLight,
+        colorText: AppTheme.expired,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (!_isValidGmail(_emailController.text)) {
+      Get.snackbar(
+        "Error",
+        "Please enter a valid @gmail.com address",
         backgroundColor: AppTheme.expiredLight,
         colorText: AppTheme.expired,
         snackPosition: SnackPosition.BOTTOM,
@@ -206,7 +222,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => Get.to(() => RegisterScreen()),
+                      onTap: () async {
+                        final registered = await Get.to(() => RegisterScreen());
+
+                        if (registered == true) {
+                          Get.snackbar(
+                            "Success",
+                            "Account created successfully. Please login.",
+                            backgroundColor: AppTheme.activeLight,
+                            colorText: AppTheme.active,
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        }
+                      },
                       child: const Text(
                         'Register here',
                         style: TextStyle(
