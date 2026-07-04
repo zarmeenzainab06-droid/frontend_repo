@@ -899,7 +899,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     }
     if (_existingScreenshotPath != null) {
       final url =
-          '${AdminService.baseUrl}/${_existingScreenshotPath!.replaceAll('\\', '/')}';
+          '${AdminService.baseUrl}/uploads/${_existingScreenshotPath!.replaceAll('\\', '/')}';
       return ClipRRect(
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         child: Stack(
