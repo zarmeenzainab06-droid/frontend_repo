@@ -330,6 +330,7 @@ class AdminService {
     Uint8List? screenshotBytes,
     String? screenshotName,
     String? existingScreenshotPath,
+    String? transactionId,
   }) async {
     try {
       final token = box.read('token');
@@ -346,6 +347,8 @@ class AdminService {
         request.fields['end_date'] = endDate;
         request.fields['amount'] = amount.toString();
         request.fields['payment_method'] = paymentMethod;
+        if (transactionId != null)
+          request.fields['transaction_id'] = transactionId; // ← add
 
         // Screenshot file — fromBytes works on web + mobile
         request.files.add(
@@ -385,6 +388,7 @@ class AdminService {
             //send existing path so backend keeps it instead of saving null
             if (existingScreenshotPath != null)
               'existing_screenshot': existingScreenshotPath,
+            if (transactionId != null) 'transaction_id': transactionId, // ← add
           }),
         );
 
@@ -418,6 +422,7 @@ class AdminService {
     Uint8List? screenshotBytes,
     String? screenshotName,
     String? existingScreenshotPath,
+    String? transactionId,
   }) async {
     try {
       var request = http.MultipartRequest(
@@ -437,7 +442,9 @@ class AdminService {
       if (existingScreenshotPath != null) {
         request.fields['existing_screenshot'] = existingScreenshotPath;
       }
-
+      if (transactionId != null) {
+        request.fields['transaction_id'] = transactionId; // ← add
+      }
       if (screenshotBytes != null) {
         request.files.add(
           http.MultipartFile.fromBytes(

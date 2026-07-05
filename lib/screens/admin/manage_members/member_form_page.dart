@@ -29,6 +29,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
   final _phoneCtrl = TextEditingController();
   final _feeCtrl = TextEditingController(text: '99.00');
   final _startDateCtrl = TextEditingController();
+  final _transactionIdCtrl = TextEditingController();
 
   String? _gender;
   String? _packageId;
@@ -77,6 +78,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     _feeCtrl.dispose();
     _startDateCtrl.dispose();
     _passwordCtrl.dispose();
+    _transactionIdCtrl.dispose();
     super.dispose();
   }
 
@@ -138,13 +140,17 @@ class _MemberFormPageState extends State<MemberFormPage> {
       _showError(result['message'] ?? 'Failed to load member data');
       return;
     }
+
     final data = result['member'];
 
     _nameCtrl.text = data['name'] ?? '';
     _emailCtrl.text = data['email'] ?? '';
-    _phoneCtrl.text = data['phone'] ?? '';
+    final rawPhone = (data['phone'] ?? '').toString();
+    _phoneCtrl.text = rawPhone.startsWith('+92')
+        ? rawPhone.substring(3)
+        : rawPhone;
     _feeCtrl.text = (data['amount_received'] ?? '99.00').toString();
-
+    _transactionIdCtrl.text = (data['transaction_id'] ?? '').toString();
     final g = (data['gender'] ?? '').toString().toLowerCase();
     if (['male', 'female', 'other'].contains(g)) _gender = g;
 
@@ -270,7 +276,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     final signupResult = await AdminService.createMember(
       name: _nameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
-      phone: _phoneCtrl.text.trim(),
+      phone: '+92${_phoneCtrl.text.trim()}',
       gender: _gender!,
       trainingSlot: _selectedSlotName ?? 'morning',
       trainerId: _trainerId,
@@ -297,6 +303,9 @@ class _MemberFormPageState extends State<MemberFormPage> {
       paymentMethod: _paymentType,
       screenshotBytes: _screenshotBytes,
       screenshotName: _screenshotName,
+      transactionId: _paymentType == 'online'
+          ? _transactionIdCtrl.text.trim()
+          : null, // ← add
     );
 
     setState(() => _isLoading = false);
@@ -321,7 +330,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
       userId: widget.memberId!,
       name: _nameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
-      phone: _phoneCtrl.text.trim(),
+      phone: '+92${_phoneCtrl.text.trim()}',
       gender: _gender ?? 'male',
       trainingSlot: _selectedSlotName ?? 'morning',
       trainerId: _trainerId,
@@ -347,6 +356,9 @@ class _MemberFormPageState extends State<MemberFormPage> {
       screenshotBytes: _screenshotBytes,
       screenshotName: _screenshotName,
       existingScreenshotPath: _existingScreenshotPath,
+      transactionId: _paymentType == 'online'
+          ? _transactionIdCtrl.text.trim()
+          : null, // ← add
     );
 
     setState(() => _isLoading = false);
@@ -408,12 +420,17 @@ class _MemberFormPageState extends State<MemberFormPage> {
                           _label('Email Address *'),
                           _textField(
                             controller: _emailCtrl,
-                            hint: 'member@example.com',
+                            hint: 'example@gmail.com',
                             keyboardType: TextInputType.emailAddress,
                             validator: (v) {
-                              if (v!.isEmpty) return 'Email is required';
-                              if (!v.contains('@'))
-                                return 'Enter a valid email';
+                              if (v == null || v.isEmpty)
+                                return 'Email is required';
+                              final emailRegex = RegExp(
+                                r'^[\w\.\-]+@[\w\-]+\.[a-zA-Z]{2,}$',
+                              );
+                              if (!emailRegex.hasMatch(v)) {
+                                return 'Please enter a valid email address.';
+                              }
                               return null;
                             },
                           ),
@@ -422,10 +439,21 @@ class _MemberFormPageState extends State<MemberFormPage> {
                           _label('Phone Number *'),
                           _textField(
                             controller: _phoneCtrl,
-                            hint: '+1 234 567 8900',
+                            hint: '3001234567',
                             keyboardType: TextInputType.phone,
-                            validator: (v) =>
-                                v!.isEmpty ? 'Phone is required' : null,
+                            prefixText: '+92 ',
+                            validator: (v) {
+                              if (v == null || v.isEmpty)
+                                return 'Phone is required';
+
+                              final phoneRegex = RegExp(r'^\d{10}$');
+
+                              if (!phoneRegex.hasMatch(v)) {
+                                return 'Enter a valid phone number';
+                              }
+
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
 
@@ -651,6 +679,20 @@ class _MemberFormPageState extends State<MemberFormPage> {
                                 ),
                                 child: _buildScreenshotPreview(),
                               ),
+                            ),
+                            const SizedBox(height: 16),
+                            // ── NEW: Transaction ID ──
+                            _label('Transaction ID *'),
+                            _textField(
+                              controller: _transactionIdCtrl,
+                              hint: 'Enter transaction ID',
+                              validator: (v) {
+                                if (_paymentType == 'online' &&
+                                    (v == null || v.trim().isEmpty)) {
+                                  return 'Transaction ID required for online payment';
+                                }
+                                return null;
+                              },
                             ),
                             const SizedBox(height: 16),
                           ],
@@ -1045,6 +1087,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     required String hint,
     TextInputType? keyboardType,
     Widget? suffixIcon,
+    String? prefixText, // <-- Add this
     bool readOnly = false,
     bool obscureText = false,
     String? Function(String?)? validator,
@@ -1054,12 +1097,14 @@ class _MemberFormPageState extends State<MemberFormPage> {
       keyboardType: keyboardType,
       validator: validator,
       readOnly: readOnly,
+
       obscureText: obscureText,
       style: TextStyle(
         fontSize: 14,
         color: readOnly ? AppTheme.textSecondary : AppTheme.textPrimary,
       ),
       decoration: InputDecoration(
+        prefixText: prefixText,
         hintText: hint,
         hintStyle: const TextStyle(color: AppTheme.textHint, fontSize: 14),
         suffixIcon: suffixIcon,
