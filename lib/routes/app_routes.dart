@@ -15,6 +15,7 @@ import '../screens/admin/admin_profile/admin_profile_screen.dart';
 import '../screens/admin/payments/manage_payments_screen.dart';
 import '../screens/admin/admin_slots_screen.dart';
 import '../screens/admin/reports/admin_reports_screen.dart';
+import '../screens/notification/notifications_screen.dart'; // ← NEW: notifications
 
 // nimra
 import '../screens/dashboard/member_profile.dart';
@@ -51,6 +52,7 @@ class AppRoutes {
   static const String adminPayments = '/admin/payments'; // ← NEW
   static const String adminSlots = '/admin/slots'; // ← NEW
   static const String adminReports = '/admin/reports';
+  static const String notifications = '/notifications'; // ← NEW
 
   // nimra
   static const String memberProfile = '/member_profile';
@@ -125,7 +127,11 @@ class AppRoutes {
       page: () => const AdminReportsScreen(),
       middlewares: [AuthMiddleware()],
     ),
-
+    GetPage(
+      name: notifications,
+      page: () => const NotificationsScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
     // nimra
     // ── Member ──────────────────────────────────────────────────
     GetPage(name: memberProfile, page: () => MemberProfileScreen()),

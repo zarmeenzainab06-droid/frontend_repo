@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
-import 'package:third_task/models/member_model.dart';
+import '../../models/member_model.dart';
 
 class MemberService {
   static const String baseUrl = 'http://localhost:3000/api';

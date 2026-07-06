@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
 import '../../core/widgets/trainer_drawer.dart';
+import '../../core/widgets/notification_bell.dart'; // ← NEW: in-app notifications
 
 class TrainerDashboard extends StatefulWidget {
   @override
@@ -14,7 +15,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   final box = GetStorage();
   bool _isLoading = true;
 
-  // ── Stats ──────────────────────────────────────────────────
   int assignedMembers = 0;
   int todaySlots = 0;
   int activeMemberships = 0;
@@ -37,7 +37,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   String get _trainerSpecialty {
     final user = box.read('user');
     if (user == null) return '';
-    return user['specialty'] ?? '';
+    return user['specialty'] ?? user['specialization'] ?? '';
   }
 
   @override
@@ -64,18 +64,27 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
 
     if (scheduleResult['success']) {
       final list = List<Map<String, dynamic>>.from(scheduleResult['schedule']);
-      // Descending: night → evening → midday → morning
-      const slotOrder = ['night', 'evening', 'midday', 'morning'];
+      // Sort by start_time ascending (earliest first)
       list.sort((a, b) {
-        final ai = slotOrder.indexOf(
-          (a['training_slot'] ?? '').toString().toLowerCase(),
-        );
-        final bi = slotOrder.indexOf(
-          (b['training_slot'] ?? '').toString().toLowerCase(),
-        );
-        return ai.compareTo(bi);
+        final at = _parseTime(a['start_time']?.toString() ?? '');
+        final bt = _parseTime(b['start_time']?.toString() ?? '');
+        return at.compareTo(bt);
       });
-      setState(() => _sessions = list);
+
+      // Count completed sessions (end_time has passed)
+      final now = TimeOfDay.now();
+      int completed = 0;
+      for (final s in list) {
+        if (_isSessionCompleted(s['end_time']?.toString() ?? '', now)) {
+          completed++;
+        }
+      }
+
+      setState(() {
+        _sessions = list;
+        completedToday = completed;
+        todaySlots = list.length;
+      });
     }
 
     if (dietResult['success']) {
@@ -84,13 +93,59 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
         totalDietPlans = s['totalPlans'] ?? 0;
         activeDietPlans = s['activePlans'] ?? 0;
         pendingDietPlans = s['noPlan'] ?? 0;
-        completedToday = activeMemberships > 0
-            ? (activeMemberships * 0.25).round()
-            : 0;
       });
     }
 
     setState(() => _isLoading = false);
+  }
+
+  // ── Time helpers ──────────────────────────────────────────────
+  // Parse "06:00 AM" or "06:00:00" → minutes since midnight
+  int _parseTime(String t) {
+    if (t.isEmpty) return 9999;
+    try {
+      t = t.trim();
+      // Handle "HH:MM AM/PM"
+      if (t.contains('AM') || t.contains('PM')) {
+        final parts = t.split(' ');
+        final isPM = parts[1].toUpperCase() == 'PM';
+        final hm = parts[0].split(':');
+        int h = int.parse(hm[0]);
+        final m = int.parse(hm[1]);
+        if (isPM && h != 12) h += 12;
+        if (!isPM && h == 12) h = 0;
+        return h * 60 + m;
+      }
+      // Handle "HH:MM:SS"
+      final hm = t.split(':');
+      return int.parse(hm[0]) * 60 + int.parse(hm[1]);
+    } catch (_) {
+      return 9999;
+    }
+  }
+
+  bool _isSessionCompleted(String endTime, TimeOfDay now) {
+    final endMins = _parseTime(endTime);
+    final nowMins = now.hour * 60 + now.minute;
+    return endMins != 9999 && nowMins > endMins;
+  }
+
+  // Format "06:00:00" or "06:00 AM" → "6:00 AM"
+  String _formatTime(String? t) {
+    if (t == null || t.isEmpty) return '';
+    try {
+      t = t.trim();
+      if (t.contains('AM') || t.contains('PM')) return t;
+      final parts = t.split(':');
+      int h = int.parse(parts[0]);
+      final m = parts[1];
+      final suffix = h >= 12 ? 'PM' : 'AM';
+      if (h > 12) h -= 12;
+      if (h == 0) h = 12;
+      return '$h:$m $suffix';
+    } catch (_) {
+      return t ?? '';
+    }
   }
 
   @override
@@ -104,7 +159,9 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
+                    child: CircularProgressIndicator(
+                      color: Color.fromARGB(255, 197, 179, 179),
+                    ),
                   )
                 : RefreshIndicator(
                     color: AppTheme.primary,
@@ -115,16 +172,11 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ── Welcome Banner ──────────────────
                           _buildWelcomeBanner(),
                           const SizedBox(height: 20),
 
                           // ── Horizontal Stat Cards ────────────
                           _buildHorizontalStats(),
-                          const SizedBox(height: 20),
-
-                          // ── Quick Action Buttons ─────────────
-                          _buildQuickActions(),
                           const SizedBox(height: 24),
 
                           // ── Upcoming Sessions ────────────────
@@ -228,6 +280,8 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
               ),
             ],
           ),
+          const Spacer(),
+          const NotificationBell(),
         ],
       ),
     );
@@ -291,10 +345,11 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // ── Horizontal Scrollable Stat Cards ─────────────────────────
+  // ── Horizontal Stat Cards ─────────────────────────────────────
   Widget _buildHorizontalStats() {
+    final remaining = todaySlots - completedToday;
     return SizedBox(
-      height: 160,
+      height: 150,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -321,7 +376,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
             iconBg: AppTheme.primary,
             value: '$todaySlots',
             label: "Today's Sessions",
-            sub: '${todaySlots - completedToday} remaining',
+            sub: '$remaining remaining',
             subColor: AppTheme.textSecondary,
           ),
           const SizedBox(width: 12),
@@ -330,8 +385,9 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
             iconBg: Colors.orange,
             value: '$completedToday',
             label: 'Completed',
-            sub:
-                '${todaySlots > 0 ? ((completedToday / todaySlots) * 100).toStringAsFixed(0) : 0}% done',
+            sub: todaySlots > 0
+                ? '${((completedToday / todaySlots) * 100).toStringAsFixed(0)}% done'
+                : '0% done',
             subColor: AppTheme.textSecondary,
           ),
         ],
@@ -359,7 +415,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Icon circle
           Container(
             width: 36,
             height: 36,
@@ -398,89 +453,24 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // ── Quick Action Buttons (4 colored) ─────────────────────────
-  Widget _buildQuickActions() {
-    return Row(
-      children: [
-        Expanded(
-          child: _quickBtn(
-            icon: Icons.people_outline_rounded,
-            label: 'View Members',
-            color: AppTheme.primary,
-            onTap: () => Get.toNamed('/trainer/members'),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _quickBtn(
-            icon: Icons.restaurant_menu_outlined,
-            label: 'Diet Plans',
-            color: Colors.green,
-            onTap: () => Get.toNamed('/trainer/diet-plans'),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _quickBtn(
-            icon: Icons.calendar_month_outlined,
-            label: 'Schedule',
-            color: Colors.blue,
-            onTap: () => Get.toNamed('/trainer/schedule'),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _quickBtn(
-            icon: Icons.person_outline_rounded,
-            label: 'Profile',
-            color: Colors.purple,
-            onTap: () => Get.toNamed('/trainer/profile'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _quickBtn({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: 24),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Session Row ───────────────────────────────────────────────
+  // ── Session Row — real time-based status ──────────────────────
   Widget _buildSessionRow(Map<String, dynamic> session, {bool isLast = false}) {
-    final name = session['memberName'] ?? session['member_name'] ?? '';
-    final slot = (session['training_slot'] ?? '').toString();
+    final name = session['memberName'] ?? '';
+    final slotName = session['slot_name'] ?? session['training_slot'] ?? '';
+    final startTime = _formatTime(session['start_time']?.toString());
+    final endTime = session['end_time']?.toString() ?? '';
+    final workout = session['workout_type'] ?? 'General Fitness';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final time = _slotToTime(slot);
+    final runsToday = session['runs_today'] ?? true;
+
+    final now = TimeOfDay.now();
+    final completed = _isSessionCompleted(endTime, now);
+
+    // Time range label
+    final timeLabel = startTime.isNotEmpty
+        ? '$startTime – ${_formatTime(endTime)}'
+        : slotName;
+
     return Column(
       children: [
         Padding(
@@ -518,16 +508,19 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                         color: AppTheme.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
-                      slot.isNotEmpty
-                          ? '${slot[0].toUpperCase()}${slot.substring(1)} Training'
-                          : 'Training Session',
+                      workout,
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary,
                       ),
                     ),
+                    if (!runsToday)
+                      const Text(
+                        'Not scheduled today',
+                        style: TextStyle(fontSize: 11, color: Colors.orange),
+                      ),
                   ],
                 ),
               ),
@@ -535,9 +528,9 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    time,
+                    timeLabel,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textPrimary,
                     ),
@@ -549,12 +542,20 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF9800),
+                      color: !runsToday
+                          ? AppTheme.textSecondary
+                          : completed
+                          ? AppTheme.active
+                          : const Color(0xFFFF9800),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'upcoming',
-                      style: TextStyle(
+                    child: Text(
+                      !runsToday
+                          ? 'off today'
+                          : completed
+                          ? 'completed'
+                          : 'upcoming',
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -581,7 +582,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   Widget _buildDietPlansOverview() {
     return Column(
       children: [
-        // Header
         Row(
           children: [
             const Icon(
@@ -618,8 +618,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
           ],
         ),
         const SizedBox(height: 12),
-
-        // 3 stat cards
         Row(
           children: [
             Expanded(
@@ -651,8 +649,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
           ],
         ),
         const SizedBox(height: 12),
-
-        // Manage All button
         GestureDetector(
           onTap: () => Get.toNamed('/trainer/diet-plans'),
           child: Container(
@@ -710,21 +706,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
         ],
       ),
     );
-  }
-
-  String _slotToTime(String slot) {
-    switch (slot.toLowerCase()) {
-      case 'morning':
-        return '6:00 AM';
-      case 'midday':
-        return '12:00 PM';
-      case 'evening':
-        return '5:00 PM';
-      case 'night':
-        return '8:00 PM';
-      default:
-        return slot;
-    }
   }
 
   Widget _buildEmptyState({required IconData icon, required String text}) {

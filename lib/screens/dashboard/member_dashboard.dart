@@ -43,6 +43,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
           'Authorization': 'Bearer ${_getToken()}',
         },
       );
+      print(response.body);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() => _membership = data['membership']);

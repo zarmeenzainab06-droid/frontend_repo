@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
 import '../../core/widgets/app_shell.dart';
+import '../../core/widgets/notification_bell.dart';
 
 class AdminDashboard extends StatefulWidget {
   @override
@@ -61,6 +62,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       role: 'admin',
       subtitle: 'Admin Panel',
       showLiveUpdates: true,
+      showNotificationBell: true,
       bottomNav: const AdminBottomNav(activeIndex: 0),
       body: _isLoading
           ? const Center(

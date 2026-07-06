@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import '../utils/theme.dart';
 import 'app_drawer.dart';
 import '../../screens/dashboard/member_payment_screen.dart';
-import '../../screens/dashboard/member_plans_screen.dart';
 import '../../screens/dashboard/member_trainer.dart';
 import '../../screens/dashboard/member_profile.dart';
+import 'notification_bell.dart';
 
 class MemberLayout extends StatelessWidget {
   final Widget body;
@@ -72,6 +72,7 @@ class MemberLayout extends StatelessWidget {
           ),
         ],
       ),
+      actions: const [NotificationBell()],
     );
   }
 

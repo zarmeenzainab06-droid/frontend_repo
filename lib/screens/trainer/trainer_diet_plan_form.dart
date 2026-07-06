@@ -179,7 +179,8 @@ class _TrainerDietPlanFormState extends State<TrainerDietPlanForm> {
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
       );
-      Get.back();
+      // ✅ Go directly to diet plans page so new plan is visible immediately
+      Get.offAllNamed('/trainer/diet-plans');
     } else {
       Get.snackbar(
         'Error',

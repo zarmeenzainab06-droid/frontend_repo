@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../utils/theme.dart';
 import 'app_drawer.dart';
+import 'notification_bell.dart';
 
 /// AppShell wraps every screen with:
 /// - Gradient top bar (hamburger + optional brand name + subtitle + optional badge)
@@ -30,6 +31,7 @@ class AppShell extends StatelessWidget {
   final bool showLiveUpdates; // show live updates badge (admin only)
   final List<AppShellAction>? actions; // optional right side actions
   final String? brandName; // optional brand/gym name shown in the top bar
+  final bool showNotificationBell; // ← this line
 
   const AppShell({
     Key? key,
@@ -40,6 +42,7 @@ class AppShell extends StatelessWidget {
     this.showLiveUpdates = false,
     this.actions,
     this.brandName,
+    this.showNotificationBell = false, // ← and this line
   }) : super(key: key);
 
   Color _darken(Color c, [double amount = .2]) {
@@ -164,6 +167,7 @@ class AppShell extends StatelessWidget {
                 color: Colors.white.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
+
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: const [
@@ -176,7 +180,8 @@ class AppShell extends StatelessWidget {
                 ],
               ),
             ),
-
+          // Notification bell (opt-in per screen)
+          if (showNotificationBell) const NotificationBell(),
           // Optional extra actions
           if (actions != null)
             ...actions!.map(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:third_task/core/utils/theme.dart';
-import 'package:third_task/core/widgets/app_shell.dart';
+import '/core/utils/theme.dart';
+import '/core/widgets/app_shell.dart';
 import 'report_controller.dart';
 import 'report_model.dart';
 

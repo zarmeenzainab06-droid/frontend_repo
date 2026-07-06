@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:third_task/core/utils/theme.dart';
+import '/core/utils/theme.dart';
 import 'payment_controller.dart';
 
 class PaymentFormPage extends StatelessWidget {

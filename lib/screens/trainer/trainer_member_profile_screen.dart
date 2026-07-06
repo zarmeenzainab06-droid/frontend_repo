@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '/core/utils/contact_number.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
+import '../../core/utils/contact_number.dart';
 import '../../core/widgets/trainer_drawer.dart';
 
 class TrainerMemberProfileScreen extends StatefulWidget {
@@ -612,25 +614,19 @@ class _TrainerMemberProfileScreenState
     );
   }
 
-  // ── Contact Button ────────────────────────────────────────────
+  // ── WhatsApp Button ───────────────────────────────────────────
   Widget _buildContactButton() {
+    final hasPhone = contactnumber.isValidPhone(_phone);
     return GestureDetector(
       onTap: () {
-        final phone = _phone != 'N/A' ? _phone : '';
-        if (phone.isNotEmpty) {
-          Get.snackbar(
-            'Contact $_name',
-            'Phone: $phone',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 4),
-            icon: const Icon(Icons.phone_rounded, color: Colors.white),
+        if (hasPhone) {
+          contactnumber.openChat(
+            _phone,
+            message: 'Hi $_name! This is your trainer from GymFitex.',
           );
         } else {
           Get.snackbar(
-            'No Phone',
+            'No Phone Number',
             'No contact number available for $_name',
             backgroundColor: AppTheme.expired,
             colorText: Colors.white,
@@ -643,11 +639,11 @@ class _TrainerMemberProfileScreenState
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.green,
+          color: hasPhone ? const Color(0xFF25D366) : AppTheme.textSecondary,
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           boxShadow: [
             BoxShadow(
-              color: Colors.green.withOpacity(0.3),
+              color: const Color(0xFF25D366).withOpacity(0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -656,15 +652,38 @@ class _TrainerMemberProfileScreenState
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.phone_rounded, color: Colors.white, size: 22),
-            const SizedBox(width: 10),
-            Text(
-              _phone != 'N/A' ? 'Call $_phone' : 'Contact Member',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+            // WhatsApp icon (using asset-free approach)
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
               ),
+              child: const Icon(
+                Icons.chat_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'WhatsApp',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  hasPhone ? _phone : 'No number available',
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                ),
+              ],
             ),
           ],
         ),

@@ -1,4 +1,4 @@
-# third_task
+# GymFitex
 
 A new Flutter project.
 

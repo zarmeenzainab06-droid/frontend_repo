@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
@@ -16,7 +17,7 @@ class MemberPaymentScreen extends StatefulWidget {
 
 class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   String _selectedMethod = 'online';
-  String _selectedMonth = '';
+  String _selectedmonth = '';
   bool _isLoading = false;
   List<dynamic> _payments = [];
   bool _loadingPayments = true;
@@ -26,6 +27,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   final _transactionIdController = TextEditingController();
   String? _uploadedImageName;
   XFile? _selectedImage;
+  Uint8List? _screenshotBytes;
   final ImagePicker _picker = ImagePicker();
 
   // Card payment fields
@@ -52,13 +54,13 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedMonth = _months[DateTime.now().month - 1];
+    _selectedmonth = _months[DateTime.now().month - 1];
     _loadPayments();
   }
 
   String _getToken() => box.read('token') ?? '';
 
-  // Load payment history from backend
+  // Load payment history
   Future<void> _loadPayments() async {
     try {
       final response = await http.get(
@@ -80,15 +82,17 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
     }
   }
 
-  // Pick image from gallery
+  // Pick image and store as bytes
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 80,
     );
     if (image != null) {
+      final bytes = await image.readAsBytes();
       setState(() {
         _selectedImage = image;
+        _screenshotBytes = bytes;
         _uploadedImageName = image.name;
       });
       Get.snackbar(
@@ -101,7 +105,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
     }
   }
 
-  // Submit payment to backend
+  // Submit payment
   Future<void> _submitPayment() async {
     // Online validation
     if (_selectedMethod == 'online') {
@@ -115,7 +119,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
         );
         return;
       }
-      if (_uploadedImageName == null) {
+      if (_screenshotBytes == null) {
         Get.snackbar(
           'Error',
           'Payment screenshot upload karo',
@@ -147,19 +151,34 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await http.post(
+      // Multipart request with bytes
+      var request = http.MultipartRequest(
+        'POST',
         Uri.parse('http://localhost:3000/api/payments/submit'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${_getToken()}',
-        },
-        body: jsonEncode({
-          'amount': 2000,
-          'method': _selectedMethod,
-          'month': _selectedMonth,
-          'transaction_id': _transactionIdController.text,
-        }),
       );
+
+      request.headers['Authorization'] = 'Bearer ${_getToken()}';
+      request.fields['amount'] = '2000';
+      request.fields['method'] = _selectedMethod;
+      request.fields['month'] = _selectedmonth;
+      request.fields['transaction_id'] = _transactionIdController.text;
+
+      // Add screenshot bytes
+      if (_selectedMethod == 'online' && _screenshotBytes != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'screenshot',
+            _screenshotBytes!,
+            filename: _uploadedImageName ?? 'screenshot.jpg',
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('Payment Status: ${response.statusCode}');
+      print('Payment Body: ${response.body}');
 
       final data = jsonDecode(response.body);
 
@@ -183,9 +202,10 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
         );
       }
     } catch (e) {
+      print('Submit Error: $e');
       Get.snackbar(
         'Error',
-        'Connection error',
+        'Error: $e',
         backgroundColor: AppTheme.expiredLight,
         colorText: AppTheme.expired,
         snackPosition: SnackPosition.BOTTOM,
@@ -195,7 +215,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
     setState(() => _isLoading = false);
   }
 
-  // Clear all form fields
+  // Clear all fields
   void _clearFields() {
     _transactionIdController.clear();
     _cardNumberController.clear();
@@ -205,6 +225,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
     setState(() {
       _uploadedImageName = null;
       _selectedImage = null;
+      _screenshotBytes = null;
     });
   }
 
@@ -266,9 +287,9 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Month dropdown
+                  // month dropdown
                   const Text(
-                    'Select Month',
+                    'Select month',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -283,7 +304,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: DropdownButton<String>(
-                      value: _selectedMonth,
+                      value: _selectedmonth,
                       isExpanded: true,
                       underline: const SizedBox(),
                       items: _months.map((month) {
@@ -292,12 +313,12 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
                           child: Text(month),
                         );
                       }).toList(),
-                      onChanged: (val) => setState(() => _selectedMonth = val!),
+                      onChanged: (val) => setState(() => _selectedmonth = val!),
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // Payment method selection
+                  // Payment method
                   const Text(
                     'Payment Method',
                     style: TextStyle(
@@ -400,7 +421,6 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
 
                   // Online payment fields
                   if (_selectedMethod == 'online') ...[
-                    // Upload screenshot button
                     const Text(
                       'Upload Payment Screenshot',
                       style: TextStyle(
@@ -410,97 +430,84 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    InkWell(
-                      onTap: _pickImage, // Pick image from gallery
+
+                    // Screenshot picker
+                    GestureDetector(
+                      onTap: _pickImage,
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(16),
+                        height: _screenshotBytes != null ? 180 : 110,
                         decoration: BoxDecoration(
-                          color: _uploadedImageName != null
-                              ? AppTheme.activeLight
-                              : const Color(0xFFF5F5F5),
+                          color: AppTheme.background,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: _uploadedImageName != null
+                            color: _screenshotBytes != null
                                 ? AppTheme.active
                                 : AppTheme.border,
-                            width: 1.5,
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              _uploadedImageName != null
-                                  ? Icons.check_circle
-                                  : Icons.upload_file,
-                              color: _uploadedImageName != null
-                                  ? AppTheme.active
-                                  : AppTheme.textSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _uploadedImageName ??
-                                    'Click to upload screenshot',
-                                style: TextStyle(
-                                  color: _uploadedImageName != null
-                                      ? AppTheme.active
-                                      : AppTheme.textSecondary,
+                        child: _screenshotBytes != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Image.memory(
+                                      _screenshotBytes!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: GestureDetector(
+                                        onTap: _pickImage,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black54,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Change',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                overflow: TextOverflow.ellipsis,
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(
+                                    Icons.upload_file,
+                                    color: AppTheme.textSecondary,
+                                    size: 32,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Click to upload screenshot',
+                                    style: TextStyle(
+                                      color: AppTheme.textSecondary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
 
-                    // Show selected image preview
-                    if (_selectedImage != null) ...[
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          _selectedImage!.path,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryLight,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Center(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.image,
-                                        color: AppTheme.primary,
-                                        size: 24,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Image selected',
-                                        style: TextStyle(
-                                          color: AppTheme.primary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                        ),
-                      ),
-                    ],
-
                     const SizedBox(height: 16),
 
-                    // Transaction ID field
+                    // Transaction ID
                     const Text(
                       'Transaction ID',
                       style: TextStyle(
@@ -552,7 +559,6 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        // Expiry date field
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,7 +581,6 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // CVV field
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,7 +610,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Submit payment button
+                  // Submit button
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -635,7 +640,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
 
             const SizedBox(height: 16),
 
-            // View payment history button
+            // View history button
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -664,7 +669,6 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
     );
   }
 
-  // Reusable text field widget
   Widget _buildField({
     required TextEditingController controller,
     required String hint,
@@ -728,7 +732,6 @@ class _MemberPaymentHistoryScreenState
     _loadPayments();
   }
 
-  // Load all payments from backend
   Future<void> _loadPayments() async {
     try {
       final response = await http.get(
@@ -776,12 +779,10 @@ class _MemberPaymentHistoryScreenState
     }
   }
 
-  // Calculate total paid amount
   double get _totalPaid => _payments
       .where((p) => p['status'] == 'paid')
       .fold(0.0, (sum, p) => sum + double.parse(p['amount'].toString()));
 
-  // Count pending payments
   int get _pendingCount =>
       _payments.where((p) => p['status'] == 'pending').length;
 
@@ -806,7 +807,7 @@ class _MemberPaymentHistoryScreenState
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Summary cards row
+                  // Summary cards
                   Row(
                     children: [
                       Expanded(
@@ -842,6 +843,7 @@ class _MemberPaymentHistoryScreenState
                   ),
 
                   const SizedBox(height: 16),
+
                   // Payment list
                   _payments.isEmpty
                       ? Container(
@@ -870,7 +872,6 @@ class _MemberPaymentHistoryScreenState
                               ),
                               child: Row(
                                 children: [
-                                  // Status icon
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
@@ -888,7 +889,6 @@ class _MemberPaymentHistoryScreenState
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  // Payment details
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -912,7 +912,6 @@ class _MemberPaymentHistoryScreenState
                                       ],
                                     ),
                                   ),
-                                  // Amount and status badge
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
@@ -956,7 +955,6 @@ class _MemberPaymentHistoryScreenState
     );
   }
 
-  // Summary card widget
   Widget _summaryCard(
     String label,
     String value,
