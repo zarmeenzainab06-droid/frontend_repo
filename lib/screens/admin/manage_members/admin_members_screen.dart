@@ -58,7 +58,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     });
   }
 
-  // ---------- color helpers (kept self-contained, built on AppTheme.primary) ----------
   Color _lighten(Color c, [double amount = .2]) {
     final hsl = HSLColor.fromColor(c);
     return hsl
@@ -86,9 +85,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     }
   }
 
-  // Overrides only 'frozen' (which was rendering grey from
-  // AppColors.statusColor/statusLightColor) with a distinct sky-blue tone.
-  // Every other status keeps using your existing theme colors untouched.
   Color _statusColor(String status) {
     if (status == 'frozen') return const Color(0xFF0EA5E9);
     return AppColors.statusColor(status);
@@ -232,17 +228,19 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       bottomNav: const AdminBottomNav(activeIndex: 1),
       body: Column(
         children: [
+          // ── Compact header + floating search card ──────────────────────────
+          // The inner Column reserves exactly enough height so the floating
+          // card's bottom edge sits flush with the Stack's bottom — ensuring
+          // every pixel of the card is within Flutter's hit-test area.
           Stack(
             clipBehavior: Clip.none,
             children: [
               Column(
                 children: [
                   _buildHeader(),
-                  // Reserves room below the header so the floating card
-                  // below is fully inside the Stack's hit-testable area
-                  // (a negative-overflow Positioned would visually overlap
-                  // but silently eat taps on the part that pokes out).
-                  const SizedBox(height: 70),
+                  const SizedBox(
+                    height: 82,
+                  ), // card height (14+36+12+14 + breathing)
                 ],
               ),
               Positioned(
@@ -253,7 +251,8 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
+          // ── Member list ────────────────────────────────────────────────────
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -276,11 +275,16 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  // ---------- header (gradient hero) ----------
+  // ── HEADER — compact version ───────────────────────────────────────────────
+  // Reduced vertical padding so the card list starts high on screen.
+  // Title + member count on the left, glass Add button on the right.
+  // Decorative circles kept but scaled down so nothing feels cramped.
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 26, 20, 58),
+      // ↓ was fromLTRB(20, 26, 20, 58) — bottom padding slashed to just
+      //   enough room for the floating card to overlap naturally.
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 44),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppTheme.primary, _darken(AppTheme.primary, 0.18)],
@@ -288,76 +292,69 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
           end: Alignment.bottomRight,
         ),
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.35),
-            blurRadius: 26,
-            offset: const Offset(0, 14),
+            color: AppTheme.primary.withOpacity(0.30),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // Decorative circles — smaller than before
           Positioned(
-            right: -28,
-            top: -34,
+            right: -24,
+            top: -28,
             child: Container(
-              width: 130,
-              height: 130,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 54,
-            top: 64,
-            child: Container(
-              width: 46,
-              height: 46,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withOpacity(0.07),
               ),
             ),
           ),
+          Positioned(
+            right: 50,
+            top: 50,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.06),
+              ),
+            ),
+          ),
+          // Content row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      'MEMBERS',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2.2,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
                     const Text(
                       'Manage Members',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
-                        height: 1.15,
+                        height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
                       '${_members.length} total members',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.85),
-                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.80),
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -382,7 +379,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  // ---------- floating glass search + filter chip card ----------
+  // ── FLOATING SEARCH + FILTER CHIPS ────────────────────────────────────────
   Widget _buildSearchFilterCard() {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -491,7 +488,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  // ---------- member card ----------
+  // ── MEMBER CARD ───────────────────────────────────────────────────────────
   Widget _buildMemberCard(Map<String, dynamic> member) {
     final name = member['name'] ?? '';
     final email = member['email'] ?? '';
@@ -760,7 +757,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     );
   }
 
-  // ---------- shared small widgets ----------
   Widget _infoRow(IconData icon, String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -923,12 +919,10 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
   }
 }
 
-/// Frosted-glass pill button used in the gradient header (e.g. "Add" member).
 class _GlassButton extends StatelessWidget {
   final VoidCallback onTap;
   final IconData icon;
   final String label;
-
   const _GlassButton({
     required this.onTap,
     required this.icon,
@@ -955,7 +949,7 @@ class _GlassButton extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 12,
+                  vertical: 10,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

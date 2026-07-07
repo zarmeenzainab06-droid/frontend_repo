@@ -181,6 +181,15 @@ class AppDrawer extends StatelessWidget {
           Get.toNamed(AppRoutes.adminSlots);
         },
       ),
+
+      _item(
+        Icons.bar_chart_outlined,
+        'Reports Settings',
+        onTap: () {
+          Get.back();
+          Get.toNamed(AppRoutes.adminReports);
+        },
+      ),
       _item(
         Icons.person_outline,
         'Profile',
@@ -189,12 +198,6 @@ class AppDrawer extends StatelessWidget {
           Get.toNamed('/admin/profile');
         },
       ),
-      _item(
-        Icons.bar_chart_outlined,
-        'Reports Settings',
-        onTap: () => Get.back(),
-      ),
-      _item(Icons.settings_outlined, 'App Settings', onTap: () => Get.back()),
       _item(Icons.help_outline, 'Help & About', onTap: () => Get.back()),
     ];
   }
