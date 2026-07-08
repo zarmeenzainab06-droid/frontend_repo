@@ -262,10 +262,15 @@ class _MemberDietScreenState extends State<MemberDietScreen> {
                               ),
                             ),
                             Text(
-                              _dietPlan!['assignment_date']
-                                      ?.toString()
-                                      .substring(0, 10) ??
-                                  'N/A',
+                              (_dietPlan!['assignment_date'] != null &&
+                                      _dietPlan!['assignment_date']
+                                              .toString()
+                                              .length >=
+                                          10)
+                                  ? _dietPlan!['assignment_date']
+                                        .toString()
+                                        .substring(0, 10)
+                                  : 'N/A',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,

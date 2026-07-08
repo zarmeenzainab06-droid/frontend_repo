@@ -544,7 +544,7 @@ class _AdminPackagesScreenState extends State<AdminPackagesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  'GymFitex',
+                  'Admin Panel',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

@@ -81,11 +81,11 @@ class ManagePaymentsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.put(PaymentController());
+    final c = Get.put(PaymentController(), permanent: true);
 
     return AppShell(
       role: 'admin',
-      subtitle: 'GymFitex',
+      subtitle: 'Admin Panel',
       bottomNav: const AdminBottomNav(activeIndex: -1),
       actions: [
         AppShellAction(

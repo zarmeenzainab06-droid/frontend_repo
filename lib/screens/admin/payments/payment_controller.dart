@@ -249,7 +249,9 @@ class PaymentController extends GetxController {
     screenshotName.value = '';
     transactionIdController.text = payment.transactionId ?? '';
     amountReceivedController.text = payment.amountReceived.toStringAsFixed(0);
-    paymentDateController.text = payment.paymentDate ?? _todayDate();
+    paymentDateController.text = payment.paymentDate != null
+        ? payment.paymentDate!.split('T')[0]
+        : _todayDate();
   }
 
   // ─── SAVE ─────────────────────────────────────────────────────────────────

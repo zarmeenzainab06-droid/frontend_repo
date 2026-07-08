@@ -43,7 +43,6 @@ class _MemberDashboardState extends State<MemberDashboard> {
           'Authorization': 'Bearer ${_getToken()}',
         },
       );
-      print(response.body);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() => _membership = data['membership']);
@@ -181,7 +180,11 @@ class _MemberDashboardState extends State<MemberDashboard> {
                             const SizedBox(height: 6),
                             _bannerInfoRow(
                               Icons.calendar_today,
-                              _membership?['end_date'] != null
+                              (_membership?['end_date'] != null &&
+                                      _membership!['end_date']
+                                              .toString()
+                                              .length >=
+                                          10)
                                   ? 'Expires ${_membership!['end_date'].toString().substring(0, 10)}'
                                   : 'No expiry',
                             ),
