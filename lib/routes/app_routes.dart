@@ -75,11 +75,6 @@ class AppRoutes {
     GetPage(name: login, page: () => LoginScreen()),
     GetPage(name: register, page: () => RegisterScreen()),
     GetPage(
-      name: dashboard,
-      page: () => MemberDashboard(),
-      middlewares: [AuthMiddleware()],
-    ),
-    GetPage(
       name: adminDashboard,
       page: () => AdminDashboard(),
       middlewares: [AuthMiddleware()],
@@ -134,32 +129,37 @@ class AppRoutes {
     ),
     // nimra
     // ── Member ──────────────────────────────────────────────────
-    GetPage(name: memberProfile, page: () => MemberProfileScreen()),
-    GetPage(name: memberMembership, page: () => MemberMembershipScreen()),
-    GetPage(name: memberTrainer, page: () => MemberTrainerScreen()),
-    GetPage(name: '/member_diet', page: () => const MemberDietScreen()),
+    GetPage(
+      name: '/member_diet',
+      page: () => const MemberDietScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
     GetPage(
       name: '/member-edit-profile',
       page: () => MemberEditProfileScreen(),
+      middlewares: [AuthMiddleware()],
     ),
-    GetPage(name: '/member-payment-history', page: () => MemberPaymentScreen()),
+    GetPage(
+      name: '/member-payment-history',
+      page: () => MemberPaymentScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
     GetPage(
       name: '/member-change-password',
       page: () => MemberChangePasswordScreen(),
+      middlewares: [AuthMiddleware()],
     ),
-    GetPage(name: '/member-plans', page: () => MemberPlansScreen()),
+    GetPage(
+      name: '/member-plans',
+      page: () => MemberPlansScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
     GetPage(
       name: dashboard,
       page: () => MemberDashboard(),
       middlewares: [AuthMiddleware()],
     ),
 
-    //member
-    GetPage(
-      name: memberProfile,
-      page: () => MemberProfileScreen(),
-      middlewares: [AuthMiddleware()],
-    ),
     GetPage(
       name: memberMembership,
       page: () => MemberMembershipScreen(),
@@ -178,11 +178,6 @@ class AppRoutes {
     GetPage(
       name: memberMembership,
       page: () => MemberMembershipScreen(),
-      middlewares: [AuthMiddleware()],
-    ),
-    GetPage(
-      name: memberTrainer,
-      page: () => MemberTrainerScreen(),
       middlewares: [AuthMiddleware()],
     ),
 
