@@ -274,7 +274,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
                                 height: 44,
                                 child: ElevatedButton(
                                   onPressed: () =>
-                                      Get.toNamed('/member-payment'),
+                                      Get.toNamed('/member-payment-history'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.primary,
                                     shape: RoundedRectangleBorder(
@@ -381,7 +381,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
                                 const SizedBox(height: 12),
                                 // View full plan button
                                 InkWell(
-                                  onTap: () => Get.toNamed('/member-diet'),
+                                  onTap: () => Get.toNamed('/member_diet'),
                                   child: const Center(
                                     child: Text(
                                       'View Full Plan →',
