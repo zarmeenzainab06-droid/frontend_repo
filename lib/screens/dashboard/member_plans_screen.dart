@@ -35,7 +35,7 @@ class _MemberPlansScreenState extends State<MemberPlansScreen> {
   Future<void> _loadPlans() async {
     try {
       final response = await http.get(
-        Uri.parse('http://gym.sandbox.pk/api/packages'),
+        Uri.parse('http://localhost:3000/api/packages'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -57,7 +57,7 @@ class _MemberPlansScreenState extends State<MemberPlansScreen> {
   Future<void> _loadCurrentPlan() async {
     try {
       final response = await http.get(
-        Uri.parse('http://gym.sandbox.pk/api/members/membership'),
+        Uri.parse('http://localhost:3000/api/members/membership'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',

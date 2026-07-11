@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 
 class AuthService {
-  static const String baseUrl = "http://gym.sandbox.pk";
+  static const String baseUrl = "http://localhost:3000";
   static final box = GetStorage();
 
   static Future<Map<String, dynamic>> login(
