@@ -699,4 +699,32 @@ class AdminService {
       return {'success': false, 'message': 'Server error: $e'};
     }
   }
+
+  // ── Member Check-in ─────────────────────────────────────────
+  static Future<Map<String, dynamic>> checkInMember(String searchQuery) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/members/check-in'),
+        headers: _headers,
+        body: json.encode({'searchQuery': searchQuery}),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'access': data['access'],
+          'memberName': data['memberName'],
+          'message': data['message'],
+        };
+      }
+      return {
+        'success': false,
+        'access': data['access'] ?? 'denied',
+        'memberName': data['memberName'] ?? '',
+        'reason': data['reason'] ?? data['message'] ?? 'Failed to check-in',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
 }
