@@ -183,6 +183,14 @@ class AppDrawer extends StatelessWidget {
       ),
 
       _item(
+        Icons.login_outlined,
+        'Gate Check-In',
+        onTap: () {
+          Get.back();
+          Get.toNamed(AppRoutes.adminCheckIn);
+        },
+      ),
+      _item(
         Icons.bar_chart_outlined,
         'Reports Settings',
         onTap: () {

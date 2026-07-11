@@ -240,6 +240,50 @@ class _MemberDashboardState extends State<MemberDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Pending Balance Alert Card
+                        if (_membership?['pending_balance'] != null &&
+                            double.tryParse(_membership!['pending_balance'].toString()) != null &&
+                            double.parse(_membership!['pending_balance'].toString()) > 0)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.expiredLight,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppTheme.expired.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.warning_amber_rounded, color: AppTheme.expired),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Pending Balance Due',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.expired,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'You have an outstanding balance of PKR ${_membership!['pending_balance']} for this month.',
+                                        style: const TextStyle(
+                                          color: AppTheme.textSecondary,
+                                          fontSize: 12.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
                         // ✅ Next Payment Card
                         Container(
                           width: double.infinity,

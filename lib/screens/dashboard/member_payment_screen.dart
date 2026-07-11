@@ -73,14 +73,19 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final price = data['membership']?['price'];
+        final pending = data['membership']?['pending_balance'];
         final pName = data['membership']?['package_name'];
         setState(() {
-          if (price != null) {
+          if (pending != null && double.tryParse(pending.toString()) != null && double.parse(pending.toString()) > 0) {
+            _packageAmount = pending.toString();
+            _packageName = '$pName (Remaining Balance)';
+          } else if (price != null) {
             _packageAmount = price.toString();
+            _packageName = pName ?? 'No Plan Assigned';
           } else {
             _packageAmount = '0';
+            _packageName = pName ?? 'No Plan Assigned';
           }
-          _packageName = pName ?? 'No Plan Assigned';
         });
       }
     } catch (e) {
