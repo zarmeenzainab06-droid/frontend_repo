@@ -104,7 +104,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 totalTrainers,
                                 Icons.sports_gymnastics_outlined,
                                 const Color.fromARGB(255, 15, 124, 226),
-                                const Color.fromARGB(255, 250, 250, 245),
+                                const Color.fromARGB(255, 208, 221, 238),
                               ),
                             ),
                             SizedBox(
