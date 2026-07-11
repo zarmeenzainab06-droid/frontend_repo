@@ -18,6 +18,7 @@ class MemberPaymentScreen extends StatefulWidget {
 class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   String _selectedMethod = 'online';
   String _selectedmonth = '';
+  String _packageAmount = '2000';
   bool _isLoading = false;
   List<dynamic> _payments = [];
   bool _loadingPayments = true;
@@ -56,6 +57,30 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
     super.initState();
     _selectedmonth = _months[DateTime.now().month - 1];
     _loadPayments();
+    _loadMembershipPrice();
+  }
+
+  Future<void> _loadMembershipPrice() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://gym.sandbox.pk/api/members/membership'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${_getToken()}',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final price = data['membership']?['price'];
+        if (price != null) {
+          setState(() {
+            _packageAmount = price.toString();
+          });
+        }
+      }
+    } catch (e) {
+      print('Load membership price error: $e');
+    }
   }
 
   String _getToken() => box.read('token') ?? '';
@@ -64,7 +89,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   Future<void> _loadPayments() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/payments/my-payments'),
+        Uri.parse('http://gym.sandbox.pk/api/payments/my-payments'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -154,11 +179,11 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
       // Multipart request with bytes
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://localhost:3000/api/payments/submit'),
+        Uri.parse('http://gym.sandbox.pk/api/payments/submit'),
       );
 
       request.headers['Authorization'] = 'Bearer ${_getToken()}';
-      request.fields['amount'] = '2000';
+      request.fields['amount'] = _packageAmount;
       request.fields['method'] = _selectedMethod;
       request.fields['month'] = _selectedmonth;
       request.fields['transaction_id'] = _transactionIdController.text;
@@ -735,7 +760,7 @@ class _MemberPaymentHistoryScreenState
   Future<void> _loadPayments() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/payments/my-payments'),
+        Uri.parse('http://gym.sandbox.pk/api/payments/my-payments'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',

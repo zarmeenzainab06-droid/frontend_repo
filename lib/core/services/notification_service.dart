@@ -4,7 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import '../../models/notification_model.dart';
 
 class NotificationService {
-  static const String baseUrl = "http://localhost:3000";
+  static const String baseUrl = "http://gym.sandbox.pk";
   static const String _path = "/notifications";
   static final box = GetStorage();
 
