@@ -472,9 +472,13 @@ class PaymentFormPage extends StatelessWidget {
     // Existing screenshot from server (edit mode)
     if (hasExisting) {
       // Build URL same way as AdminService.baseUrl
-      final raw = c.existingScreenshot.value.replaceAll('\\', '/');
-      //final url = 'http://gym.sandbox.pk/$raw';
-      final url = 'http://gym.sandbox.pk/uploads/${c.existingScreenshot.value}';
+      String cleanScreenshot = c.existingScreenshot.value.replaceAll('\\', '/');
+      if (cleanScreenshot.startsWith('/uploads/')) {
+        cleanScreenshot = cleanScreenshot.substring(9);
+      } else if (cleanScreenshot.startsWith('uploads/')) {
+        cleanScreenshot = cleanScreenshot.substring(8);
+      }
+      final url = 'http://gym.sandbox.pk/uploads/$cleanScreenshot';
 
       print('Image URL: $url');
       return ClipRRect(

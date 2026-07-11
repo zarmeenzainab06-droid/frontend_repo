@@ -940,8 +940,13 @@ class _MemberFormPageState extends State<MemberFormPage> {
       );
     }
     if (_existingScreenshotPath != null) {
-      final url =
-          '${AdminService.baseUrl}/uploads/${_existingScreenshotPath!.replaceAll('\\', '/')}';
+      String cleanPath = _existingScreenshotPath!.replaceAll('\\', '/');
+      if (cleanPath.startsWith('/uploads/')) {
+        cleanPath = cleanPath.substring(9);
+      } else if (cleanPath.startsWith('uploads/')) {
+        cleanPath = cleanPath.substring(8);
+      }
+      final url = '${AdminService.baseUrl}/uploads/$cleanPath';
       return ClipRRect(
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         child: Stack(

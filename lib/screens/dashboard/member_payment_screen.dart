@@ -19,6 +19,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   String _selectedMethod = 'online';
   String _selectedmonth = '';
   String _packageAmount = '2000';
+  String _packageName = 'Loading...';
   bool _isLoading = false;
   List<dynamic> _payments = [];
   bool _loadingPayments = true;
@@ -72,14 +73,21 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final price = data['membership']?['price'];
-        if (price != null) {
-          setState(() {
+        final pName = data['membership']?['package_name'];
+        setState(() {
+          if (price != null) {
             _packageAmount = price.toString();
-          });
-        }
+          } else {
+            _packageAmount = '0';
+          }
+          _packageName = pName ?? 'No Plan Assigned';
+        });
       }
     } catch (e) {
       print('Load membership price error: $e');
+      setState(() {
+        _packageName = 'Error loading plan';
+      });
     }
   }
 
@@ -312,6 +320,39 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Package Info Display
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your Package: $_packageName',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Amount to Pay: PKR $_packageAmount',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   // month dropdown
                   const Text(
                     'Select month',

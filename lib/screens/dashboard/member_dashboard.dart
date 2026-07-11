@@ -268,6 +268,17 @@ class _MemberDashboardState extends State<MemberDashboard> {
                                   color: AppTheme.textPrimary,
                                 ),
                               ),
+                              const SizedBox(height: 4),
+                              Text(
+                                (_membership?['end_date'] != null &&
+                                        _membership!['end_date'].toString().length >= 10)
+                                    ? 'Due on ${_membership!['end_date'].toString().substring(0, 10)}'
+                                    : 'No due date',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
                               const SizedBox(height: 12),
                               SizedBox(
                                 width: double.infinity,
