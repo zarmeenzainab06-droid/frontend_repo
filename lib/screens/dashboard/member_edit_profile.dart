@@ -25,6 +25,7 @@ class _MemberEditProfileScreenState extends State<MemberEditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
+    if (_isLoading) return;
     if (_nameController.text.isEmpty) {
       Get.snackbar(
         'Error', 'Name required hai',
