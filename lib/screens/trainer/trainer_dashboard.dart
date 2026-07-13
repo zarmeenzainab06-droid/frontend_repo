@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
 import '../../core/widgets/trainer_drawer.dart';
+import '../../core/widgets/notification_bell.dart'; // ← NEW: in-app notifications
 
 class TrainerDashboard extends StatefulWidget {
   @override
@@ -279,6 +280,8 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
               ),
             ],
           ),
+          const Spacer(),
+          const NotificationBell(),
         ],
       ),
     );

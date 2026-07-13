@@ -180,7 +180,11 @@ class _MemberDashboardState extends State<MemberDashboard> {
                             const SizedBox(height: 6),
                             _bannerInfoRow(
                               Icons.calendar_today,
-                              _membership?['end_date'] != null
+                              (_membership?['end_date'] != null &&
+                                      _membership!['end_date']
+                                              .toString()
+                                              .length >=
+                                          10)
                                   ? 'Expires ${_membership!['end_date'].toString().substring(0, 10)}'
                                   : 'No expiry',
                             ),
@@ -236,6 +240,62 @@ class _MemberDashboardState extends State<MemberDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Pending Balance Alert Card
+                        if (_membership?['pending_balance'] != null &&
+                            double.tryParse(
+                                  _membership!['pending_balance'].toString(),
+                                ) !=
+                                null &&
+                            double.parse(
+                                  _membership!['pending_balance'].toString(),
+                                ) >
+                                0)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.expiredLight,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppTheme.expired.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: AppTheme.expired,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Pending Balance Due',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.expired,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'You have an outstanding balance of PKR ${_membership!['pending_balance']} for this month.',
+                                        style: const TextStyle(
+                                          color: AppTheme.textSecondary,
+                                          fontSize: 12.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
                         // ✅ Next Payment Card
                         Container(
                           width: double.infinity,
@@ -264,13 +324,27 @@ class _MemberDashboardState extends State<MemberDashboard> {
                                   color: AppTheme.textPrimary,
                                 ),
                               ),
+                              const SizedBox(height: 4),
+                              Text(
+                                (_membership?['end_date'] != null &&
+                                        _membership!['end_date']
+                                                .toString()
+                                                .length >=
+                                            10)
+                                    ? 'Due on ${_membership!['end_date'].toString().substring(0, 10)}'
+                                    : 'No due date',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
                               const SizedBox(height: 12),
                               SizedBox(
                                 width: double.infinity,
                                 height: 44,
                                 child: ElevatedButton(
                                   onPressed: () =>
-                                      Get.toNamed('/member-payment'),
+                                      Get.toNamed('/member-payment-history'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.primary,
                                     shape: RoundedRectangleBorder(
@@ -377,7 +451,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
                                 const SizedBox(height: 12),
                                 // View full plan button
                                 InkWell(
-                                  onTap: () => Get.toNamed('/member-diet'),
+                                  onTap: () => Get.toNamed('/member_diet'),
                                   child: const Center(
                                     child: Text(
                                       'View Full Plan →',

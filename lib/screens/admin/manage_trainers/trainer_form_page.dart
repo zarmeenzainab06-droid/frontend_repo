@@ -246,7 +246,12 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
                       validator: (v) {
                         if (v == null || v.trim().isEmpty)
                           return 'Email is required';
-                        if (!v.contains('@')) return 'Enter a valid email';
+                        final regex = RegExp(
+                          r'^[\w\.\-]+@gmail\.com$',
+                          caseSensitive: false,
+                        );
+                        if (!regex.hasMatch(v.trim()))
+                          return 'Enter a valid @gmail.com address';
                         return null;
                       },
                     ),
@@ -257,6 +262,17 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
                       hint: '+92 300 0000000',
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty)
+                          return null; // optional field
+                        final phoneRegex = RegExp(r'^\+?\d{10,13}$');
+                        if (!phoneRegex.hasMatch(
+                          v.trim().replaceAll(' ', ''),
+                        )) {
+                          return 'Enter a valid phone number';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 12),
                     _buildGenderDropdown(),

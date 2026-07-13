@@ -1,8 +1,8 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:third_task/core/utils/theme.dart';
-import 'package:third_task/screens/admin/payments/payment_form_screen.dart';
+import '/core/utils/theme.dart';
+import 'package:GymFitex/screens/admin/payments/payment_form_screen.dart';
 import 'payment_controller.dart';
 import '../../../screens/admin/payments/payment_model.dart';
 import '../../../core/widgets/app_shell.dart';
@@ -81,11 +81,11 @@ class ManagePaymentsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.put(PaymentController());
+    final c = Get.put(PaymentController(), permanent: true);
 
     return AppShell(
       role: 'admin',
-      subtitle: 'GymFitex',
+      subtitle: 'Admin Panel',
       bottomNav: const AdminBottomNav(activeIndex: -1),
       actions: [
         AppShellAction(

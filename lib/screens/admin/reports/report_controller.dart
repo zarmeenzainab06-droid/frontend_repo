@@ -6,14 +6,20 @@ import '../../../core/services/admin_report_service.dart';
 import 'report_model.dart';
 
 class ReportController extends GetxController {
-  // ─── STATE ────────────────────────────────────────────────────────────────
-  final Rx<ReportSummary> summary = Rx(ReportSummary.empty());
+  // ─── FLAT Rx FIELDS (each tracked independently by GetX) ─────────────────
+  // Using a single Rx<ReportSummary> object caused nested Obx widgets to miss
+  // updates when the whole object was replaced — GetX only fires if .value
+  // is re-read inside the Obx after replacement. Flat fields fix this cleanly.
+  final RxDouble totalRevenue = 0.0.obs;
+  final RxDouble revenueThisMonth = 0.0.obs;
+  final RxDouble averageMonthlyRevenue = 0.0.obs;
+  final RxList<MonthDataPoint> revenueByMonth = <MonthDataPoint>[].obs;
+  final RxList<MonthDataPoint> newMembersByMonth = <MonthDataPoint>[].obs;
+  final RxList<PackageReportItem> packages = <PackageReportItem>[].obs;
+
   final RxBool isLoading = false.obs;
 
-  // Period filter for the whole screen — mirrors the "Last 3 Months" dropdown
-  // in your design. Internally we still ask the backend for 6 months of raw
-  // data and slice client-side, since the backend already returns labelled
-  // month buckets that are cheap to filter.
+  // ─── PERIOD FILTER ────────────────────────────────────────────────────────
   final RxString selectedPeriod = 'Last 6 Months'.obs;
   static const periodOptions = [
     'Last 3 Months',
@@ -21,7 +27,7 @@ class ReportController extends GetxController {
     'Last 12 Months',
   ];
 
-  // Custom date-range revenue lookup result (shown when user picks a range)
+  // ─── DATE-RANGE RESULT ───────────────────────────────────────────────────
   final Rx<DateRangeRevenue?> dateRangeResult = Rx(null);
   final RxBool isDateRangeLoading = false.obs;
 
@@ -42,11 +48,33 @@ class ReportController extends GetxController {
     }
   }
 
-  // ─── LOAD SUMMARY ─────────────────────────────────────────────────────────
+  // ─── COMPUTED ─────────────────────────────────────────────────────────────
+  // Growth % between the two most recent months in revenueByMonth
+  double? get latestGrowthPercent {
+    final months = revenueByMonth;
+    if (months.length < 2) return null;
+    final prev = months[months.length - 2].revenue;
+    final curr = months.last.revenue;
+    if (prev == 0) return curr > 0 ? 100.0 : 0.0;
+    return ((curr - prev) / prev) * 100;
+  }
+
+  int get newMembersInPeriod =>
+      newMembersByMonth.fold(0, (sum, m) => sum + m.newMembers);
+
+  // ─── LOAD ─────────────────────────────────────────────────────────────────
   Future<void> loadSummary() async {
     try {
       isLoading.value = true;
-      summary.value = await ReportService.getSummary(months: _monthsForPeriod);
+      final summary = await ReportService.getSummary(months: _monthsForPeriod);
+
+      // Assign each field individually — GetX notifies each Obx that reads it
+      totalRevenue.value = summary.totalRevenue;
+      revenueThisMonth.value = summary.revenueThisMonth;
+      averageMonthlyRevenue.value = summary.averageMonthlyRevenue;
+      revenueByMonth.assignAll(summary.revenueByMonth);
+      newMembersByMonth.assignAll(summary.newMembersByMonth);
+      packages.assignAll(summary.packages);
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -60,20 +88,19 @@ class ReportController extends GetxController {
     }
   }
 
+  // Period changed from dropdown — re-fetch with new month window
   void changePeriod(String period) {
     selectedPeriod.value = period;
     loadSummary();
   }
 
-  // ─── CUSTOM DATE-RANGE REVENUE ────────────────────────────────────────────
+  // ─── DATE-RANGE REVENUE ───────────────────────────────────────────────────
   Future<void> fetchRevenueForRange(DateTime start, DateTime end) async {
     try {
       isDateRangeLoading.value = true;
-      final startStr = _fmt(start);
-      final endStr = _fmt(end);
       dateRangeResult.value = await ReportService.getRevenueByDateRange(
-        startDate: startStr,
-        endDate: endStr,
+        startDate: _fmt(start),
+        endDate: _fmt(end),
       );
     } catch (e) {
       Get.snackbar(

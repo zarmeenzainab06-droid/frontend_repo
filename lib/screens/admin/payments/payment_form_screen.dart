@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:third_task/core/utils/theme.dart';
+import '/core/utils/theme.dart';
 import 'payment_controller.dart';
 
 class PaymentFormPage extends StatelessWidget {
@@ -472,9 +472,13 @@ class PaymentFormPage extends StatelessWidget {
     // Existing screenshot from server (edit mode)
     if (hasExisting) {
       // Build URL same way as AdminService.baseUrl
-      final raw = c.existingScreenshot.value.replaceAll('\\', '/');
-      //final url = 'http://localhost:3000/$raw';
-      final url = 'http://localhost:3000/uploads/${c.existingScreenshot.value}';
+      String cleanScreenshot = c.existingScreenshot.value.replaceAll('\\', '/');
+      if (cleanScreenshot.startsWith('/uploads/')) {
+        cleanScreenshot = cleanScreenshot.substring(9);
+      } else if (cleanScreenshot.startsWith('uploads/')) {
+        cleanScreenshot = cleanScreenshot.substring(8);
+      }
+      final url = 'http://localhost:3000/uploads/$cleanScreenshot';
 
       print('Image URL: $url');
       return ClipRRect(

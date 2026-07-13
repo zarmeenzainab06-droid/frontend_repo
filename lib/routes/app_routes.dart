@@ -1,10 +1,10 @@
 import 'package:get/get.dart';
-
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
-
 import '../screens/dashboard/member_dashboard.dart';
+import '../screens/forgot_password_screen.dart';
+import '../screens/reset_password_screen.dart';
 import '../screens/admin/admin_dashboard.dart';
 import '../screens/admin/manage_members/admin_members_screen.dart';
 import '../screens/admin/admin_packages_screen.dart';
@@ -15,6 +15,8 @@ import '../screens/admin/admin_profile/admin_profile_screen.dart';
 import '../screens/admin/payments/manage_payments_screen.dart';
 import '../screens/admin/admin_slots_screen.dart';
 import '../screens/admin/reports/admin_reports_screen.dart';
+import '../screens/notification/notifications_screen.dart'; // ← NEW: notifications
+import '../screens/admin/admin_check_in_screen.dart';
 
 // nimra
 import '../screens/dashboard/member_profile.dart';
@@ -41,6 +43,8 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
   static const String dashboard = '/dashboard';
   static const String adminDashboard = '/admin-dashboard';
   static const String adminMembers = '/admin/members';
@@ -51,6 +55,8 @@ class AppRoutes {
   static const String adminPayments = '/admin/payments'; // ← NEW
   static const String adminSlots = '/admin/slots'; // ← NEW
   static const String adminReports = '/admin/reports';
+  static const String notifications = '/notifications'; // ← NEW
+  static const String adminCheckIn = '/admin/check-in';
 
   // nimra
   static const String memberProfile = '/member_profile';
@@ -72,11 +78,8 @@ class AppRoutes {
     GetPage(name: splash, page: () => SplashScreen()),
     GetPage(name: login, page: () => LoginScreen()),
     GetPage(name: register, page: () => RegisterScreen()),
-    GetPage(
-      name: dashboard,
-      page: () => MemberDashboard(),
-      middlewares: [AuthMiddleware()],
-    ),
+    GetPage(name: forgotPassword, page: () => ForgotPasswordScreen()),
+    GetPage(name: resetPassword, page: () => ResetPasswordScreen()),
     GetPage(
       name: adminDashboard,
       page: () => AdminDashboard(),
@@ -125,35 +128,49 @@ class AppRoutes {
       page: () => const AdminReportsScreen(),
       middlewares: [AuthMiddleware()],
     ),
-
+    GetPage(
+      name: notifications,
+      page: () => const NotificationsScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: adminCheckIn,
+      page: () => const AdminCheckInScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
     // nimra
     // ── Member ──────────────────────────────────────────────────
-    GetPage(name: memberProfile, page: () => MemberProfileScreen()),
-    GetPage(name: memberMembership, page: () => MemberMembershipScreen()),
-    GetPage(name: memberTrainer, page: () => MemberTrainerScreen()),
-    GetPage(name: '/member_diet', page: () => const MemberDietScreen()),
+    GetPage(
+      name: '/member_diet',
+      page: () => const MemberDietScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
     GetPage(
       name: '/member-edit-profile',
       page: () => MemberEditProfileScreen(),
+      middlewares: [AuthMiddleware()],
     ),
-    GetPage(name: '/member-payment-history', page: () => MemberPaymentScreen()),
+    GetPage(
+      name: '/member-payment-history',
+      page: () => MemberPaymentScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
     GetPage(
       name: '/member-change-password',
       page: () => MemberChangePasswordScreen(),
+      middlewares: [AuthMiddleware()],
     ),
-    GetPage(name: '/member-plans', page: () => MemberPlansScreen()),
+    GetPage(
+      name: '/member-plans',
+      page: () => MemberPlansScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
     GetPage(
       name: dashboard,
       page: () => MemberDashboard(),
       middlewares: [AuthMiddleware()],
     ),
 
-    //member
-    GetPage(
-      name: memberProfile,
-      page: () => MemberProfileScreen(),
-      middlewares: [AuthMiddleware()],
-    ),
     GetPage(
       name: memberMembership,
       page: () => MemberMembershipScreen(),
@@ -172,11 +189,6 @@ class AppRoutes {
     GetPage(
       name: memberMembership,
       page: () => MemberMembershipScreen(),
-      middlewares: [AuthMiddleware()],
-    ),
-    GetPage(
-      name: memberTrainer,
-      page: () => MemberTrainerScreen(),
       middlewares: [AuthMiddleware()],
     ),
 

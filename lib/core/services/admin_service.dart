@@ -330,6 +330,7 @@ class AdminService {
     Uint8List? screenshotBytes,
     String? screenshotName,
     String? existingScreenshotPath,
+    String? transactionId,
   }) async {
     try {
       final token = box.read('token');
@@ -346,6 +347,8 @@ class AdminService {
         request.fields['end_date'] = endDate;
         request.fields['amount'] = amount.toString();
         request.fields['payment_method'] = paymentMethod;
+        if (transactionId != null)
+          request.fields['transaction_id'] = transactionId; // ← add
 
         // Screenshot file — fromBytes works on web + mobile
         request.files.add(
@@ -385,6 +388,7 @@ class AdminService {
             //send existing path so backend keeps it instead of saving null
             if (existingScreenshotPath != null)
               'existing_screenshot': existingScreenshotPath,
+            if (transactionId != null) 'transaction_id': transactionId, // ← add
           }),
         );
 
@@ -418,6 +422,7 @@ class AdminService {
     Uint8List? screenshotBytes,
     String? screenshotName,
     String? existingScreenshotPath,
+    String? transactionId,
   }) async {
     try {
       var request = http.MultipartRequest(
@@ -437,7 +442,9 @@ class AdminService {
       if (existingScreenshotPath != null) {
         request.fields['existing_screenshot'] = existingScreenshotPath;
       }
-
+      if (transactionId != null) {
+        request.fields['transaction_id'] = transactionId; // ← add
+      }
       if (screenshotBytes != null) {
         request.files.add(
           http.MultipartFile.fromBytes(
@@ -688,6 +695,34 @@ class AdminService {
         return {'success': true};
       }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Member Check-in ─────────────────────────────────────────
+  static Future<Map<String, dynamic>> checkInMember(String searchQuery) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/members/check-in'),
+        headers: _headers,
+        body: json.encode({'searchQuery': searchQuery}),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'access': data['access'],
+          'memberName': data['memberName'],
+          'message': data['message'],
+        };
+      }
+      return {
+        'success': false,
+        'access': data['access'] ?? 'denied',
+        'memberName': data['memberName'] ?? '',
+        'reason': data['reason'] ?? data['message'] ?? 'Failed to check-in',
+      };
     } catch (e) {
       return {'success': false, 'message': 'Server error: $e'};
     }

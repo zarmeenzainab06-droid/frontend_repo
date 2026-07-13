@@ -65,9 +65,9 @@ class PaymentModel {
   Map<String, dynamic> toJson() {
     return {
       'user_id': memberId,
-      'package_id': packageId,
+      // 'package_id': packageId,
       'membership_month': membershipMonth,
-      'package_amount': packageAmount,
+      // 'package_amount': packageAmount,
       'amount_received': amountReceived,
       'status': paymentStatus.toLowerCase(),
       'payment_date': paymentDate,

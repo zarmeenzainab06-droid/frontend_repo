@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../screens/dashboard/member_plans_screen.dart';
 import '../utils/theme.dart';
-import 'package:third_task/routes/app_routes.dart';
+import '../../routes/app_routes.dart';
 
 class AppDrawer extends StatelessWidget {
   final String role; // 'admin' or 'user'
@@ -181,6 +181,23 @@ class AppDrawer extends StatelessWidget {
           Get.toNamed(AppRoutes.adminSlots);
         },
       ),
+
+      _item(
+        Icons.login_outlined,
+        'Gate Check-In',
+        onTap: () {
+          Get.back();
+          Get.toNamed(AppRoutes.adminCheckIn);
+        },
+      ),
+      _item(
+        Icons.bar_chart_outlined,
+        'Reports Settings',
+        onTap: () {
+          Get.back();
+          Get.toNamed(AppRoutes.adminReports);
+        },
+      ),
       _item(
         Icons.person_outline,
         'Profile',
@@ -189,12 +206,6 @@ class AppDrawer extends StatelessWidget {
           Get.toNamed('/admin/profile');
         },
       ),
-      _item(
-        Icons.bar_chart_outlined,
-        'Reports Settings',
-        onTap: () => Get.back(),
-      ),
-      _item(Icons.settings_outlined, 'App Settings', onTap: () => Get.back()),
       _item(Icons.help_outline, 'Help & About', onTap: () => Get.back()),
     ];
   }

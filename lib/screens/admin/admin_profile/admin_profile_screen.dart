@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:third_task/screens/admin/admin_profile/change_password_screen.dart';
+import '../admin_profile/change_password_screen.dart';
 import '../../../core/services/admin_service.dart';
 import '../../../core/utils/theme.dart';
 import '../../../core/widgets/app_shell.dart';

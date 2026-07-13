@@ -2,8 +2,7 @@ import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:third_task/core/services/admin_payment_service.dart'
-    hide debugPrint;
+import '/core/services/admin_payment_service.dart' hide debugPrint;
 import '../../../screens/admin/payments/payment_model.dart';
 
 class PaymentController extends GetxController {
@@ -250,7 +249,9 @@ class PaymentController extends GetxController {
     screenshotName.value = '';
     transactionIdController.text = payment.transactionId ?? '';
     amountReceivedController.text = payment.amountReceived.toStringAsFixed(0);
-    paymentDateController.text = payment.paymentDate ?? _todayDate();
+    paymentDateController.text = payment.paymentDate != null
+        ? payment.paymentDate!.split('T')[0]
+        : _todayDate();
   }
 
   // ─── SAVE ─────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-name: third_task
+name: GymFitex
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -50,6 +50,8 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   intl: ^0.19.0
+  flutter_launcher_icons: ^0.14.3 
+ 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -75,6 +77,12 @@ flutter:
         - asset: fonts/Lexend-Bold.ttf
           weight: 700
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/logo.png"
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

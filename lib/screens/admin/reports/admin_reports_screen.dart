@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:third_task/core/utils/theme.dart';
-import 'package:third_task/core/widgets/app_shell.dart';
+import '/core/utils/theme.dart';
+import '/core/widgets/app_shell.dart';
 import 'report_controller.dart';
 import 'report_model.dart';
 
 class AdminReportsScreen extends StatelessWidget {
   const AdminReportsScreen({super.key});
 
-  // ---------- color helpers (same pattern as Payments/Members screens) ----
-  Color _lighten(Color c, [double amount = .2]) {
+  Color _lighten(Color c, [double amount = .15]) {
     final hsl = HSLColor.fromColor(c);
     return hsl
         .withLightness((hsl.lightness + amount).clamp(0.0, 1.0))
         .toColor();
   }
 
-  Color _darken(Color c, [double amount = .2]) {
+  Color _darken(Color c, [double amount = .18]) {
     final hsl = HSLColor.fromColor(c);
     return hsl
         .withLightness((hsl.lightness - amount).clamp(0.0, 1.0))
@@ -30,11 +29,18 @@ class AdminReportsScreen extends StatelessWidget {
 
     return AppShell(
       role: 'admin',
-      subtitle: 'GymFitex',
+      subtitle: 'Admin Panel',
       bottomNav: const AdminBottomNav(activeIndex: 2),
-
+      actions: [
+        AppShellAction(
+          icon: Icons.refresh,
+          onTap: c.loadSummary,
+          tooltip: 'Refresh',
+        ),
+      ],
       body: Obx(() {
-        if (c.isLoading.value && c.summary.value.revenueByMonth.isEmpty) {
+        // Only gate behind spinner on the very first load (lists are empty)
+        if (c.isLoading.value && c.revenueByMonth.isEmpty) {
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primary),
           );
@@ -69,14 +75,14 @@ class AdminReportsScreen extends StatelessWidget {
     );
   }
 
-  // ---------- header (same gradient hero as Payments screen) -------------
+  // ── Header ────────────────────────────────────────────────────────────────
   Widget _buildHeader(ReportController c) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primary, _darken(AppTheme.primary, 0.18)],
+          colors: [AppTheme.primary, _darken(AppTheme.primary)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -89,25 +95,20 @@ class AdminReportsScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Reports & Analytics',
-                  style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.1,
-                  ),
-                ),
+          const Expanded(
+            child: Text(
+              'Reports & Analytics',
+              style: TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                height: 1.1,
               ),
-              _periodDropdown(c),
-            ],
+            ),
           ),
+          _periodDropdown(c),
         ],
       ),
     );
@@ -148,48 +149,54 @@ class AdminReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _sectionTitle(String text) => Text(
-    text,
-    style: const TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.w800,
-      color: AppTheme.textPrimary,
+  Widget _sectionTitle(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 2),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
+        color: AppTheme.textPrimary,
+      ),
     ),
   );
 
-  // ---------- 💰 Revenue stat cards (Total / This Month / Average) -------
+  // ── 💰 Revenue stat cards ─────────────────────────────────────────────────
   Widget _revenueStatsGrid(ReportController c) {
-    return Obx(() {
-      final s = c.summary.value;
-      final growth = s.latestGrowthPercent;
-      return Column(
-        children: [
-          _statCard(
+    return Column(
+      children: [
+        // Each Obx reads exactly one Rx field — guaranteed to update
+        Obx(
+          () => _statCard(
             label: 'Total Revenue',
-            value: 'Rs ${_fmtMoney(s.totalRevenue)}',
+            value: 'Rs ${_fmtMoney(c.totalRevenue.value)}',
             icon: Icons.attach_money_rounded,
             iconColor: AppTheme.active,
             growth: null,
           ),
-          const SizedBox(height: 12),
-          _statCard(
+        ),
+        const SizedBox(height: 12),
+        Obx(
+          () => _statCard(
             label: 'Revenue This Month',
-            value: 'Rs ${_fmtMoney(s.revenueThisMonth)}',
+            value: 'Rs ${_fmtMoney(c.revenueThisMonth.value)}',
             icon: Icons.calendar_today_rounded,
             iconColor: const Color(0xFF1E88E5),
-            growth: growth,
+            growth: c.latestGrowthPercent,
           ),
-          const SizedBox(height: 12),
-          _statCard(
+        ),
+        const SizedBox(height: 12),
+        Obx(
+          () => _statCard(
             label: 'Average Monthly',
-            value: 'Rs ${_fmtMoney(s.averageMonthlyRevenue)}',
+            value: 'Rs ${_fmtMoney(c.averageMonthlyRevenue.value)}',
             icon: Icons.show_chart_rounded,
             iconColor: AppTheme.pending,
             growth: null,
           ),
-        ],
-      );
-    });
+        ),
+      ],
+    );
   }
 
   Widget _statCard({
@@ -279,10 +286,10 @@ class AdminReportsScreen extends StatelessWidget {
     );
   }
 
-  // ---------- Revenue by month bar chart ----------------------------------
+  // ── Revenue by month bar chart ────────────────────────────────────────────
   Widget _revenueByMonthChart(ReportController c) {
     return Obx(() {
-      final months = c.summary.value.revenueByMonth;
+      final months = c.revenueByMonth; // RxList — GetX tracks this directly
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -309,9 +316,20 @@ class AdminReportsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            if (months.isEmpty)
+            // Loading shimmer while re-fetching for a new period
+            if (c.isLoading.value)
               const SizedBox(
-                height: 160,
+                height: 200,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primary,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
+            else if (months.isEmpty)
+              const SizedBox(
+                height: 200,
                 child: Center(
                   child: Text(
                     'No revenue data yet',
@@ -362,9 +380,8 @@ class AdminReportsScreen extends StatelessWidget {
                           showTitles: true,
                           getTitlesWidget: (value, meta) {
                             final i = value.toInt();
-                            if (i < 0 || i >= months.length) {
+                            if (i < 0 || i >= months.length)
                               return const SizedBox.shrink();
-                            }
                             final label = months[i].month.split(' ').first;
                             return Padding(
                               padding: const EdgeInsets.only(top: 6),
@@ -394,7 +411,7 @@ class AdminReportsScreen extends StatelessWidget {
                               end: Alignment.topCenter,
                               colors: [
                                 AppTheme.primary,
-                                _lighten(AppTheme.primary, 0.15),
+                                _lighten(AppTheme.primary),
                               ],
                             ),
                           ),
@@ -410,7 +427,7 @@ class AdminReportsScreen extends StatelessWidget {
     });
   }
 
-  // ---------- Custom date-range revenue lookup ----------------------------
+  // ── Date-range revenue card ───────────────────────────────────────────────
   Widget _dateRangeCard(BuildContext context, ReportController c) {
     return Container(
       width: double.infinity,
@@ -550,11 +567,11 @@ class AdminReportsScreen extends StatelessWidget {
     }
   }
 
-  // ---------- 📦 Membership / package breakdown ----------------------------
+  // ── 📦 Package breakdown ──────────────────────────────────────────────────
   Widget _packageBreakdownList(ReportController c) {
     return Obx(() {
-      final packages = c.summary.value.packages;
-      if (packages.isEmpty) {
+      final pkgs = c.packages; // RxList
+      if (pkgs.isEmpty) {
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -570,10 +587,13 @@ class AdminReportsScreen extends StatelessWidget {
           ),
         );
       }
+      final maxRevenue = pkgs
+          .map((p) => p.revenue)
+          .fold<double>(0, (a, b) => a > b ? a : b);
       return Column(
         children:
-            packages
-                .map((p) => _packageCard(p, packages))
+            pkgs
+                .map((p) => _packageCard(p, maxRevenue))
                 .expand((w) => [w, const SizedBox(height: 12)])
                 .toList()
               ..removeLast(),
@@ -581,15 +601,10 @@ class AdminReportsScreen extends StatelessWidget {
     });
   }
 
-  Widget _packageCard(
-    PackageReportItem p,
-    List<PackageReportItem> allPackages,
-  ) {
-    final maxRevenue = allPackages
-        .map((x) => x.revenue)
-        .fold<double>(0, (a, b) => a > b ? a : b);
-    final progress = maxRevenue > 0 ? (p.revenue / maxRevenue) : 0.0;
-
+  Widget _packageCard(PackageReportItem p, double maxRevenue) {
+    final progress = maxRevenue > 0
+        ? (p.revenue / maxRevenue).clamp(0.0, 1.0)
+        : 0.0;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -656,7 +671,7 @@ class AdminReportsScreen extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
+              value: progress,
               minHeight: 8,
               backgroundColor: AppTheme.background,
               valueColor: const AlwaysStoppedAnimation(AppTheme.active),
@@ -676,10 +691,10 @@ class AdminReportsScreen extends StatelessWidget {
     );
   }
 
-  // ---------- 📈 Trends: new members line chart ---------------------------
+  // ── 📈 Trends: new members line chart ────────────────────────────────────
   Widget _trendsCard(ReportController c) {
     return Obx(() {
-      final months = c.summary.value.newMembersByMonth;
+      final months = c.newMembersByMonth; // RxList
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -719,7 +734,7 @@ class AdminReportsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '+${c.summary.value.newMembersInPeriod} new',
+                    '+${c.newMembersInPeriod} new',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -730,9 +745,19 @@ class AdminReportsScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            if (months.isEmpty)
+            if (c.isLoading.value)
               const SizedBox(
-                height: 160,
+                height: 200,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primary,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
+            else if (months.isEmpty)
+              const SizedBox(
+                height: 200,
                 child: Center(
                   child: Text(
                     'No membership data yet',
@@ -779,9 +804,8 @@ class AdminReportsScreen extends StatelessWidget {
                           showTitles: true,
                           getTitlesWidget: (value, meta) {
                             final i = value.toInt();
-                            if (i < 0 || i >= months.length) {
+                            if (i < 0 || i >= months.length)
                               return const SizedBox.shrink();
-                            }
                             final label = months[i].month.split(' ').first;
                             return Padding(
                               padding: const EdgeInsets.only(top: 6),
@@ -826,14 +850,14 @@ class AdminReportsScreen extends StatelessWidget {
     });
   }
 
-  // ---------- formatting helpers -------------------------------------------
+  // ── Helpers ───────────────────────────────────────────────────────────────
   String _fmtMoney(double v) {
-    final isWhole = v == v.roundToDouble();
-    final s = isWhole ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
-    // add thousands separators
+    final s = v == v.roundToDouble()
+        ? v.toStringAsFixed(0)
+        : v.toStringAsFixed(2);
     final parts = s.split('.');
-    final intPart = parts[0];
     final buf = StringBuffer();
+    final intPart = parts[0];
     for (int i = 0; i < intPart.length; i++) {
       if (i > 0 && (intPart.length - i) % 3 == 0) buf.write(',');
       buf.write(intPart[i]);
@@ -850,22 +874,19 @@ class AdminReportsScreen extends StatelessWidget {
     if (values.isEmpty) return 100;
     final maxV = values.fold<double>(0, (a, b) => a > b ? a : b);
     if (maxV <= 0) return 100;
-    // round up to a nice number above the max
     final magnitude = (maxV.toString().split('.').first.length - 1).clamp(
       0,
       10,
     );
     final step = [1, 2, 5, 10]
-        .map((m) => m * pow10(magnitude))
-        .firstWhere((s) => s >= maxV, orElse: () => pow10(magnitude + 1));
+        .map((m) => m * _pow10(magnitude))
+        .firstWhere((s) => s >= maxV, orElse: () => _pow10(magnitude + 1));
     return step.toDouble();
   }
 
-  num pow10(int n) {
+  num _pow10(int n) {
     num r = 1;
-    for (int i = 0; i < n; i++) {
-      r *= 10;
-    }
+    for (int i = 0; i < n; i++) r *= 10;
     return r;
   }
 }
