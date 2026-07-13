@@ -16,6 +16,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int activeMembers = 0;
   int expiredMembers = 0;
   int pendingPayments = 0;
+  int newMembers = 0;
+  int fullPayments = 0;
+  double monthlyRevenue = 0.0;
+  String? _selectedMonth;
+  List<String> _filterMonths = [];
   List<Map<String, dynamic>> recentActivity = [];
 
   @override
@@ -24,9 +29,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _loadDashboard();
   }
 
-  Future<void> _loadDashboard() async {
+  Future<void> _loadDashboard([String? targetMonth]) async {
     setState(() => _isLoading = true);
-    final statsResult = await AdminService.getDashboardStats();
+    final statsResult = await AdminService.getDashboardStats(targetMonth);
     final activityResult = await AdminService.getRecentActivity();
 
     if (statsResult['success']) {
@@ -37,6 +42,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
         activeMembers = s['active'] ?? 0;
         expiredMembers = s['expired'] ?? 0;
         pendingPayments = s['pendingPayments'] ?? 0;
+        newMembers = s['newMembers'] ?? 0;
+        fullPayments = s['fullPayments'] ?? 0;
+        monthlyRevenue = (s['revenue'] ?? 0).toDouble();
+        _selectedMonth = s['selectedMonth'];
+        _filterMonths = List<String>.from(s['filterMonths'] ?? []);
       });
     }
     if (activityResult['success']) {
@@ -70,15 +80,109 @@ class _AdminDashboardState extends State<AdminDashboard> {
             )
           : RefreshIndicator(
               color: AppTheme.primary,
-              onRefresh: _loadDashboard,
+              onRefresh: () => _loadDashboard(_selectedMonth),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Stat cards
-                    _sectionLabel('OVERVIEW'),
+                    // Month filter dropdown card
+                    if (_filterMonths.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppTheme.border),
+                          boxShadow: [AppTheme.cardShadow],
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedMonth,
+                            isExpanded: true,
+                            icon: const Icon(Icons.arrow_drop_down, color: AppTheme.primary),
+                            items: _filterMonths.map((m) {
+                              return DropdownMenuItem<String>(
+                                value: m,
+                                child: Text(
+                                  'Filter Month: $m',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                _loadDashboard(val);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+
+                    // Monthly Metrics Section
+                    _sectionLabel('MONTHLY METRICS (${_selectedMonth ?? ""})'),
+                    const SizedBox(height: 10),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final cardWidth = (constraints.maxWidth - 12) / 2;
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            SizedBox(
+                              width: cardWidth,
+                              child: _statCard(
+                                'Monthly Revenue',
+                                'PKR ${monthlyRevenue.toStringAsFixed(0)}',
+                                Icons.monetization_on_outlined,
+                                AppTheme.active,
+                                AppTheme.activeLight,
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _statCard(
+                                'New Members',
+                                newMembers,
+                                Icons.person_add_outlined,
+                                AppTheme.primary,
+                                AppTheme.primaryLight,
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _statCard(
+                                'Full Payments',
+                                fullPayments,
+                                Icons.check_circle_outline,
+                                const Color.fromARGB(255, 15, 124, 226),
+                                const Color.fromARGB(255, 240, 248, 255),
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _statCard(
+                                'Pending Payments',
+                                pendingPayments,
+                                Icons.access_time_outlined,
+                                AppTheme.pending,
+                                AppTheme.pendingLight,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Lifetime Overview Section
+                    _sectionLabel('LIFETIME OVERVIEW'),
                     const SizedBox(height: 10),
                     LayoutBuilder(
                       builder: (context, constraints) {
@@ -104,13 +208,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 totalTrainers,
                                 Icons.sports_gymnastics_outlined,
                                 const Color.fromARGB(255, 15, 124, 226),
-                                const Color.fromARGB(255, 250, 250, 245),
+                                const Color.fromARGB(255, 240, 248, 255),
                               ),
                             ),
                             SizedBox(
                               width: cardWidth,
                               child: _statCard(
-                                'Active',
+                                'Active Members',
                                 activeMembers,
                                 Icons.check_circle_outline,
                                 AppTheme.active,
@@ -120,21 +224,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             SizedBox(
                               width: cardWidth,
                               child: _statCard(
-                                'Expired',
+                                'Expired Members',
                                 expiredMembers,
                                 Icons.cancel_outlined,
                                 AppTheme.expired,
                                 AppTheme.expiredLight,
-                              ),
-                            ),
-                            SizedBox(
-                              width: cardWidth,
-                              child: _statCard(
-                                'Pending Payments',
-                                pendingPayments,
-                                Icons.access_time_outlined,
-                                AppTheme.pending,
-                                AppTheme.pendingLight,
                               ),
                             ),
                           ],
@@ -142,6 +236,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       },
                     ),
                     const SizedBox(height: 24),
+
                     _sectionLabel('RECENT ACTIVITY'),
                     const SizedBox(height: 10),
                     if (recentActivity.isEmpty)
@@ -183,7 +278,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   /// compact stat card (2-column grid)
   Widget _statCard(
     String label,
-    int value,
+    dynamic value,
     IconData icon,
     Color color,
     Color bg,
@@ -208,7 +303,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Text(
             '$value',
             style: const TextStyle(
-              fontSize: 26,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
               color: AppTheme.textPrimary,
             ),

@@ -18,10 +18,13 @@ class AdminService {
   }
 
   // ── Dashboard Stats ────────────────────────────────────────
-  static Future<Map<String, dynamic>> getDashboardStats() async {
+  static Future<Map<String, dynamic>> getDashboardStats([String? month]) async {
     try {
+      final uri = Uri.parse('$baseUrl/admin/stats').replace(
+        queryParameters: month != null ? {'month': month} : null,
+      );
       final response = await http.get(
-        Uri.parse('$baseUrl/admin/stats'),
+        uri,
         headers: _headers,
       );
       final data = json.decode(response.body);
