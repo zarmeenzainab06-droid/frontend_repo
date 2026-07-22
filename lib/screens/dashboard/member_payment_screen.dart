@@ -64,7 +64,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   Future<void> _loadMembershipPrice() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/members/membership'),
+        Uri.parse('http://gym.sandbox.pk/api/members/membership'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -76,7 +76,9 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
         final pending = data['membership']?['pending_balance'];
         final pName = data['membership']?['package_name'];
         setState(() {
-          if (pending != null && double.tryParse(pending.toString()) != null && double.parse(pending.toString()) > 0) {
+          if (pending != null &&
+              double.tryParse(pending.toString()) != null &&
+              double.parse(pending.toString()) > 0) {
             _packageAmount = pending.toString();
             _packageName = '$pName (Remaining Balance)';
           } else if (price != null) {
@@ -102,7 +104,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   Future<void> _loadPayments() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/payments/my-payments'),
+        Uri.parse('http://gym.sandbox.pk/api/payments/my-payments'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -192,7 +194,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
       // Multipart request with bytes
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://localhost:3000/api/payments/submit'),
+        Uri.parse('http://gym.sandbox.pk/api/payments/submit'),
       );
 
       request.headers['Authorization'] = 'Bearer ${_getToken()}';
@@ -808,7 +810,7 @@ class _MemberPaymentHistoryScreenState
   Future<void> _loadPayments() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/payments/my-payments'),
+        Uri.parse('http://gym.sandbox.pk/api/payments/my-payments'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',

@@ -37,7 +37,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
   Future<void> _loadMembership() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/members/membership'),
+        Uri.parse('http://gym.sandbox.pk/api/members/membership'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -55,7 +55,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
   Future<void> _loadTrainer() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/members/trainer'),
+        Uri.parse('http://gym.sandbox.pk/api/members/trainer'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -73,7 +73,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
   Future<void> _loadDietPlan() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/diet/my-plan'),
+        Uri.parse('http://gym.sandbox.pk/api/diet/my-plan'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -242,8 +242,14 @@ class _MemberDashboardState extends State<MemberDashboard> {
                       children: [
                         // Pending Balance Alert Card
                         if (_membership?['pending_balance'] != null &&
-                            double.tryParse(_membership!['pending_balance'].toString()) != null &&
-                            double.parse(_membership!['pending_balance'].toString()) > 0)
+                            double.tryParse(
+                                  _membership!['pending_balance'].toString(),
+                                ) !=
+                                null &&
+                            double.parse(
+                                  _membership!['pending_balance'].toString(),
+                                ) >
+                                0)
                           Container(
                             width: double.infinity,
                             margin: const EdgeInsets.only(bottom: 16),
@@ -251,15 +257,21 @@ class _MemberDashboardState extends State<MemberDashboard> {
                             decoration: BoxDecoration(
                               color: AppTheme.expiredLight,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.expired.withOpacity(0.3)),
+                              border: Border.all(
+                                color: AppTheme.expired.withOpacity(0.3),
+                              ),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.warning_amber_rounded, color: AppTheme.expired),
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: AppTheme.expired,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Pending Balance Due',

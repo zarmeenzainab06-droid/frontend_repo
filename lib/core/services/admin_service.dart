@@ -6,7 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 
 class AdminService {
-  static const String baseUrl = "http://localhost:3000";
+  static const String baseUrl = "http://gym.sandbox.pk";
   static final box = GetStorage();
 
   static Map<String, String> get _headers {
@@ -20,13 +20,10 @@ class AdminService {
   // ── Dashboard Stats ────────────────────────────────────────
   static Future<Map<String, dynamic>> getDashboardStats([String? month]) async {
     try {
-      final uri = Uri.parse('$baseUrl/admin/stats').replace(
-        queryParameters: month != null ? {'month': month} : null,
-      );
-      final response = await http.get(
-        uri,
-        headers: _headers,
-      );
+      final uri = Uri.parse(
+        '$baseUrl/admin/stats',
+      ).replace(queryParameters: month != null ? {'month': month} : null);
+      final response = await http.get(uri, headers: _headers);
       final data = json.decode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
         return {'success': true, 'stats': data['stats']};
