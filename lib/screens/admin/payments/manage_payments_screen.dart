@@ -82,6 +82,8 @@ class ManagePaymentsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Get.put(PaymentController(), permanent: true);
+    c.loadMembers(); // ← refresh member list every time this screen opens, since the
+    // controller is permanent and onInit() only ran once at app start
 
     return AppShell(
       role: 'admin',
@@ -90,7 +92,10 @@ class ManagePaymentsScreen extends StatelessWidget {
       actions: [
         AppShellAction(
           icon: Icons.refresh,
-          onTap: c.loadPayments,
+          onTap: () {
+            c.loadPayments();
+            c.loadMembers();
+          },
           tooltip: 'Refresh',
         ),
       ],
