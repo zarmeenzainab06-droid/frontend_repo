@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '/core/utils/theme.dart';
+import '/core/utils/formatters.dart';
 import 'package:GymFitex/screens/admin/payments/payment_form_screen.dart';
 import 'payment_controller.dart';
 import '../../../screens/admin/payments/payment_model.dart';
@@ -526,12 +527,12 @@ class ManagePaymentsScreen extends StatelessWidget {
                         const SizedBox(height: 8),
                         _infoRow(
                           Icons.currency_rupee,
-                          'Package: Rs ${payment.packageAmount.toStringAsFixed(0)}',
+                          'Package: ${formatCurrency(payment.packageAmount)}',
                         ),
                         const SizedBox(height: 8),
                         _infoRow(
                           Icons.payments_outlined,
-                          'Paid: Rs ${payment.amountReceived.toStringAsFixed(0)}',
+                          'Paid: ${formatCurrency(payment.amountReceived)}',
                         ),
                         const SizedBox(height: 8),
                         _infoRow(
@@ -850,7 +851,7 @@ class ManagePaymentsScreen extends StatelessWidget {
           ),
         ),
         content: Text(
-          "Mark ${payment.memberName}'s payment of Rs ${payment.amountReceived.toStringAsFixed(0)} as $label?",
+          "Mark ${payment.memberName}'s payment of ${formatCurrency(payment.amountReceived)} as $label?",
           style: const TextStyle(color: AppTheme.textSecondary),
         ),
         actions: [

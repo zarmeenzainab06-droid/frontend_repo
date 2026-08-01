@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/utils/theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/member_layout.dart';
 import '../../core/services/member_service.dart';
 
@@ -177,7 +178,12 @@ class _MemberMembershipScreenState extends State<MemberMembershipScreen> {
                         _buildTile(
                           Icons.attach_money,
                           'Price',
-                          'PKR ${_membership!['price'] ?? '0'}',
+                          formatCurrency(
+                            num.tryParse(
+                                  _membership!['price']?.toString() ?? '0',
+                                ) ??
+                                0,
+                          ),
                         ),
                         const Divider(height: 1),
                         // Description

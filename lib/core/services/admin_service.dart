@@ -465,6 +465,23 @@ class AdminService {
     }
   }
 
+  // ── Get Member Payment Count ───────────────────────────────
+  static Future<Map<String, dynamic>> getMemberPaymentCount(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/members/$userId/payment-count'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'count': data['count']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
   // ── Delete Member ──────────────────────────────────────────
   static Future<Map<String, dynamic>> deleteMember(int userId) async {
     try {
@@ -517,7 +534,7 @@ class AdminService {
     }
   }
 
-  // ── Get Trainer By ID ──────────────────────────────────────
+  // ── Get Trainer By ID ─────────────────────────────────────
   static Future<Map<String, dynamic>> getTrainerById(int id) async {
     try {
       final response = await http.get(
@@ -725,6 +742,23 @@ class AdminService {
       };
     } catch (e) {
       return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Today's Check-ins ───────────────────────────────────────
+  static Future<List<dynamic>> getTodayCheckIns() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/members/check-in/today'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return data['checkIns'] ?? [];
+      }
+      return [];
+    } catch (e) {
+      return [];
     }
   }
 }

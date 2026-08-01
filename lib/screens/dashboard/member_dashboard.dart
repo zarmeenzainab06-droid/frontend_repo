@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../core/utils/theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/member_layout.dart';
 import 'member_plans_screen.dart';
 
@@ -283,7 +284,7 @@ class _MemberDashboardState extends State<MemberDashboard> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        'You have an outstanding balance of PKR ${_membership!['pending_balance']} for this month.',
+                                        'You have an outstanding balance of ${formatCurrency(num.tryParse(_membership!['pending_balance'].toString()) ?? 0)} for this month.',
                                         style: const TextStyle(
                                           color: AppTheme.textSecondary,
                                           fontSize: 12.5,
@@ -317,7 +318,13 @@ class _MemberDashboardState extends State<MemberDashboard> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'PKR ${_membership?['price'] ?? '0'}',
+                                formatCurrency(
+                                  num.tryParse(
+                                        _membership?['price']?.toString() ??
+                                            '0',
+                                      ) ??
+                                      0,
+                                ),
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import '../../core/utils/theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/member_layout.dart';
 
 class MemberPlansScreen extends StatefulWidget {
@@ -138,7 +139,7 @@ class _MemberPlansScreenState extends State<MemberPlansScreen> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Choose the plan that fits your fitness goals',
+                    'View your assigned membership plan',
                     style: TextStyle(
                       fontSize: 13,
                       color: AppTheme.textSecondary,
@@ -377,7 +378,9 @@ class _MemberPlansScreenState extends State<MemberPlansScreen> {
                   text: TextSpan(
                     children: [
                       TextSpan(
-                        text: 'Rs.${plan['price']}',
+                        text: formatCurrency(
+                          num.tryParse(plan['price'].toString()) ?? 0,
+                        ),
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
@@ -431,34 +434,44 @@ class _MemberPlansScreenState extends State<MemberPlansScreen> {
                 const SizedBox(height: 12),
 
                 // Choose / Renew button
+                // Replace the entire "Choose / Renew button" SizedBox block (lines 433-464) with:
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.snackbar(
-                        isCurrent ? 'Renew Plan' : 'Plan Selected',
-                        '${plan['name']} ${isCurrent ? 'renew' : 'selected'}! Admin se contact karo.',
-                        backgroundColor: AppTheme.activeLight,
-                        colorText: AppTheme.active,
-                        snackPosition: SnackPosition.BOTTOM,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isCurrent
-                          ? AppTheme.primary
-                          : Colors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isCurrent
+                          ? AppTheme.primaryLight
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border: isCurrent
+                          ? Border.all(color: AppTheme.primary, width: 1)
+                          : null,
                     ),
-                    child: Text(
-                      isCurrent ? 'Renew Plan' : 'Choose Plan',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          isCurrent
+                              ? Icons.check_circle
+                              : Icons.visibility_outlined,
+                          size: 14,
+                          color: isCurrent
+                              ? AppTheme.primary
+                              : AppTheme.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isCurrent ? 'Your Plan' : 'View Only',
+                          style: TextStyle(
+                            color: isCurrent
+                                ? AppTheme.primary
+                                : AppTheme.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

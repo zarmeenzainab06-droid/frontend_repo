@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/utils/theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/services/member_service.dart';
 
 class MemberEditProfileScreen extends StatefulWidget {
@@ -16,19 +18,31 @@ class _MemberEditProfileScreenState extends State<MemberEditProfileScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   bool _isLoading = false;
+  bool _isLoadingProfile = true;
   final box = GetStorage();
 
   @override
   void initState() {
     super.initState();
     _nameController.text = box.read('userName') ?? '';
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final member = await MemberService.getMyProfile();
+    if (member != null) {
+      _nameController.text = member.fullName;
+      _phoneController.text = stripPakPhonePrefix(member.phone);
+    }
+    if (mounted) setState(() => _isLoadingProfile = false);
   }
 
   Future<void> _saveProfile() async {
     if (_isLoading) return;
     if (_nameController.text.isEmpty) {
       Get.snackbar(
-        'Error', 'Name required hai',
+        'Error',
+        'Name required hai',
         backgroundColor: AppTheme.expiredLight,
         colorText: AppTheme.expired,
         snackPosition: SnackPosition.BOTTOM,
@@ -40,7 +54,7 @@ class _MemberEditProfileScreenState extends State<MemberEditProfileScreen> {
 
     final success = await MemberService.updateProfile(
       name: _nameController.text.trim(),
-      phone: _phoneController.text.trim(),
+      phone: normalizePakPhone(_phoneController.text.trim()),
     );
 
     setState(() => _isLoading = false);
@@ -50,7 +64,8 @@ class _MemberEditProfileScreenState extends State<MemberEditProfileScreen> {
       box.write('userName', _nameController.text.trim());
 
       Get.snackbar(
-        'Success', 'Profile update ho gaya!',
+        'Success',
+        'Profile update ho gaya!',
         backgroundColor: AppTheme.activeLight,
         colorText: AppTheme.active,
         snackPosition: SnackPosition.BOTTOM,
@@ -58,7 +73,8 @@ class _MemberEditProfileScreenState extends State<MemberEditProfileScreen> {
       Get.back();
     } else {
       Get.snackbar(
-        'Error', 'Update nahi hua, dobara try karo',
+        'Error',
+        'Update nahi hua, dobara try karo',
         backgroundColor: AppTheme.expiredLight,
         colorText: AppTheme.expired,
         snackPosition: SnackPosition.BOTTOM,
@@ -112,9 +128,12 @@ class _MemberEditProfileScreenState extends State<MemberEditProfileScreen> {
                   _buildLabel('Phone Number'),
                   _buildField(
                     controller: _phoneController,
-                    hint: 'Phone number likho',
+                    hint: '3001234567',
                     icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
+                    prefixText: '+92 ',
+                    maxLength: 10,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                 ],
               ),
@@ -154,11 +173,14 @@ class _MemberEditProfileScreenState extends State<MemberEditProfileScreen> {
   Widget _buildLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(label,
-          style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.textPrimary)),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: AppTheme.textPrimary,
+        ),
+      ),
     );
   }
 
@@ -167,14 +189,21 @@ class _MemberEditProfileScreenState extends State<MemberEditProfileScreen> {
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    String? prefixText,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: AppTheme.textHint),
         prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 20),
+        prefixText: prefixText,
+        counterText: '',
         filled: true,
         fillColor: const Color(0xFFF5F5F5),
         border: OutlineInputBorder(

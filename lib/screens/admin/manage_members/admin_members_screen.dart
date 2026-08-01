@@ -96,6 +96,16 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
   }
 
   Future<void> _deleteMember(int id, String name) async {
+    final countResult = await AdminService.getMemberPaymentCount(id);
+    final paymentCount = countResult['success'] == true
+        ? (countResult['count'] ?? 0)
+        : 0;
+
+    if (paymentCount > 1) {
+      await _showCannotDeleteDialog(name);
+      return;
+    }
+
     final confirm = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withOpacity(0.45),
@@ -218,6 +228,108 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
         );
       }
     }
+  }
+
+  // ── New: blocked-deletion warning dialog ──────────────────────
+  Future<void> _showCannotDeleteDialog(String name) async {
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.45),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.surface.withOpacity(0.94),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withOpacity(0.3)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.expired.withOpacity(0.85),
+                          AppTheme.expired,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.expired.withOpacity(0.35),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.warning_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Cannot Delete Member',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'This member cannot be deleted because multiple payment records exist. Please keep the member record for payment history.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 13.5,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _outlineActionButton(
+                          icon: Icons.close_rounded,
+                          label: 'Cancel',
+                          color: AppTheme.textSecondary,
+                          onTap: () => Navigator.pop(ctx),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _gradientActionButton(
+                          icon: Icons.check_rounded,
+                          label: 'OK',
+                          colors: [
+                            AppTheme.expired,
+                            _darken(AppTheme.expired, 0.1),
+                          ],
+                          onTap: () => Navigator.pop(ctx),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override

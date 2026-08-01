@@ -254,6 +254,14 @@ class AppDrawer extends StatelessWidget {
         },
       ),
       _item(
+        Icons.check_circle_outline,
+        'My Check-ins',
+        onTap: () {
+          Get.back();
+          Get.toNamed('/member_checkins');
+        },
+      ),
+      _item(
         Icons.card_membership_outlined,
         'Plans',
         onTap: () {

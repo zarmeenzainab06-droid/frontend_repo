@@ -13,29 +13,34 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/login'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+        }, // Set content type to JSON
         body: json.encode({'email': email, 'password': password}),
       );
 
       final data = json.decode(response.body);
-      print('Login response: $data');
+      // print('Login response: $data');
 
       if (response.statusCode == 200 && data['success'] == true) {
         // ✅ SAVE TOKEN
         if (data['token'] != null) {
-          box.write('token', data['token']);
-          box.write('user', data['user']);
+          box.write('token', data['token']); // Save token to local storage
+          box.write('user', data['user']); // Save user data to local storage
           box.write('role', data['user']['role']); // for admin
-          print('✅ Token saved: ${data['token']}');
-          print('✅ Role saved: ${data['user']['role']}'); //  for admin
+          // print('✅ Token saved: ${data['token']}');
+          // print('✅ Role saved: ${data['user']['role']}'); //  for admin
         }
 
-        return {'success': true, 'data': data};
+        return {
+          'success': true,
+          'data': data,
+        }; // Return the back to login screen
       } else {
         return {'success': false, 'message': data['message'] ?? 'Login failed'};
       }
     } catch (e) {
-      print('Login error: $e');
+      // print('Login error: $e');
       return {'success': false, 'message': 'Server error: $e'};
     }
   }
@@ -84,7 +89,7 @@ class AuthService {
         Uri.parse('$baseUrl/profile'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // ✅ Send token in header
+          'Authorization': 'Bearer $token', //  Send token in header
         },
       );
 

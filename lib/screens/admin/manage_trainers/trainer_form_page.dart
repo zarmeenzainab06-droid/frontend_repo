@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../core/services/admin_service.dart';
 import '../../../core/utils/theme.dart';
+import '../../../core/utils/formatters.dart';
 
 class TrainerFormPage extends StatefulWidget {
   final int? trainerId;
@@ -66,7 +67,9 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
       final t = result['trainer'] as Map<String, dynamic>;
       _nameCtrl.text = t['name'] ?? '';
       _emailCtrl.text = t['email'] ?? '';
-      _phoneCtrl.text = t['phone'] ?? '';
+      _phoneCtrl.text = t['phone'] != null && t['phone'].toString().isNotEmpty
+          ? stripPakPhonePrefix(t['phone'].toString())
+          : '';
       _specCtrl.text = t['specialization'] ?? '';
       _expCtrl.text = t['experience']?.toString() ?? '';
       _gender = t['gender'];
@@ -140,7 +143,9 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
         id: widget.trainerId!,
         name: _nameCtrl.text.trim(),
         email: _emailCtrl.text.trim(),
-        phone: _phoneCtrl.text.trim(),
+        phone: _phoneCtrl.text.trim().isEmpty
+            ? ''
+            : normalizePakPhone(_phoneCtrl.text.trim()),
         gender: _gender,
         specialization: _specCtrl.text.trim(),
         experience: int.tryParse(_expCtrl.text.trim()),
@@ -151,7 +156,9 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
       result = await AdminService.createTrainer(
         name: _nameCtrl.text.trim(),
         email: _emailCtrl.text.trim(),
-        phone: _phoneCtrl.text.trim(),
+        phone: _phoneCtrl.text.trim().isEmpty
+            ? ''
+            : normalizePakPhone(_phoneCtrl.text.trim()),
         gender: _gender,
         specialization: _specCtrl.text.trim(),
         experience: int.tryParse(_expCtrl.text.trim()),
@@ -259,16 +266,16 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
                     _buildField(
                       controller: _phoneCtrl,
                       label: 'Phone (optional)',
-                      hint: '+92 300 0000000',
+                      hint: '3001234567',
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
+                      prefixText: '+92 ',
+                      maxLength: 10,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (v) {
                         if (v == null || v.trim().isEmpty)
                           return null; // optional field
-                        final phoneRegex = RegExp(r'^\+?\d{10,13}$');
-                        if (!phoneRegex.hasMatch(
-                          v.trim().replaceAll(' ', ''),
-                        )) {
+                        if (v.trim().length != 10) {
                           return 'Enter a valid phone number';
                         }
                         return null;
@@ -490,16 +497,21 @@ class _TrainerFormPageState extends State<TrainerFormPage> {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    String? prefixText,
+    int? maxLength,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       validator: validator,
+      maxLength: maxLength,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon, size: 18, color: AppTheme.textSecondary),
+        prefixText: prefixText,
+        counterText: '',
         labelStyle: const TextStyle(
           fontSize: 14,
           color: AppTheme.textSecondary,

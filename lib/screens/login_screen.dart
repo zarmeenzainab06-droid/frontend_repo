@@ -55,10 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      // ✅ Read role from response
+      // Read role from response
       final userRole = result['data']['user']['role'];
 
-      box.write('isLoggedIn', true);
+      box.write('isLoggedIn', true); // Save login state
       box.write('userName', result['data']['user']['name']);
       box.write('token', result['data']['token']);
       box.write('userId', result['data']['user']['id']);
@@ -126,7 +126,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
-                        controller: _emailController,
+                        controller:
+                            _emailController, // allows user to type email
                         keyboardType: TextInputType.emailAddress,
                         style: const TextStyle(
                           fontSize: 14,
@@ -157,7 +158,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           suffix: IconButton(
                             icon: Icon(
                               _obscurePassword
-                                  ? Icons.visibility_off_outlined
+                                  ? Icons
+                                        .visibility_off_outlined // Show visibility icon when password is obscured
                                   : Icons.visibility_outlined,
                               color: AppTheme.textSecondary,
                               size: 20,

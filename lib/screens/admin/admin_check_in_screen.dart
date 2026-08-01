@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/app_shell.dart';
 
 class AdminCheckInScreen extends StatefulWidget {
@@ -17,11 +18,29 @@ class _AdminCheckInScreenState extends State<AdminCheckInScreen> {
   String _memberName = '';
   String _statusMessage = '';
 
+  List<dynamic> _todayCheckIns = [];
+  bool _isLoadingToday = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTodayCheckIns();
+  }
+
+  Future<void> _loadTodayCheckIns() async {
+    setState(() => _isLoadingToday = true);
+    final result = await AdminService.getTodayCheckIns();
+    setState(() {
+      _todayCheckIns = result;
+      _isLoadingToday = false;
+    });
+  }
+
   Future<void> _submitCheckIn() async {
     final query = _searchController.text.trim();
     if (query.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter member ID, Phone, or Email')),
+        const SnackBar(content: Text('Please enter email or phone number')),
       );
       return;
     }
@@ -41,6 +60,7 @@ class _AdminCheckInScreenState extends State<AdminCheckInScreen> {
           _memberName = result['memberName'] ?? '';
           _statusMessage = result['message'] ?? 'Access Granted';
         });
+        _loadTodayCheckIns();
       } else {
         setState(() {
           _checkedInSuccessfully = false;
@@ -101,9 +121,12 @@ class _AdminCheckInScreenState extends State<AdminCheckInScreen> {
                     TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        labelText: 'Search Member',
-                        hintText: 'Enter Member ID, Phone, or Email',
-                        prefixIcon: const Icon(Icons.search, color: AppTheme.primary),
+                        labelText: 'Email or Phone Number',
+                        hintText: 'Enter email or phone number',
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: AppTheme.primary,
+                        ),
                         filled: true,
                         fillColor: AppTheme.background,
                         border: OutlineInputBorder(
@@ -126,7 +149,9 @@ class _AdminCheckInScreenState extends State<AdminCheckInScreen> {
                           ),
                         ),
                         child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
                             : const Text(
                                 'Verify & Log Check-In',
                                 style: TextStyle(
@@ -180,7 +205,9 @@ class _AdminCheckInScreenState extends State<AdminCheckInScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _checkedInSuccessfully! ? 'ACCESS GRANTED' : 'ACCESS DENIED',
+                      _checkedInSuccessfully!
+                          ? 'ACCESS GRANTED'
+                          : 'ACCESS DENIED',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -215,6 +242,66 @@ class _AdminCheckInScreenState extends State<AdminCheckInScreen> {
                 ),
               ),
             ],
+            const SizedBox(height: 24),
+            const Text(
+              'Today',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (_isLoadingToday)
+              const Center(child: CircularProgressIndicator())
+            else if (_todayCheckIns.isEmpty)
+              Text(
+                'No check-ins yet today',
+                style: const TextStyle(color: AppTheme.textSecondary),
+              )
+            else
+              Column(
+                children: _todayCheckIns.map((entry) {
+                  final name = entry['name'] ?? '';
+                  final contact =
+                      (entry['email'] != null &&
+                          entry['email'].toString().isNotEmpty)
+                      ? entry['email']
+                      : (entry['phone'] ?? '');
+                  final dt = parseServerTimestamp(
+                    entry['check_in_time']?.toString(),
+                  );
+                  final time = dt != null ? formatTime12h(dt) : '';
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                      side: BorderSide(color: AppTheme.border),
+                    ),
+                    color: AppTheme.surface,
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.check_circle,
+                        color: AppTheme.active,
+                      ),
+                      title: Text(
+                        name,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(contact.toString()),
+                      trailing: Text(
+                        time,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
           ],
         ),
       ),

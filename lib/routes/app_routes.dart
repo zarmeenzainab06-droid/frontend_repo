@@ -27,6 +27,7 @@ import '../screens/dashboard/member_plans_screen.dart';
 import '../screens/dashboard/member_edit_profile.dart';
 import '../screens/dashboard/member_change_password.dart';
 import '../screens/dashboard/member_diet_screen.dart';
+import '../screens/dashboard/member_checkins_screen.dart';
 
 // eman
 import '../screens/trainer/trainer_dashboard.dart';
@@ -139,6 +140,11 @@ class AppRoutes {
     GetPage(
       name: '/member_diet',
       page: () => const MemberDietScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: '/member_checkins',
+      page: () => const MemberCheckInsScreen(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(

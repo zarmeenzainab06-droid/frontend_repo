@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import '../../core/utils/theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/member_layout.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -352,7 +353,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Amount to Pay: PKR $_packageAmount',
+                          'Amount to Pay: ${formatCurrency(num.tryParse(_packageAmount) ?? 0)}',
                           style: const TextStyle(
                             fontSize: 13,
                             color: AppTheme.textSecondary,
@@ -888,7 +889,7 @@ class _MemberPaymentHistoryScreenState
                       Expanded(
                         child: _summaryCard(
                           'Total Paid',
-                          'PKR ${_totalPaid.toStringAsFixed(0)}',
+                          formatCurrency(_totalPaid),
                           Icons.check_circle,
                           AppTheme.active,
                           AppTheme.activeLight,
@@ -991,7 +992,12 @@ class _MemberPaymentHistoryScreenState
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        'PKR ${payment['amount']}',
+                                        formatCurrency(
+                                          num.tryParse(
+                                                payment['amount'].toString(),
+                                              ) ??
+                                              0,
+                                        ),
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15,

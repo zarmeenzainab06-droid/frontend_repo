@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/admin_service.dart';
 import '../../core/utils/theme.dart';
+import '../../core/utils/formatters.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/notification_bell.dart';
 
@@ -145,7 +146,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               width: cardWidth,
                               child: _statCard(
                                 'Monthly Revenue',
-                                'PKR ${monthlyRevenue.toStringAsFixed(0)}',
+                                formatCurrency(monthlyRevenue),
                                 Icons.monetization_on_outlined,
                                 AppTheme.active,
                                 AppTheme.activeLight,
