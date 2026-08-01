@@ -1,3 +1,5 @@
+import 'package:GymFitex/screens/trainer/forgot_password_screen.dart';
+import 'package:GymFitex/screens/trainer/reset_password_screen.dart';
 import 'package:get/get.dart';
 
 import '../screens/splash_screen.dart';
@@ -71,12 +73,16 @@ class AppRoutes {
   static const String trainerSchedule = '/trainer/schedule';
   static const String trainerDietPlans = '/trainer/diet-plans';
   static const String trainerDietPlanForm = '/trainer/diet-plan-form';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
 
   // pages list
   static final List<GetPage<dynamic>> pages = [
     GetPage(name: splash, page: () => SplashScreen()),
     GetPage(name: login, page: () => LoginScreen()),
     GetPage(name: register, page: () => RegisterScreen()),
+    GetPage(name: forgotPassword, page: () => ForgotPasswordScreen()),
+    GetPage(name: resetPassword, page: () => ResetPasswordScreen()),
     GetPage(
       name: adminDashboard,
       page: () => AdminDashboard(),
