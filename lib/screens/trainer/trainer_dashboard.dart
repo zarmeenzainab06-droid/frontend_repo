@@ -746,7 +746,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
               _navItem(
                 Icons.people_outline_rounded,
                 'Members',
-                onTap: () => Get.toNamed('/trainer/members'),
+                onTap: () => Get.offNamed('/trainer/members'),
               ),
               _navItem(
                 Icons.restaurant_menu_outlined,

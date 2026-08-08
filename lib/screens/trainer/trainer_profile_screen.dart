@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/services/trainer_service.dart';
 import '../../core/utils/theme.dart';
+import '../../core/widgets/trainer_drawer.dart';
 
 class TrainerProfileScreen extends StatefulWidget {
   @override
@@ -375,8 +376,8 @@ class _TrainerProfileScreenState extends State<TrainerProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: _buildDrawer(),
       backgroundColor: AppTheme.background,
+      drawer: const TrainerDrawer(),
       body: Column(
         children: [
           _buildTopBar(context),

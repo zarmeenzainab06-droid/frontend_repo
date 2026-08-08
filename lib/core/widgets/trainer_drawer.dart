@@ -183,57 +183,7 @@ class TrainerDrawer extends StatelessWidget {
                     }
                   },
                 ),
-                _menuItem(
-                  context: context,
-                  icon: Icons.bar_chart_outlined,
-                  label: 'Performance Report',
-                  isActive: false,
-                  onTap: () {
-                    Get.back();
-                    Get.snackbar(
-                      'Coming Soon',
-                      'Performance report will be available soon',
-                      backgroundColor: Colors.white,
-                      colorText: const Color(0xFF212121),
-                      snackPosition: SnackPosition.BOTTOM,
-                      margin: const EdgeInsets.all(16),
-                    );
-                  },
-                ),
-                _menuItem(
-                  context: context,
-                  icon: Icons.settings_outlined,
-                  label: 'Settings',
-                  isActive: false,
-                  onTap: () {
-                    Get.back();
-                    Get.snackbar(
-                      'Coming Soon',
-                      'Settings will be available soon',
-                      backgroundColor: Colors.white,
-                      colorText: const Color(0xFF212121),
-                      snackPosition: SnackPosition.BOTTOM,
-                      margin: const EdgeInsets.all(16),
-                    );
-                  },
-                ),
-                _menuItem(
-                  context: context,
-                  icon: Icons.help_outline_rounded,
-                  label: 'Help & Support',
-                  isActive: false,
-                  onTap: () {
-                    Get.back();
-                    Get.snackbar(
-                      'Coming Soon',
-                      'Help & Support will be available soon',
-                      backgroundColor: Colors.white,
-                      colorText: const Color(0xFF212121),
-                      snackPosition: SnackPosition.BOTTOM,
-                      margin: const EdgeInsets.all(16),
-                    );
-                  },
-                ),
+
                 _menuItem(
                   context: context,
                   icon: Icons.person_outline,
