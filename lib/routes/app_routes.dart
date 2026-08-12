@@ -40,8 +40,13 @@ import '../screens/trainer/trainer_schedule_screen.dart';
 import '../screens/trainer/trainer_diet_plans_screen.dart';
 import '../screens/trainer/trainer_diet_plan_form.dart';
 
+import '../screens/dashboard/member_pass_screen.dart';
+import '../screens/dashboard/member_workout_screen.dart';
+import '../screens/trainer/trainer_workout_plan_form.dart';
+
 // routess
 class AppRoutes {
+
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
@@ -254,5 +259,21 @@ class AppRoutes {
       page: () => TrainerDietPlanForm(),
       middlewares: [AuthMiddleware()],
     ),
+    GetPage(
+      name: '/member-pass',
+      page: () => const MemberPassScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: '/member-workout',
+      page: () => const MemberWorkoutScreen(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: '/trainer/workout-plan-form',
+      page: () => const TrainerWorkoutPlanForm(),
+      middlewares: [AuthMiddleware()],
+    ),
   ];
 }
+

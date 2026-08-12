@@ -939,93 +939,98 @@ class _MemberPaymentHistoryScreenState
                           children: _payments.map((payment) {
                             final status = payment['status'] ?? 'pending';
                             return Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [AppTheme.cardShadow],
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: _statusLightColor(status),
-                                      shape: BoxShape.circle,
+                            return InkWell(
+                              onTap: () => _showDigitalReceipt(payment),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [AppTheme.cardShadow],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: _statusLightColor(status),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        status == 'paid'
+                                            ? Icons.check_circle
+                                            : status == 'pending'
+                                                ? Icons.access_time
+                                                : Icons.cancel,
+                                        color: _statusColor(status),
+                                        size: 20,
+                                      ),
                                     ),
-                                    child: Icon(
-                                      status == 'paid'
-                                          ? Icons.check_circle
-                                          : status == 'pending'
-                                          ? Icons.access_time
-                                          : Icons.cancel,
-                                      color: _statusColor(status),
-                                      size: 20,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            payment['month'] ?? 'N/A',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                          Text(
+                                            payment['method']?.toUpperCase() ??
+                                                '',
+                                            style: const TextStyle(
+                                              color: AppTheme.textSecondary,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
                                       children: [
                                         Text(
-                                          payment['month'] ?? 'N/A',
+                                          formatCurrency(
+                                            num.tryParse(
+                                                  payment['amount'].toString(),
+                                                ) ??
+                                                0,
+                                          ),
                                           style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
+                                            fontWeight: FontWeight.bold,
                                             fontSize: 15,
                                           ),
                                         ),
-                                        Text(
-                                          payment['method']?.toUpperCase() ??
-                                              '',
-                                          style: const TextStyle(
-                                            color: AppTheme.textSecondary,
-                                            fontSize: 12,
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: _statusLightColor(status),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            status.toUpperCase(),
+                                            style: TextStyle(
+                                              color: _statusColor(status),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        formatCurrency(
-                                          num.tryParse(
-                                                payment['amount'].toString(),
-                                              ) ??
-                                              0,
-                                        ),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _statusLightColor(status),
-                                          borderRadius: BorderRadius.circular(
-                                            20,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          status.toUpperCase(),
-                                          style: TextStyle(
-                                            color: _statusColor(status),
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           }).toList(),
@@ -1074,4 +1079,82 @@ class _MemberPaymentHistoryScreenState
       ),
     );
   }
+
+  void _showDigitalReceipt(Map<String, dynamic> payment) {
+    final status = (payment['status'] ?? 'pending').toString().toLowerCase();
+    final isPaid = status == 'paid';
+    final amountStr = formatCurrency(num.tryParse(payment['amount'].toString()) ?? 0);
+    final receiptId = 'REC-${payment['id'] ?? '000'}';
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.fitness_center, color: AppTheme.primary, size: 22),
+                      SizedBox(width: 8),
+                      Text('GYMFITEX', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _statusLightColor(status),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      status.toUpperCase(),
+                      style: TextStyle(color: _statusColor(status), fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text('PAYMENT RECEIPT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+              const SizedBox(height: 6),
+              Text(amountStr, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black)),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 12),
+              _receiptRow('Receipt ID', receiptId),
+              _receiptRow('Month', payment['month'] ?? 'N/A'),
+              _receiptRow('Method', (payment['method'] ?? 'cash').toString().toUpperCase()),
+              _receiptRow('Date', payment['created_at'] != null ? payment['created_at'].toString().split('T')[0] : 'N/A'),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+                  child: const Text('Close Receipt', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _receiptRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+        ],
+      ),
+    );
+  }
+
 }

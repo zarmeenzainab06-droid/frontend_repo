@@ -295,10 +295,76 @@ class _MemberDashboardState extends State<MemberDashboard> {
                                 ),
                               ],
                             ),
-                          ),
+                        // ✅ Quick Actions Row (Gate Pass & Workout)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () => Get.toNamed('/member-pass'),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1E293B),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [AppTheme.cardShadow],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: const [
+                                      Icon(Icons.qr_code_2, color: Colors.white, size: 26),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Digital Pass',
+                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                      ),
+                                      Text(
+                                        'Gate Entry Pass',
+                                        style: TextStyle(color: Colors.white70, fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () => Get.toNamed('/member-workout'),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2563EB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [AppTheme.cardShadow],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: const [
+                                      Icon(Icons.fitness_center, color: Colors.white, size: 26),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Workout Plan',
+                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                      ),
+                                      Text(
+                                        'Exercise Routine',
+                                        style: TextStyle(color: Colors.white70, fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
 
                         // ✅ Next Payment Card
                         Container(
+
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(

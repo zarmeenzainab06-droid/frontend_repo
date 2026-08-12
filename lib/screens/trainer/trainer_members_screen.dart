@@ -449,8 +449,20 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
                         arguments: {'member': member, 'plan_id': dietPlanId},
                       )?.then((_) => _loadMembers()),
                       child: Icon(
-                        hasDietPlan ? Icons.edit_outlined : Icons.add,
+                        hasDietPlan ? Icons.edit_outlined : Icons.restaurant,
                         color: Colors.green,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () => Get.toNamed(
+                        '/trainer/workout-plan-form',
+                        arguments: {'member_id': member['id']},
+                      )?.then((_) => _loadMembers()),
+                      child: const Icon(
+                        Icons.fitness_center_outlined,
+                        color: Colors.orange,
                         size: 20,
                       ),
                     ),
@@ -458,6 +470,7 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
                 ),
               ],
             ),
+
             const SizedBox(height: 10),
 
             // ── Info rows ──────────────────────────────────────

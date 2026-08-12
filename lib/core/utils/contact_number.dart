@@ -1,11 +1,9 @@
-// lib/core/utils/contact_number.dart
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'package:url_launcher/url_launcher.dart';
 
 class contactnumber {
-  /// Opens WhatsApp chat for the given phone number in a new browser tab.
+  /// Opens WhatsApp chat for the given phone number.
   /// Automatically cleans and formats the number.
-  static void openChat(String phone, {String message = ''}) {
+  static Future<void> openChat(String phone, {String message = ''}) async {
     // ── Clean the number ──────────────────────────────────────
     // Remove spaces, dashes, parentheses, plus signs
     String cleaned = phone.replaceAll(RegExp(r'[\s\-\(\)\+]'), '').trim();
@@ -22,12 +20,16 @@ class contactnumber {
 
     // ── Build WhatsApp URL ────────────────────────────────────
     final encodedMsg = Uri.encodeComponent(message);
-    final url = message.isNotEmpty
+    final urlString = message.isNotEmpty
         ? 'https://wa.me/$cleaned?text=$encodedMsg'
         : 'https://wa.me/$cleaned';
 
-    // ── Open in new tab ───────────────────────────────────────
-    html.window.open(url, '_blank');
+    final uri = Uri.parse(urlString);
+
+    // ── Open URL ───────────────────────────────────────────────
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   /// Checks if a phone number is valid enough to open WhatsApp

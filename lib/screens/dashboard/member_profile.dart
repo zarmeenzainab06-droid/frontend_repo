@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../models/member_model.dart';
 import '../../core/services/member_service.dart';
 import '../../core/widgets/member_layout.dart';
+
 
 class MemberProfileScreen extends StatefulWidget {
   const MemberProfileScreen({super.key});
@@ -190,6 +193,18 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                       child: Column(
                         children: [
                           _buildActionTile(
+                            label: 'Digital Member Pass',
+                            icon: Icons.qr_code_2,
+                            onTap: () => Get.toNamed('/member-pass'),
+                          ),
+                          const Divider(height: 1, indent: 16, endIndent: 16),
+                          _buildActionTile(
+                            label: 'Log Body Weight',
+                            icon: Icons.monitor_weight_outlined,
+                            onTap: _showWeightLoggerDialog,
+                          ),
+                          const Divider(height: 1, indent: 16, endIndent: 16),
+                          _buildActionTile(
                             label: 'Edit Profile',
                             icon: Icons.edit_outlined,
                             onTap: () => Get.toNamed('/member-edit-profile'),
@@ -224,7 +239,61 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     );
   }
 
+  void _showWeightLoggerDialog() {
+    final weightCtrl = TextEditingController();
+    Get.defaultDialog(
+      title: 'Log Weight (kg)',
+      content: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Column(
+          children: [
+            const Text('Track your fitness progress', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: weightCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Weight in kg',
+                hintText: 'e.g. 74.5',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      textCancel: 'Cancel',
+      textConfirm: 'Save',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.blueAccent,
+      onConfirm: () async {
+        final weight = weightCtrl.text.trim();
+        if (weight.isEmpty || double.tryParse(weight) == null) {
+          Get.snackbar('Error', 'Please enter a valid weight');
+          return;
+        }
+        final token = box.read('token') ?? '';
+        try {
+          final res = await http.post(
+            Uri.parse('http://gym.sandbox.pk/api/progress/weight'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'weight_kg': double.parse(weight)}),
+          );
+          if (res.statusCode == 200) {
+            Get.back();
+            Get.snackbar('Success', 'Weight logged successfully!', backgroundColor: Colors.green, colorText: Colors.white);
+          }
+        } catch (e) {
+          Get.snackbar('Error', 'Failed to log weight: $e');
+        }
+      },
+    );
+  }
+
   void _showLogoutDialog() {
+
     Get.defaultDialog(
       title: 'Logout',
       middleText: 'Kya aap logout karna chahte hain?',
