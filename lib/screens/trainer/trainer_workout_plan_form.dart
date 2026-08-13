@@ -100,7 +100,7 @@ class _TrainerWorkoutPlanFormState extends State<TrainerWorkoutPlanForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: TrainerDrawer(currentRoute: '/trainer/workout-plan-form'),
+      drawer: const TrainerDrawer(),
       appBar: AppBar(
         title: const Text('Assign Workout Plan'),
         backgroundColor: AppTheme.primary,

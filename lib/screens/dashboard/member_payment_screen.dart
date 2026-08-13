@@ -936,11 +936,12 @@ class _MemberPaymentHistoryScreenState
                           ),
                         )
                       : Column(
-                          children: _payments.map((payment) {
+                          children: _payments.map<Widget>((payment) {
+
                             final status = payment['status'] ?? 'pending';
-                            return Container(
                             return InkWell(
                               onTap: () => _showDigitalReceipt(payment),
+
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 margin: const EdgeInsets.only(bottom: 10),

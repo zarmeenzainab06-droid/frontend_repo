@@ -295,8 +295,13 @@ class _MemberDashboardState extends State<MemberDashboard> {
                                 ),
                               ],
                             ),
+                          ),
+
+                        const SizedBox(height: 12),
+
                         // ✅ Quick Actions Row (Gate Pass & Workout)
                         Row(
+
                           children: [
                             Expanded(
                               child: InkWell(

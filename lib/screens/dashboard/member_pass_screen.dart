@@ -66,8 +66,9 @@ class _MemberPassScreenState extends State<MemberPassScreen> {
 
     return MemberLayout(
       title: 'Digital Member Pass',
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+      currentIndex: -1,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -104,12 +105,12 @@ class _MemberPassScreenState extends State<MemberPassScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor.withOpacity(0.2),
+                                    color: AppTheme.primary.withOpacity(0.2),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
                                     Icons.fitness_center,
-                                    color: AppTheme.primaryColor,
+                                    color: AppTheme.primary,
                                     size: 24,
                                   ),
                                 ),
@@ -214,7 +215,7 @@ class _MemberPassScreenState extends State<MemberPassScreen> {
                                 Text(
                                   _membership?['package_name'] ?? 'No Plan',
                                   style: const TextStyle(
-                                    color: AppTheme.primaryColor,
+                                    color: AppTheme.primary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -236,10 +237,10 @@ class _MemberPassScreenState extends State<MemberPassScreen> {
                             ),
                             child: Column(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.qr_code_2_rounded,
                                   size: 140,
-                                  color: Colors.slate.shade900,
+                                  color: Color(0xFF0F172A),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
@@ -272,7 +273,7 @@ class _MemberPassScreenState extends State<MemberPassScreen> {
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline, color: AppTheme.primaryColor),
+                          const Icon(Icons.info_outline, color: AppTheme.primary),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(

@@ -52,8 +52,9 @@ class _MemberWorkoutScreenState extends State<MemberWorkoutScreen> {
   Widget build(BuildContext context) {
     return MemberLayout(
       title: 'Workout Plan',
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+      currentIndex: -1,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20.0),
               child: _workoutPlan == null
