@@ -55,32 +55,83 @@ class PackageReportItem {
   }
 }
 
+/// Payment method analytics item.
+class PaymentMethodItem {
+  final String method;
+  final int count;
+  final double totalAmount;
+
+  PaymentMethodItem({
+    required this.method,
+    required this.count,
+    required this.totalAmount,
+  });
+
+  factory PaymentMethodItem.fromJson(Map<String, dynamic> json) {
+    return PaymentMethodItem(
+      method: json['method']?.toString() ?? 'Cash',
+      count: int.tryParse(json['count']?.toString() ?? '0') ?? 0,
+      totalAmount: double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0,
+    );
+  }
+}
+
+/// Membership status analytics item.
+class MembershipStatusItem {
+  final String status;
+  final int count;
+
+  MembershipStatusItem({
+    required this.status,
+    required this.count,
+  });
+
+  factory MembershipStatusItem.fromJson(Map<String, dynamic> json) {
+    return MembershipStatusItem(
+      status: json['status']?.toString() ?? 'unknown',
+      count: int.tryParse(json['count']?.toString() ?? '0') ?? 0,
+    );
+  }
+}
+
 /// Top-level container for the /admin/reports/summary response — this is
 /// the single object the Reports screen binds to.
 class ReportSummary {
   final double totalRevenue;
   final double revenueThisMonth;
   final double averageMonthlyRevenue;
+  final double pendingDuesAmount;
+  final int pendingDuesCount;
   final List<MonthDataPoint> revenueByMonth;
   final List<MonthDataPoint> newMembersByMonth;
   final List<PackageReportItem> packages;
+  final List<PaymentMethodItem> paymentMethods;
+  final List<MembershipStatusItem> membershipStatuses;
 
   ReportSummary({
     required this.totalRevenue,
     required this.revenueThisMonth,
     required this.averageMonthlyRevenue,
+    this.pendingDuesAmount = 0.0,
+    this.pendingDuesCount = 0,
     required this.revenueByMonth,
     required this.newMembersByMonth,
     required this.packages,
+    this.paymentMethods = const [],
+    this.membershipStatuses = const [],
   });
 
   factory ReportSummary.empty() => ReportSummary(
     totalRevenue: 0,
     revenueThisMonth: 0,
     averageMonthlyRevenue: 0,
+    pendingDuesAmount: 0,
+    pendingDuesCount: 0,
     revenueByMonth: [],
     newMembersByMonth: [],
     packages: [],
+    paymentMethods: [],
+    membershipStatuses: [],
   );
 
   factory ReportSummary.fromJson(Map<String, dynamic> json) {
@@ -92,6 +143,10 @@ class ReportSummary {
       averageMonthlyRevenue:
           double.tryParse(json['average_monthly_revenue']?.toString() ?? '0') ??
           0.0,
+      pendingDuesAmount:
+          double.tryParse(json['pending_dues_amount']?.toString() ?? '0') ?? 0.0,
+      pendingDuesCount:
+          int.tryParse(json['pending_dues_count']?.toString() ?? '0') ?? 0,
       revenueByMonth: (json['revenue_by_month'] as List? ?? [])
           .map((e) => MonthDataPoint.fromJson(e))
           .toList(),
@@ -100,6 +155,12 @@ class ReportSummary {
           .toList(),
       packages: (json['packages'] as List? ?? [])
           .map((e) => PackageReportItem.fromJson(e))
+          .toList(),
+      paymentMethods: (json['payment_methods'] as List? ?? [])
+          .map((e) => PaymentMethodItem.fromJson(e))
+          .toList(),
+      membershipStatuses: (json['membership_statuses'] as List? ?? [])
+          .map((e) => MembershipStatusItem.fromJson(e))
           .toList(),
     );
   }
@@ -142,3 +203,4 @@ class DateRangeRevenue {
     );
   }
 }
+

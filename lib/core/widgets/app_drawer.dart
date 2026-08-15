@@ -192,7 +192,7 @@ class AppDrawer extends StatelessWidget {
       ),
       _item(
         Icons.bar_chart_outlined,
-        'Reports Settings',
+        'Reports',
         onTap: () {
           Get.back();
           Get.toNamed(AppRoutes.adminReports);

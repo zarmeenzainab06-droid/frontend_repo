@@ -13,11 +13,16 @@ class ReportController extends GetxController {
   final RxDouble totalRevenue = 0.0.obs;
   final RxDouble revenueThisMonth = 0.0.obs;
   final RxDouble averageMonthlyRevenue = 0.0.obs;
+  final RxDouble pendingDuesAmount = 0.0.obs;
+  final RxInt pendingDuesCount = 0.obs;
   final RxList<MonthDataPoint> revenueByMonth = <MonthDataPoint>[].obs;
   final RxList<MonthDataPoint> newMembersByMonth = <MonthDataPoint>[].obs;
   final RxList<PackageReportItem> packages = <PackageReportItem>[].obs;
+  final RxList<PaymentMethodItem> paymentMethods = <PaymentMethodItem>[].obs;
+  final RxList<MembershipStatusItem> membershipStatuses = <MembershipStatusItem>[].obs;
 
   final RxBool isLoading = false.obs;
+
 
   // ─── PERIOD FILTER ────────────────────────────────────────────────────────
   final RxString selectedPeriod = 'Last 6 Months'.obs;
@@ -72,9 +77,14 @@ class ReportController extends GetxController {
       totalRevenue.value = summary.totalRevenue;
       revenueThisMonth.value = summary.revenueThisMonth;
       averageMonthlyRevenue.value = summary.averageMonthlyRevenue;
+      pendingDuesAmount.value = summary.pendingDuesAmount;
+      pendingDuesCount.value = summary.pendingDuesCount;
       revenueByMonth.assignAll(summary.revenueByMonth);
       newMembersByMonth.assignAll(summary.newMembersByMonth);
       packages.assignAll(summary.packages);
+      paymentMethods.assignAll(summary.paymentMethods);
+      membershipStatuses.assignAll(summary.membershipStatuses);
+
     } catch (e) {
       Get.snackbar(
         'Error',
