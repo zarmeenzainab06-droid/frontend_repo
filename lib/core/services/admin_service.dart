@@ -363,9 +363,6 @@ class AdminService {
         final streamedResponse = await request.send();
         final response = await http.Response.fromStream(streamedResponse);
 
-        print('DEBUG multipart status: ${response.statusCode}');
-        print('DEBUG multipart body: ${response.body}');
-
         final data = json.decode(response.body);
         if (response.statusCode == 201 && data['success'] == true) {
           return {'success': true};
