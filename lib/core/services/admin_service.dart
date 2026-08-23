@@ -250,6 +250,8 @@ class AdminService {
   // ── Create Member ──────────────────────────────────────────
   static Future<Map<String, dynamic>> createMember({
     required String name,
+    required String address,
+
     required String email,
     required String password,
     required String phone,
@@ -263,7 +265,9 @@ class AdminService {
         headers: _headers,
         body: json.encode({
           'name': name,
+          'address': address,
           'email': email,
+
           'phone': phone,
           'gender': gender,
           'training_slot': trainingSlot,
@@ -286,6 +290,7 @@ class AdminService {
   static Future<Map<String, dynamic>> updateMember({
     required int userId,
     required String name,
+    String? address,
     required String email,
     required String phone,
     required String gender,
@@ -299,11 +304,13 @@ class AdminService {
         headers: _headers,
         body: json.encode({
           'name': name,
+          'address': address,
           'email': email,
           'phone': phone,
           'gender': gender,
           'training_slot': trainingSlot,
           if (trainerId != null) 'trainer_id': int.tryParse(trainerId),
+          if (password != null && password.isNotEmpty) 'password': password,
         }),
       );
       final data = json.decode(response.body);

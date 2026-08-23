@@ -27,6 +27,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
   final _feeCtrl = TextEditingController(text: '99.00');
   final _startDateCtrl = TextEditingController();
   final _transactionIdCtrl = TextEditingController();
@@ -145,6 +146,8 @@ class _MemberFormPageState extends State<MemberFormPage> {
 
     _nameCtrl.text = data['name'] ?? '';
     _emailCtrl.text = data['email'] ?? '';
+    _addressCtrl.text = data['address'] ?? '';
+
     final rawPhone = (data['phone'] ?? '').toString();
     _phoneCtrl.text = rawPhone.startsWith('+92')
         ? rawPhone.substring(3)
@@ -276,6 +279,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     final signupResult = await AdminService.createMember(
       name: _nameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
+      address: _addressCtrl.text.trim(),
       phone: '+92${_phoneCtrl.text.trim()}',
       gender: _gender!,
       trainingSlot: _selectedSlotName ?? 'morning',
@@ -289,7 +293,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
       _showError(signupResult['message'] ?? 'Failed to create member');
       return;
     }
-
+    // backend se user details aye r is me store ho gae...
     final int userId = signupResult['user_id'];
     final startDate = _startDateCtrl.text;
     final endDate = _calcEndDate(startDate, _packageId!);
@@ -329,6 +333,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
     final updateResult = await AdminService.updateMember(
       userId: widget.memberId!,
       name: _nameCtrl.text.trim(),
+      address: _addressCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       phone: '+92${_phoneCtrl.text.trim()}',
       gender: _gender ?? 'male',
@@ -454,6 +459,15 @@ class _MemberFormPageState extends State<MemberFormPage> {
 
                               return null;
                             },
+                          ),
+                          const SizedBox(height: 16),
+                          // for address
+                          _label('Address *'),
+                          _textField(
+                            controller: _addressCtrl,
+                            hint: 'Enter full address',
+                            validator: (v) =>
+                                v!.isEmpty ? 'address is required' : null,
                           ),
                           const SizedBox(height: 16),
 

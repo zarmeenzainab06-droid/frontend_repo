@@ -40,7 +40,9 @@ class NotificationModel {
                 : json['reference_id']),
       isRead: json['is_read'] == 1 || json['is_read'] == true,
       createdAt:
-          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.tryParse(
+            '${json['created_at']?.toString() ?? ''}Z',
+          )?.toLocal() ??
           DateTime.now(),
     );
   }
