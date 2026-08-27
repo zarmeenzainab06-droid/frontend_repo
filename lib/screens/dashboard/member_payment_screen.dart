@@ -59,7 +59,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   Future<void> _loadMembershipPrice() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/members/membership'),
+        Uri.parse('http://gym.sandbox.pk/api/members/membership'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -99,7 +99,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   Future<void> _loadPayments() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/payments/my-payments'),
+        Uri.parse('http://gym.sandbox.pk/api/payments/my-payments'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -172,7 +172,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
       // Multipart request with bytes
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://localhost:3000/api/payments/submit'),
+        Uri.parse('http://gym.sandbox.pk/api/payments/submit'),
       );
 
       request.headers['Authorization'] = 'Bearer ${_getToken()}';
@@ -633,7 +633,7 @@ class _MemberPaymentHistoryScreenState
   Future<void> _loadPayments() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/payments/my-payments'),
+        Uri.parse('http://gym.sandbox.pk/api/payments/my-payments'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',

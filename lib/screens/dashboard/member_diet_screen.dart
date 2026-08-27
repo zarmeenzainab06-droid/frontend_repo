@@ -31,7 +31,7 @@ class _MemberDietScreenState extends State<MemberDietScreen> {
   Future<void> _loadDietPlan() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/diet/my-plan'),
+        Uri.parse('http://gym.sandbox.pk/api/diet/my-plan'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -55,7 +55,7 @@ class _MemberDietScreenState extends State<MemberDietScreen> {
   Future<void> _loadRemarks(String dietPlanId) async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/diet/remarks/$dietPlanId'),
+        Uri.parse('http://gym.sandbox.pk/api/diet/remarks/$dietPlanId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
@@ -77,7 +77,7 @@ class _MemberDietScreenState extends State<MemberDietScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:3000/api/diet/remark'),
+        Uri.parse('http://gym.sandbox.pk/api/diet/remark'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',
