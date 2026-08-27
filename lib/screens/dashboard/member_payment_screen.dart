@@ -17,7 +17,7 @@ class MemberPaymentScreen extends StatefulWidget {
 }
 
 class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
-  String _selectedMethod = 'online';
+  final String _selectedMethod = 'online';
   String _selectedmonth = '';
   String _packageAmount = '2000';
   String _packageName = 'Loading...';
@@ -32,12 +32,6 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   XFile? _selectedImage;
   Uint8List? _screenshotBytes;
   final ImagePicker _picker = ImagePicker();
-
-  // Card payment fields
-  final _cardNumberController = TextEditingController();
-  final _cardHolderController = TextEditingController();
-  final _expiryController = TextEditingController();
-  final _cvvController = TextEditingController();
 
   final List<String> _months = [
     'January 2026',
@@ -172,23 +166,6 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
       }
     }
 
-    // Card validation
-    if (_selectedMethod == 'card') {
-      if (_cardNumberController.text.isEmpty ||
-          _cardHolderController.text.isEmpty ||
-          _expiryController.text.isEmpty ||
-          _cvvController.text.isEmpty) {
-        Get.snackbar(
-          'Error',
-          'Sab card fields fill karo',
-          backgroundColor: AppTheme.expiredLight,
-          colorText: AppTheme.expired,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
-    }
-
     setState(() => _isLoading = true);
 
     try {
@@ -259,10 +236,6 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   // Clear all fields
   void _clearFields() {
     _transactionIdController.clear();
-    _cardNumberController.clear();
-    _cardHolderController.clear();
-    _expiryController.clear();
-    _cvvController.clear();
     setState(() {
       _uploadedImageName = null;
       _selectedImage = null;
@@ -404,93 +377,30 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      // Online button
-                      Expanded(
-                        child: InkWell(
-                          onTap: () =>
-                              setState(() => _selectedMethod = 'online'),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: _selectedMethod == 'online'
-                                  ? AppTheme.primaryLight
-                                  : const Color(0xFFF5F5F5),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _selectedMethod == 'online'
-                                    ? AppTheme.primary
-                                    : Colors.transparent,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.phone_android,
-                                  color: _selectedMethod == 'online'
-                                      ? AppTheme.primary
-                                      : AppTheme.textSecondary,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Online',
-                                  style: TextStyle(
-                                    color: _selectedMethod == 'online'
-                                        ? AppTheme.primary
-                                        : AppTheme.textSecondary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.primary, width: 1.5),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.phone_android,
+                          color: AppTheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Online',
+                          style: TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Card button
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => setState(() => _selectedMethod = 'card'),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: _selectedMethod == 'card'
-                                  ? AppTheme.primaryLight
-                                  : const Color(0xFFF5F5F5),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _selectedMethod == 'card'
-                                    ? AppTheme.primary
-                                    : Colors.transparent,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.credit_card,
-                                  color: _selectedMethod == 'card'
-                                      ? AppTheme.primary
-                                      : AppTheme.textSecondary,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Card',
-                                  style: TextStyle(
-                                    color: _selectedMethod == 'card'
-                                        ? AppTheme.primary
-                                        : AppTheme.textSecondary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -600,90 +510,6 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
                     ),
                   ],
 
-                  // Card payment fields
-                  if (_selectedMethod == 'card') ...[
-                    const Text(
-                      'Card Number',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildField(
-                      controller: _cardNumberController,
-                      hint: '1234 5678 9012 3456',
-                      icon: Icons.credit_card,
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Card Holder Name',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildField(
-                      controller: _cardHolderController,
-                      hint: 'Name on card',
-                      icon: Icons.person_outline,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Expiry Date',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              _buildField(
-                                controller: _expiryController,
-                                hint: 'MM/YY',
-                                icon: Icons.calendar_today,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'CVV',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              _buildField(
-                                controller: _cvvController,
-                                hint: '***',
-                                icon: Icons.lock_outline,
-                                obscureText: true,
-                                keyboardType: TextInputType.number,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-
                   const SizedBox(height: 20),
 
                   // Submit button
@@ -777,10 +603,6 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   @override
   void dispose() {
     _transactionIdController.dispose();
-    _cardNumberController.dispose();
-    _cardHolderController.dispose();
-    _expiryController.dispose();
-    _cvvController.dispose();
     super.dispose();
   }
 }
