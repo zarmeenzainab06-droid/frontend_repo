@@ -341,20 +341,10 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       body: Column(
         children: [
           // ── Compact header + floating search card ──────────────────────────
-          // The inner Column reserves exactly enough height so the floating
-          // card's bottom edge sits flush with the Stack's bottom — ensuring
-          // every pixel of the card is within Flutter's hit-test area.
           Stack(
             clipBehavior: Clip.none,
             children: [
-              Column(
-                children: [
-                  _buildHeader(),
-                  const SizedBox(
-                    height: 82,
-                  ), // card height (14+36+12+14 + breathing)
-                ],
-              ),
+              Column(children: [_buildHeader(), const SizedBox(height: 82)]),
               Positioned(
                 left: 16,
                 right: 16,
