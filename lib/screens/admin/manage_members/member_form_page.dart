@@ -262,6 +262,10 @@ class _MemberFormPageState extends State<MemberFormPage> {
       _showError('Please select a training slot');
       return;
     }
+    if (_trainerId == null) {
+      _showError('Please assign a trainer');
+      return;
+    }
     if (_paymentType == 'online' && !_isEdit && _screenshotBytes == null) {
       _showError('Please upload a payment screenshot');
       return;
@@ -592,7 +596,7 @@ class _MemberFormPageState extends State<MemberFormPage> {
                           _buildSlotDropdown(),
                           const SizedBox(height: 16),
 
-                          _label('Assign Trainer'),
+                          _label('Assign Trainer *'),
                           _dropdownField(
                             hint: _trainers.isEmpty
                                 ? 'No trainers available'

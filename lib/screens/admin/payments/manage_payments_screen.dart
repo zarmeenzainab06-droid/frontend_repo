@@ -263,6 +263,7 @@ class ManagePaymentsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
+            controller: c.searchController, // ← NEW
             onChanged: (v) => c.searchQuery.value = v,
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(

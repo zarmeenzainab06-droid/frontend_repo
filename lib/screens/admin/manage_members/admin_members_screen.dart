@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/services/admin_service.dart';
@@ -13,6 +14,7 @@ class AdminMembersScreen extends StatefulWidget {
 
 class _AdminMembersScreenState extends State<AdminMembersScreen> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce; // serch by email
   bool _isLoading = true;
   List<Map<String, dynamic>> _members = [];
   List<Map<String, dynamic>> _filtered = [];
@@ -41,6 +43,21 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       _applyFilter();
     }
     setState(() => _isLoading = false);
+  }
+
+  // this void for phne no
+  void _onSearchChanged(String _) {
+    // ← NEW, insert here
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), _loadMembers);
+  }
+
+  @override
+  void dispose() {
+    // ← NEW, insert here
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _applyFilter() {
@@ -502,10 +519,10 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
         children: [
           TextField(
             controller: _searchController,
-            onChanged: (val) => _loadMembers(),
+            onChanged: _onSearchChanged,
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
-              hintText: 'Search by name or email...',
+              hintText: 'Search by name or phone...',
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: AppTheme.textHint,
