@@ -93,9 +93,6 @@ class _TrainerMemberProfileScreenState
       ? _formatDate(member['created_at'].toString())
       : 'N/A';
 
-  String get _workoutType =>
-      member['workout_type'] ?? member['diet_plan_title'] ?? '';
-
   String get _dietPlanTitle => member['diet_plan_title'] ?? '';
 
   String _formatDate(String raw) {
@@ -497,14 +494,6 @@ class _TrainerMemberProfileScreenState
           ),
           const SizedBox(height: 12),
           _contactRow(icon: Icons.wc_outlined, label: 'Gender', value: _gender),
-          if (_workoutType.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _contactRow(
-              icon: Icons.fitness_center_outlined,
-              label: 'Workout Type',
-              value: _workoutType,
-            ),
-          ],
         ],
       ),
     );

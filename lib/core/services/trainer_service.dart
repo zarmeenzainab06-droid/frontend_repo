@@ -4,7 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 
 class TrainerService {
-  static const String baseUrl = "http://gym.sandbox.pk";
+  static const String baseUrl = "http://localhost:3000";
   static final box = GetStorage();
 
   static Map<String, String> get _headers {
@@ -247,6 +247,23 @@ class TrainerService {
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           data['success'] == true) {
         return {'success': true, 'plan_id': data['plan_id']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
+  // ── Get remarks for a diet plan ─────────────────────────────
+  static Future<Map<String, dynamic>> getDietPlanRemarks(int planId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/trainer/diet-plans/$planId/remarks'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'remarks': data['remarks']};
       }
       return {'success': false, 'message': data['message'] ?? 'Failed'};
     } catch (e) {

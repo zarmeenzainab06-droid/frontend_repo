@@ -10,6 +10,8 @@ class TrainerDietPlansScreen extends StatefulWidget {
 }
 
 class _TrainerDietPlansScreenState extends State<TrainerDietPlansScreen> {
+  Map<int, List<dynamic>> _remarksByPlan = {};
+  Set<int> _expandedRemarks = {};
   bool _isLoading = true;
   List<Map<String, dynamic>> _plans = [];
   List<Map<String, dynamic>> _filtered = [];
@@ -50,6 +52,20 @@ class _TrainerDietPlansScreenState extends State<TrainerDietPlansScreen> {
         }).toList();
       }
     });
+  }
+
+  Future<void> _toggleRemarks(int planId) async {
+    if (_expandedRemarks.contains(planId)) {
+      setState(() => _expandedRemarks.remove(planId));
+      return;
+    }
+    setState(() => _expandedRemarks.add(planId));
+    if (!_remarksByPlan.containsKey(planId)) {
+      final result = await TrainerService.getDietPlanRemarks(planId);
+      if (result['success'] == true) {
+        setState(() => _remarksByPlan[planId] = result['remarks']);
+      }
+    }
   }
 
   Future<void> _deletePlan(int planId, String title) async {
@@ -636,6 +652,53 @@ class _TrainerDietPlansScreenState extends State<TrainerDietPlansScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: () => _toggleRemarks(planId),
+            icon: Icon(
+              _expandedRemarks.contains(planId)
+                  ? Icons.keyboard_arrow_up
+                  : Icons.keyboard_arrow_down,
+              size: 18,
+            ),
+            label: Text(
+              _expandedRemarks.contains(planId)
+                  ? 'Hide Remarks'
+                  : 'View Member Remarks',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+          if (_expandedRemarks.contains(planId)) ...[
+            if (!_remarksByPlan.containsKey(planId))
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              )
+            else if (_remarksByPlan[planId]!.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'No remarks from the member yet.',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+              )
+            else
+              ..._remarksByPlan[planId]!.map(
+                (r) => Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.background,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                    border: Border.all(color: AppTheme.border),
+                  ),
+                  child: Text(
+                    r['remark'] ?? '',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ),
+          ],
         ],
       ),
     );

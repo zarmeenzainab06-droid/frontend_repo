@@ -411,7 +411,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
     bool isLast = false,
   }) {
     final name = member['memberName'] ?? '';
-    final workoutType = member['workout_type'] ?? 'General Fitness';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return Column(
       children: [
@@ -451,13 +450,6 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      workoutType,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
                   ],
                 ),
               ),
