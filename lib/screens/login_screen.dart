@@ -17,27 +17,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   final box = GetStorage();
 
-  bool _isValidGmail(String email) {
-    final regex = RegExp(r'^[\w\.\-]+@gmail\.com$', caseSensitive: false);
-    return regex.hasMatch(email.trim());
-  }
-
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       Get.snackbar(
-        "Error",
-        "Email and Password are required",
-        backgroundColor: AppTheme.expiredLight,
-        colorText: AppTheme.expired,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    if (!_isValidGmail(_emailController.text)) {
-      Get.snackbar(
-        "Error",
-        "Please enter a valid @gmail.com address",
+        'Error',
+        'Email and Password are required',
         backgroundColor: AppTheme.expiredLight,
         colorText: AppTheme.expired,
         snackPosition: SnackPosition.BOTTOM,
@@ -46,12 +30,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => _isLoading = true);
-
     final result = await AuthService.login(
       _emailController.text.trim(),
       _passwordController.text,
     );
-
     setState(() => _isLoading = false);
 
     if (result['success']) {
@@ -60,20 +42,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
       box.write('isLoggedIn', true); // Save login state
       box.write('userName', result['data']['user']['name']);
-      box.write('token', result['data']['token']);
-      box.write('userId', result['data']['user']['id']);
 
       if (userRole == 'admin') {
         Get.offAllNamed('/admin-dashboard');
       } else if (userRole == 'trainer') {
-        Get.offAllNamed('/trainer-dashboard'); // ✅ trainer goes here
+        Get.offAllNamed('/trainer-dashboard');
       } else {
-        Get.offAllNamed('/dashboard'); // regular member
+        Get.offAllNamed('/dashboard');
       }
     } else {
-      // ❌ Login failed — just show error, no redirect
       Get.snackbar(
-        "Login Failed",
+        'Login Failed',
         result['message'] ?? 'Invalid email or password',
         backgroundColor: AppTheme.expiredLight,
         colorText: AppTheme.expired,
@@ -116,6 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 28),
 
+                      // Email
                       const Text(
                         'Email',
                         style: TextStyle(
@@ -137,6 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
 
+                      // Password
                       const Text(
                         'Password',
                         style: TextStyle(
@@ -188,6 +169,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
 
+                      // ── Forgot Password Link ───────────────
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () => Get.toNamed('/forgot-password'),
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              color: AppTheme.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Login Button
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -240,19 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () async {
-                        final registered = await Get.to(() => RegisterScreen());
-
-                        if (registered == true) {
-                          Get.snackbar(
-                            "Success",
-                            "Account created successfully. Please login.",
-                            backgroundColor: AppTheme.activeLight,
-                            colorText: AppTheme.active,
-                            snackPosition: SnackPosition.BOTTOM,
-                          );
-                        }
-                      },
+                      onTap: () => Get.to(() => RegisterScreen()),
                       child: const Text(
                         'Register here',
                         style: TextStyle(

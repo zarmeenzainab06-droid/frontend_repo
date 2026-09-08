@@ -5,6 +5,8 @@ import '../../core/utils/theme.dart';
 import '../../core/widgets/trainer_drawer.dart';
 
 class TrainerDietPlansScreen extends StatefulWidget {
+  const TrainerDietPlansScreen({super.key});
+
   @override
   State<TrainerDietPlansScreen> createState() => _TrainerDietPlansScreenState();
 }
