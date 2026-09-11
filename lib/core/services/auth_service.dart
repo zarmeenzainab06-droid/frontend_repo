@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 
 class AuthService {
   static const String baseUrl = "http://localhost:3000";
-  static const String baseUrl = "http://localhost:3000";
   static final box = GetStorage();
   static const Map<String, String> _headers = {
     // for forget password and reset password

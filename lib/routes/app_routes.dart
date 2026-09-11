@@ -1,5 +1,3 @@
-import 'package:GymFitex/screens/trainer/forgot_password_screen.dart';
-import 'package:GymFitex/screens/trainer/reset_password_screen.dart';
 import 'package:get/get.dart';
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
@@ -46,8 +44,6 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String register = '/register';
-  static const String forgotPassword = '/forgot-password';
-  static const String resetPassword = '/reset-password';
   static const String dashboard = '/dashboard';
   static const String adminDashboard = '/admin-dashboard';
   static const String adminMembers = '/admin/members';
