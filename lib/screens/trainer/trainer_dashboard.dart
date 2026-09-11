@@ -459,7 +459,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     final slotName = session['slot_name'] ?? session['training_slot'] ?? '';
     final startTime = _formatTime(session['start_time']?.toString());
     final endTime = session['end_time']?.toString() ?? '';
-    final workout = session['workout_type'] ?? 'General Fitness';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     final runsToday = session['runs_today'] ?? true;
 
@@ -509,13 +508,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      workout,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
                     if (!runsToday)
                       const Text(
                         'Not scheduled today',

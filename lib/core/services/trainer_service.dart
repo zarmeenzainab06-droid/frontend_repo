@@ -303,4 +303,21 @@ class TrainerService {
       return {'success': false, 'message': 'Server error: $e'};
     }
   }
+
+  // ── Get remarks for a diet plan ─────────────────────────────
+  static Future<Map<String, dynamic>> getDietPlanRemarks(int planId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/trainer/diet-plans/$planId/remarks'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'remarks': data['remarks']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
 }

@@ -94,6 +94,10 @@ class PaymentService {
     debugPrint(
       'addPayment cash status: ${response.statusCode} body: ${response.body}',
     );
+    if (response.statusCode != 201) {
+      final msg = _extractErrorMessage(response.body);
+      if (msg != null) throw Exception(msg);
+    }
     return response.statusCode == 201;
   }
 
@@ -183,7 +187,25 @@ class PaymentService {
     debugPrint(
       'multipart $method status: ${response.statusCode} body: ${response.body}',
     );
+    if (response.statusCode != expectedStatus) {
+      final msg = _extractErrorMessage(response.body);
+      if (msg != null) throw Exception(msg);
+    }
     return response.statusCode == expectedStatus;
+  }
+
+  // Pulls the `message` field out of a JSON error body, e.g.
+  // {"success": false, "message": "This member's fee for ... is already fully recorded"}
+  static String? _extractErrorMessage(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded['message'] is String) {
+        return decoded['message'] as String;
+      }
+    } catch (_) {
+      // Not JSON, or no message field — fall through to generic handling.
+    }
+    return null;
   }
 }
 

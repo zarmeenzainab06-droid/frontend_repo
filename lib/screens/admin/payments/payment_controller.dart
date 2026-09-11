@@ -356,9 +356,10 @@ class PaymentController extends GetxController {
       }
     } catch (e) {
       debugPrint('savePayment error: $e');
+      final message = e.toString().replaceFirst('Exception: ', '');
       Get.snackbar(
-        'Error',
-        'Something went wrong: $e',
+        'Payment Not Added',
+        message,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFE53935),
         colorText: Colors.white,

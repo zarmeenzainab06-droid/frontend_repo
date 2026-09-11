@@ -33,20 +33,23 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   Uint8List? _screenshotBytes;
   final ImagePicker _picker = ImagePicker();
 
-  final List<String> _months = [
-    'January 2026',
-    'February 2026',
-    'March 2026',
-    'April 2026',
-    'May 2026',
-    'June 2026',
-    'July 2026',
-    'August 2026',
-    'September 2026',
-    'October 2026',
-    'November 2026',
-    'December 2026',
+  static const _monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
+  final List<String> _months = _monthNames
+      .map((m) => '$m ${DateTime.now().year}')
+      .toList();
 
   @override
   void initState() {

@@ -749,6 +749,25 @@ class AdminService {
     }
   }
 
+  // ── Member Check-in History (for the History dialog) for the admin can seee history
+  static Future<Map<String, dynamic>> getMemberCheckInHistory(
+    int userId,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/members/$userId/check-ins'),
+        headers: _headers,
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'checkIns': data['checkIns']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': 'Server error: $e'};
+    }
+  }
+
   // ── Today's Check-ins ───────────────────────────────────────
   static Future<List<dynamic>> getTodayCheckIns() async {
     try {

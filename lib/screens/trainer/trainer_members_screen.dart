@@ -348,12 +348,6 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
       planLabel = planDuration != null ? '$plan ${planDuration} Days' : plan;
     }
 
-    // Workout + slot label
-    final workoutType = member['workout_type'] ?? '';
-    final slotLabel = slot.isNotEmpty
-        ? '${workoutType.isNotEmpty ? workoutType : slot[0].toUpperCase() + slot.substring(1)} (${_slotTime(slot)})'
-        : '';
-
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -461,8 +455,6 @@ class _TrainerMembersScreenState extends State<TrainerMembersScreen> {
             const SizedBox(height: 10),
 
             // ── Info rows ──────────────────────────────────────
-            if (slotLabel.isNotEmpty)
-              _infoRow(Icons.access_time_outlined, slotLabel),
             if (planLabel.isNotEmpty) ...[
               const SizedBox(height: 4),
               _infoRow(Icons.people_outline, planLabel),
