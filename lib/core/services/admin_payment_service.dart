@@ -7,7 +7,7 @@ import '../../screens/admin/payments/payment_model.dart';
 import 'package:get/get.dart';
 
 class PaymentService {
-  static const String baseUrl = "http://localhost:3000";
+  static const String baseUrl = "http://gym.sandbox.pk";
   static const String _path = "/admin/payments";
   static final box = GetStorage();
 

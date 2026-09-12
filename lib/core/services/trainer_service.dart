@@ -4,7 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 
 class TrainerService {
-  static const String baseUrl = "http://localhost:3000";
+  static const String baseUrl = "http://gym.sandbox.pk";
   static final box = GetStorage();
 
   static Map<String, String> get _headers {

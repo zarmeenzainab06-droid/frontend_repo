@@ -30,7 +30,7 @@ class _MemberCheckInsScreenState extends State<MemberCheckInsScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/members/my-check-ins'),
+        Uri.parse('http://gym.sandbox.pk/api/members/my-check-ins'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${_getToken()}',

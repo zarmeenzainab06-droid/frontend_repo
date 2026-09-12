@@ -478,7 +478,7 @@ class PaymentFormPage extends StatelessWidget {
       } else if (cleanScreenshot.startsWith('uploads/')) {
         cleanScreenshot = cleanScreenshot.substring(8);
       }
-      final url = 'http://localhost:3000/uploads/$cleanScreenshot';
+      final url = 'http://gym.sandbox.pk/uploads/$cleanScreenshot';
 
       print('Image URL: $url');
       return ClipRRect(

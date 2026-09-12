@@ -435,7 +435,8 @@ class _MemberFormPageState extends State<MemberFormPage> {
                               if (v == null || v.isEmpty)
                                 return 'Email is required';
                               final emailRegex = RegExp(
-                                r'^[\w\.\-]+@[\w\-]+\.[a-zA-Z]{2,}$',
+                                r'^[\w\.\-]+@gmail\.com$',
+                                caseSensitive: false,
                               );
                               if (!emailRegex.hasMatch(v)) {
                                 return 'Please enter a valid email address.';
