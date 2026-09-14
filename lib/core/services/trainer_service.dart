@@ -15,7 +15,7 @@ class TrainerService {
     };
   }
 
-  // ── Dashboard Stats ────────────────────────────────────────
+  //  Dashboard Stats
   static Future<Map<String, dynamic>> getDashboardStats() async {
     try {
       final response = await http.get(
@@ -35,7 +35,7 @@ class TrainerService {
     }
   }
 
-  // ── Assigned Members (includes diet_plan info) ─────────────
+  // Assigned Members (includes diet_plan info)
   static Future<Map<String, dynamic>> getMyMembers({String? search}) async {
     try {
       final uri = Uri.parse('$baseUrl/trainer/members').replace(
@@ -57,7 +57,7 @@ class TrainerService {
     }
   }
 
-  // ── Get Single Member by ID ────────────────────────────────
+  //  Get Single Member by ID
   static Future<Map<String, dynamic>> getMemberById(int memberId) async {
     try {
       final response = await http.get(
@@ -74,7 +74,7 @@ class TrainerService {
     }
   }
 
-  // ── Today's Schedule ───────────────────────────────────────
+  //  Today's Schedule
   static Future<Map<String, dynamic>> getTodaySchedule() async {
     try {
       final response = await http.get(
@@ -90,7 +90,7 @@ class TrainerService {
     }
   }
 
-  // ── Recent Activity ────────────────────────────────────────
+  // Recent Activity
   static Future<Map<String, dynamic>> getRecentActivity() async {
     try {
       final response = await http.get(
@@ -106,7 +106,7 @@ class TrainerService {
     }
   }
 
-  // ── Trainer Profile ────────────────────────────────────────
+  //  Trainer Profile
   static Future<Map<String, dynamic>> getProfile() async {
     try {
       final response = await http.get(
@@ -126,7 +126,7 @@ class TrainerService {
     }
   }
 
-  // ── Update Profile ─────────────────────────────────────────
+  //  Update Profile
   static Future<Map<String, dynamic>> updateProfile({
     required String name,
     required String phone,
@@ -155,7 +155,7 @@ class TrainerService {
     }
   }
 
-  // ── Change Password ────────────────────────────────────────
+  //  Change Password
   static Future<Map<String, dynamic>> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -178,11 +178,7 @@ class TrainerService {
     }
   }
 
-  // ══════════════════════════════════════════════════════════
-  // DIET PLAN METHODS
-  // ══════════════════════════════════════════════════════════
-
-  // ── Get all diet plans ─────────────────────────────────────
+  //  Get all diet plans
   static Future<Map<String, dynamic>> getDietPlans() async {
     try {
       final response = await http.get(
@@ -203,7 +199,7 @@ class TrainerService {
     }
   }
 
-  // ── Get single diet plan ───────────────────────────────────
+  //  Get single diet plan
   static Future<Map<String, dynamic>> getDietPlan(int planId) async {
     try {
       final response = await http.get(
@@ -219,7 +215,7 @@ class TrainerService {
     }
   }
 
-  // ── Create diet plan ───────────────────────────────────────
+  //  Create diet plan
   static Future<Map<String, dynamic>> createDietPlan({
     required int memberId,
     required String title,
@@ -254,7 +250,7 @@ class TrainerService {
     }
   }
 
-  // ── Update diet plan ───────────────────────────────────────
+  //  Update diet plan
   static Future<Map<String, dynamic>> updateDietPlan({
     required int planId,
     required int memberId,
@@ -288,7 +284,7 @@ class TrainerService {
     }
   }
 
-  // ── Delete diet plan ───────────────────────────────────────
+  //  Delete diet plan
   static Future<Map<String, dynamic>> deleteDietPlan(int planId) async {
     try {
       final response = await http.delete(
@@ -304,7 +300,7 @@ class TrainerService {
     }
   }
 
-  // ── Get remarks for a diet plan ─────────────────────────────
+  // Get remarks for a diet plan
   static Future<Map<String, dynamic>> getDietPlanRemarks(int planId) async {
     try {
       final response = await http.get(
