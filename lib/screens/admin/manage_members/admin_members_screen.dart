@@ -1,10 +1,12 @@
 import 'dart:ui' as ui;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/services/admin_service.dart';
 import '../../../core/utils/theme.dart';
 import '../../../core/widgets/app_shell.dart';
 import 'member_form_page.dart';
+import 'package:intl/intl.dart';
 
 class AdminMembersScreen extends StatefulWidget {
   @override
@@ -13,6 +15,7 @@ class AdminMembersScreen extends StatefulWidget {
 
 class _AdminMembersScreenState extends State<AdminMembersScreen> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce; // serch by email
   bool _isLoading = true;
   List<Map<String, dynamic>> _members = [];
   List<Map<String, dynamic>> _filtered = [];
@@ -41,6 +44,21 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       _applyFilter();
     }
     setState(() => _isLoading = false);
+  }
+
+  // this void for phne no
+  void _onSearchChanged(String _) {
+    // ← NEW, insert here
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), _loadMembers);
+  }
+
+  @override
+  void dispose() {
+    // ← NEW, insert here
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _applyFilter() {
@@ -502,10 +520,10 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
         children: [
           TextField(
             controller: _searchController,
-            onChanged: (val) => _loadMembers(),
+            onChanged: _onSearchChanged,
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
-              hintText: 'Search by name or email...',
+              hintText: 'Search by name or phone...',
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: AppTheme.textHint,
@@ -819,6 +837,13 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                   ],
                   Row(
                     children: [
+                      _iconOnlyButton(
+                        icon: Icons.history_rounded,
+                        color: AppTheme.textSecondary,
+                        onTap: () => _showCheckInHistory(member['id'], name),
+                      ),
+                      const SizedBox(width: 10),
+
                       Expanded(
                         child: _gradientActionButton(
                           icon: Icons.edit_outlined,
@@ -840,6 +865,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
+
                       Expanded(
                         child: _outlineActionButton(
                           icon: Icons.delete_outline_rounded,
@@ -854,6 +880,162 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // for checkin okhh...
+  Widget _iconOnlyButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withOpacity(0.4)),
+          ),
+          child: Icon(icon, size: 18, color: color),
+        ),
+      ),
+    );
+  }
+
+  // ── Check-in History dialog ─────────────────────────────────────
+  void _showCheckInHistory(int memberId, String memberName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 480, maxWidth: 360),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '$memberName — Check-in History',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: FutureBuilder<Map<String, dynamic>>(
+                    future: AdminService.getMemberCheckInHistory(memberId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                        );
+                      }
+
+                      final result = snapshot.data;
+                      if (result == null || result['success'] != true) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            result?['message'] ??
+                                'Failed to load check-in history',
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        );
+                      }
+
+                      final checkIns = List<Map<String, dynamic>>.from(
+                        result['checkIns'] ?? [],
+                      );
+
+                      if (checkIns.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            'No check-ins recorded yet.',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: checkIns.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, i) {
+                          final raw = checkIns[i]['check_in_time']?.toString();
+                          String display = raw ?? '';
+                          final parsed = raw != null
+                              ? DateTime.tryParse('${raw}Z')?.toLocal()
+                              : null;
+                          if (parsed != null) {
+                            display = DateFormat(
+                              'EEE, MMM d, y — h:mm a',
+                            ).format(parsed);
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle_outline,
+                                  size: 16,
+                                  color: AppTheme.active,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  display,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

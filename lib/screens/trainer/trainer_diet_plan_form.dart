@@ -269,7 +269,30 @@ class _TrainerDietPlanFormState extends State<TrainerDietPlanForm> {
                           children: [
                             // Member Dropdown
                             _fieldLabel('Select Member *'),
-                            _buildMemberDropdown(),
+                            _isEdit
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.background,
+                                      borderRadius: BorderRadius.circular(
+                                        AppTheme.radiusMd,
+                                      ),
+                                      border: Border.all(
+                                        color: AppTheme.border,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _selectedMemberName,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                  )
+                                : _buildMemberDropdown(),
                             const SizedBox(height: 14),
 
                             // Diet Plan Title

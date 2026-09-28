@@ -234,7 +234,7 @@ class AppDrawer extends StatelessWidget {
         'Payments',
         onTap: () {
           Get.back();
-          Get.toNamed('/member-payment');
+          Get.toNamed('/member-payment-history');
         },
       ),
       _item(

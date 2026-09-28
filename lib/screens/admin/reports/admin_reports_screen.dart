@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '/core/utils/theme.dart';
+import '/core/utils/formatters.dart';
 import '/core/widgets/app_shell.dart';
 import 'report_controller.dart';
 import 'report_model.dart';
@@ -23,15 +24,9 @@ class AdminReportsScreen extends StatelessWidget {
         .toColor();
   }
 
-  String _fmtMoney(double val) {
-    if (val >= 1000000) {
-      return '${(val / 1000000).toStringAsFixed(1)}M';
-    } else if (val >= 1000) {
-      return '${(val / 1000).toStringAsFixed(1)}k';
-    }
-    return val.toStringAsFixed(0);
-  }
-
+  // Kept for the revenue chart's Y-axis tick labels only — cramped axis
+  // space still needs the short form. Everywhere else uses formatCurrency()
+  // from core/utils/formatters.dart to match the Dashboard's full Rs. format.
   String _shortMoney(double val) {
     if (val >= 1000000) return '${(val / 1000000).toStringAsFixed(1)}M';
     if (val >= 1000) return '${(val / 1000).toStringAsFixed(0)}k';
@@ -53,13 +48,6 @@ class AdminReportsScreen extends StatelessWidget {
       role: 'admin',
       subtitle: 'Admin Panel',
       bottomNav: const AdminBottomNav(activeIndex: 2),
-      actions: [
-        AppShellAction(
-          icon: Icons.refresh_rounded,
-          onTap: c.loadSummary,
-          tooltip: 'Refresh',
-        ),
-      ],
       body: Obx(() {
         if (c.isLoading.value && c.revenueByMonth.isEmpty) {
           return const Center(
@@ -213,7 +201,7 @@ class AdminReportsScreen extends StatelessWidget {
               child: Obx(
                 () => _kpiCard(
                   label: 'Total Revenue',
-                  value: 'Rs ${_fmtMoney(c.totalRevenue.value)}',
+                  value: formatCurrency(c.totalRevenue.value),
                   icon: Icons.account_balance_wallet_rounded,
                   iconColor: const Color(0xFF10B981),
                   bgColor: const Color(0xFFECFDF5),
@@ -225,7 +213,7 @@ class AdminReportsScreen extends StatelessWidget {
               child: Obx(
                 () => _kpiCard(
                   label: 'This Month',
-                  value: 'Rs ${_fmtMoney(c.revenueThisMonth.value)}',
+                  value: formatCurrency(c.revenueThisMonth.value),
                   icon: Icons.calendar_today_rounded,
                   iconColor: const Color(0xFF2563EB),
                   bgColor: const Color(0xFFEFF6FF),
@@ -242,7 +230,7 @@ class AdminReportsScreen extends StatelessWidget {
               child: Obx(
                 () => _kpiCard(
                   label: 'Uncollected Dues',
-                  value: 'Rs ${_fmtMoney(c.pendingDuesAmount.value)}',
+                  value: formatCurrency(c.pendingDuesAmount.value),
                   icon: Icons.pending_actions_rounded,
                   iconColor: const Color(0xFFF59E0B),
                   bgColor: const Color(0xFFFFFBEB),
@@ -255,7 +243,7 @@ class AdminReportsScreen extends StatelessWidget {
               child: Obx(
                 () => _kpiCard(
                   label: 'Avg Monthly',
-                  value: 'Rs ${_fmtMoney(c.averageMonthlyRevenue.value)}',
+                  value: formatCurrency(c.averageMonthlyRevenue.value),
                   icon: Icons.analytics_rounded,
                   iconColor: const Color(0xFF8B5CF6),
                   bgColor: const Color(0xFFF5F3FF),
@@ -651,7 +639,7 @@ class AdminReportsScreen extends StatelessWidget {
                                 ],
                               ),
                               Text(
-                                'Rs ${_fmtMoney(m.totalAmount)} (${pct.toStringAsFixed(0)}%)',
+                                '${formatCurrency(m.totalAmount)} (${pct.toStringAsFixed(0)}%)',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.grey,
@@ -1085,7 +1073,7 @@ class AdminReportsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Rs ${_fmtMoney(p.revenue)} total revenue generated',
+                  '${formatCurrency(p.revenue)} total revenue generated',
                   style: const TextStyle(
                     fontSize: 12,
                     color: Colors.grey,
@@ -1189,7 +1177,7 @@ class AdminReportsScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Rs ${_fmtMoney(r.revenue)}',
+                          formatCurrency(r.revenue),
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

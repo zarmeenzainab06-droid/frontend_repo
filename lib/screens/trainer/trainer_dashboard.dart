@@ -355,20 +355,20 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
         children: [
           _horizStatCard(
             icon: Icons.people_alt_rounded,
-            iconBg: Colors.blue,
+            iconBg: Colors.purpleAccent,
             value: '$assignedMembers',
             label: 'Assigned Members',
             sub: '+3 this month',
-            subColor: Colors.blue,
+            subColor: Colors.green,
           ),
           const SizedBox(width: 12),
           _horizStatCard(
             icon: Icons.restaurant_menu_outlined,
-            iconBg: Colors.green,
+            iconBg: Colors.red,
             value: '$activeDietPlans',
             label: 'Active Diet Plans',
             sub: '$pendingDietPlans need update',
-            subColor: Colors.orange,
+            subColor: Colors.red,
           ),
           const SizedBox(width: 12),
           _horizStatCard(
@@ -508,7 +508,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                       ),
                     ),
                     const SizedBox(height: 2),
-
                     if (!runsToday)
                       const Text(
                         'Not scheduled today',

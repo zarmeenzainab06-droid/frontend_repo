@@ -19,6 +19,7 @@ class PaymentController extends GetxController {
   final amountReceivedController = TextEditingController();
   final paymentDateController = TextEditingController();
   final transactionIdController = TextEditingController(); // ← NEW
+  final searchController = TextEditingController();
 
   // ─── FORM OBSERVABLES ─────────────────────────────────────────────────────
   final Rx<Map<String, dynamic>?> selectedMember = Rx(null);
@@ -48,6 +49,8 @@ class PaymentController extends GetxController {
     amountReceivedController.dispose();
     paymentDateController.dispose();
     transactionIdController.dispose();
+    searchController.dispose(); // ← NEW
+
     super.onClose();
   }
 
@@ -353,9 +356,10 @@ class PaymentController extends GetxController {
       }
     } catch (e) {
       debugPrint('savePayment error: $e');
+      final message = e.toString().replaceFirst('Exception: ', '');
       Get.snackbar(
-        'Error',
-        'Something went wrong: $e',
+        'Payment Not Added',
+        message,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFE53935),
         colorText: Colors.white,
