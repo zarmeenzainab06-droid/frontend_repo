@@ -9,7 +9,7 @@ import 'report_model.dart';
 
 class AdminReportsScreen extends StatelessWidget {
   const AdminReportsScreen({super.key});
-
+  // to only make clr darker
   Color _darken(Color c, [double amount = .18]) {
     final hsl = HSLColor.fromColor(c);
     return hsl
@@ -24,15 +24,14 @@ class AdminReportsScreen extends StatelessWidget {
         .toColor();
   }
 
-  // Kept for the revenue chart's Y-axis tick labels only — cramped axis
-  // space still needs the short form. Everywhere else uses formatCurrency()
-  // from core/utils/formatters.dart to match the Dashboard's full Rs. format.
+  // fr the 100000 to 1k okhh for charts
   String _shortMoney(double val) {
     if (val >= 1000000) return '${(val / 1000000).toStringAsFixed(1)}M';
     if (val >= 1000) return '${(val / 1000).toStringAsFixed(0)}k';
     return val.toStringAsFixed(0);
   }
 
+  // same for yaxis okhh for charts
   double _niceMaxY(List<double> values) {
     if (values.isEmpty) return 10;
     final maxVal = values.fold<double>(0, (a, b) => a > b ? a : b);
@@ -42,19 +41,22 @@ class AdminReportsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.put(ReportController());
+    final c = Get.put(ReportController()); // noe c is refer to controler
 
     return AppShell(
       role: 'admin',
       subtitle: 'Admin Panel',
       bottomNav: const AdminBottomNav(activeIndex: 2),
       body: Obx(() {
+        // obxx for rebuild ui
         if (c.isLoading.value && c.revenueByMonth.isEmpty) {
+          // for loadin case
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primary),
           );
         }
         return RefreshIndicator(
+          // ifykyk
           color: AppTheme.primary,
           onRefresh: c.loadSummary,
           child: ListView(
@@ -99,7 +101,7 @@ class AdminReportsScreen extends StatelessWidget {
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
+  //  =============fhhh header of report===========
   Widget _buildHeader(ReportController c) {
     return Container(
       width: double.infinity,

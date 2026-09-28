@@ -6,10 +6,7 @@ import '../../../core/services/admin_report_service.dart';
 import 'report_model.dart';
 
 class ReportController extends GetxController {
-  // ─── FLAT Rx FIELDS (each tracked independently by GetX) ─────────────────
-  // Using a single Rx<ReportSummary> object caused nested Obx widgets to miss
-  // updates when the whole object was replaced — GetX only fires if .value
-  // is re-read inside the Obx after replacement. Flat fields fix this cleanly.
+  // comes fron the backend
   final RxDouble totalRevenue = 0.0.obs;
   final RxDouble revenueThisMonth = 0.0.obs;
   final RxDouble averageMonthlyRevenue = 0.0.obs;

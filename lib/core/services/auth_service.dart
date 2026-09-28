@@ -27,13 +27,13 @@ class AuthService {
       // print('Login response: $data');
 
       if (response.statusCode == 200 && data['success'] == true) {
-        // ✅ SAVE TOKEN
+        // SAVE TOKEN
         if (data['token'] != null) {
           box.write('token', data['token']); // Save token to local storage
           box.write('user', data['user']); // Save user data to local storage
           box.write('role', data['user']['role']); // for admin
-          // print('✅ Token saved: ${data['token']}');
-          // print('✅ Role saved: ${data['user']['role']}'); //  for admin
+          // print(' Token saved: ${data['token']}');
+          // print(' Role saved: ${data['user']['role']}'); //  for admin
         }
 
         return {
@@ -74,13 +74,13 @@ class AuthService {
     }
   }
 
-  // ✅ LOGOUT - Clear token
+  // LOGOUT - Clear token
   static void logout() {
     box.remove('token');
     box.remove('user');
   }
 
-  // ✅ GET PROFILE (Protected route example)
+  // GET PROFILE (Protected route example)
   static Future<Map<String, dynamic>> getProfile() async {
     try {
       final token = box.read('token');
@@ -108,11 +108,10 @@ class AuthService {
       return {'success': false, 'message': 'Server error: $e'};
     }
   }
-  // ══════════════════════════════════════════════════════════
-  // FORGOT PASSWORD METHODS
-  // ══════════════════════════════════════════════════════════
 
-  // ── Step 1: Send reset email ───────────────────────────────
+  // FORGOT PASSWORD METHODS
+
+  //  Step 1: Send reset email
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
     try {
       final response = await http.post(
@@ -130,7 +129,7 @@ class AuthService {
     }
   }
 
-  // ── Step 2: Verify reset token ─────────────────────────────
+  //  Step 2: Verify reset token
   static Future<Map<String, dynamic>> verifyResetToken(
     String token,
     String email,
@@ -150,7 +149,7 @@ class AuthService {
     }
   }
 
-  // ── Step 3: Reset password with token ─────────────────────
+  //  Step 3: Reset password with token
   static Future<Map<String, dynamic>> resetPassword({
     required String token,
     required String email,

@@ -16,6 +16,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _locationCtrl;
+  late final TextEditingController _jazzCashCtrl;
+
   bool _isLoading = false;
 
   @override
@@ -25,6 +27,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _phoneCtrl = TextEditingController(text: widget.profile['phone'] ?? '');
     _locationCtrl = TextEditingController(
       text: widget.profile['gym_location'] ?? '',
+    );
+    _jazzCashCtrl = TextEditingController(
+      text: widget.profile['jazzcash_number'] ?? '',
     );
   }
 
@@ -44,6 +49,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       name: _nameCtrl.text.trim(),
       phone: _phoneCtrl.text.trim(),
       gymLocation: _locationCtrl.text.trim(),
+      jazzcashNumber: _jazzCashCtrl.text.trim(),
     );
 
     if (!mounted) return;
@@ -139,6 +145,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _locationCtrl,
                 hint: 'e.g. GymFitex Downtown Branch',
                 icon: Icons.location_on_outlined,
+              ),
+              const SizedBox(height: 16),
+              _label('JazzCash Number'),
+              _field(
+                controller: _jazzCashCtrl,
+                hint: '03XXXXXXXXX',
+                icon: Icons.account_balance_wallet_outlined,
+                keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 32),
               SizedBox(

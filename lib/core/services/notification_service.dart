@@ -16,7 +16,7 @@ class NotificationService {
     };
   }
 
-  // ── GET ALL NOTIFICATIONS FOR THE LOGGED-IN USER ────────────────────────
+  // GET ALL NOTIFICATIONS FOR THE LOGGED-IN USER
   static Future<List<NotificationModel>> getNotifications({
     bool unreadOnly = false,
   }) async {
@@ -29,7 +29,7 @@ class NotificationService {
     throw Exception('Failed to load notifications: ${response.body}');
   }
 
-  // ── GET UNREAD COUNT ─────────────────────────────────────────────────────
+  // GET UNREAD COUNT
   static Future<int> getUnreadCount() async {
     try {
       final response = await http.get(
@@ -45,7 +45,7 @@ class NotificationService {
     }
   }
 
-  // ── MARK A SINGLE NOTIFICATION AS READ ──────────────────────────────────
+  // MARK A SINGLE NOTIFICATION AS READ
   static Future<bool> markAsRead(int id) async {
     final response = await http.patch(
       Uri.parse('$baseUrl$_path/$id/read'),
@@ -54,7 +54,7 @@ class NotificationService {
     return response.statusCode == 200;
   }
 
-  // ── MARK ALL NOTIFICATIONS AS READ ──────────────────────────────────────
+  // MARK ALL NOTIFICATIONS AS READ
   static Future<bool> markAllAsRead() async {
     final response = await http.patch(
       Uri.parse('$baseUrl$_path/read-all'),

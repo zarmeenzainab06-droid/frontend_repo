@@ -204,6 +204,12 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
             label: 'Gym Location',
             value: _profile['gym_location'] ?? '—',
           ),
+          _divider(),
+          _infoTile(
+            icon: Icons.account_balance_wallet_outlined,
+            label: 'JazzCash Number',
+            value: _profile['jazzcash_number'] ?? '—',
+          ),
         ],
       ),
     );

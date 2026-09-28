@@ -24,6 +24,8 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   bool _isLoading = false;
   List<dynamic> _payments = [];
   bool _loadingPayments = true;
+  String? _adminJazzCashNumber;
+  String _adminName = 'Admin';
   final box = GetStorage();
 
   // Online payment fields
@@ -57,6 +59,30 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
     _selectedmonth = _months[DateTime.now().month - 1];
     _loadPayments();
     _loadMembershipPrice();
+    _loadAdminPaymentInfo();
+  }
+
+  Future<void> _loadAdminPaymentInfo() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://gym.sandbox.pk/api/members/admin-payment-info'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${_getToken()}',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('ADMIN PAYMENT INFO: ${response.body}');
+        final info = data['payment_info'];
+        setState(() {
+          _adminJazzCashNumber = info?['jazzcash_number'];
+          _adminName = info?['admin_name'] ?? 'Admin';
+        });
+      }
+    } catch (e) {
+      // Silently ignore — number simply won't show if this fails
+    }
   }
 
   Future<void> _loadMembershipPrice() async {
@@ -410,6 +436,54 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
 
                   // Online payment fields
                   if (_selectedMethod == 'online') ...[
+                    if (_adminJazzCashNumber != null) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
+                          border: Border.all(
+                            color: AppTheme.primary.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.account_balance_wallet_outlined,
+                              color: AppTheme.primary,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Send payment to $_adminName\'s JazzCash',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color.fromARGB(255, 41, 40, 40),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _adminJazzCashNumber!,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     const Text(
                       'Upload Payment Screenshot',
                       style: TextStyle(

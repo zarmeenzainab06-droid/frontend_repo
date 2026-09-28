@@ -18,7 +18,7 @@ class ReportService {
     };
   }
 
-  // ── ONE-SHOT SUMMARY (used by main Reports screen) ───────────────────────
+  //  ONE-SHOT SUMMARY (used by main Reports screen)
   static Future<ReportSummary> getSummary({int months = 6}) async {
     final url = '$baseUrl$_path/summary?months=$months';
     final response = await http.get(Uri.parse(url), headers: _headers);
@@ -30,7 +30,7 @@ class ReportService {
     throw Exception('Failed to load reports summary: ${response.body}');
   }
 
-  // ── CUSTOM DATE-RANGE REVENUE ─────────────────────────────────────────────
+  //  CUSTOM DATE-RANGE REVENUE
   static Future<DateRangeRevenue> getRevenueByDateRange({
     required String startDate, // 'YYYY-MM-DD'
     required String endDate, // 'YYYY-MM-DD'
@@ -53,7 +53,7 @@ class ReportService {
     throw Exception('Failed to load revenue by date range: ${response.body}');
   }
 
-  // ── MEMBERSHIP REPORT (per-package breakdown only, if needed standalone) ─
+  //  MEMBERSHIP REPORT (per-package breakdown only, if needed standalone)
   static Future<List<PackageReportItem>> getMembershipReport() async {
     final url = '$baseUrl$_path/membership';
     final response = await http.get(Uri.parse(url), headers: _headers);
@@ -66,7 +66,7 @@ class ReportService {
     throw Exception('Failed to load membership report: ${response.body}');
   }
 
-  // ── TRENDS REPORT (standalone, if needed without the full summary) ───────
+  //  TRENDS REPORT (standalone, if needed without the full summary)
   static Future<List<MonthDataPoint>> getTrendsReport({int months = 6}) async {
     final url = '$baseUrl$_path/trends?months=$months';
     final response = await http.get(Uri.parse(url), headers: _headers);

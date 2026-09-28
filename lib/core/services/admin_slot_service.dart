@@ -15,7 +15,7 @@ class AdminService {
     };
   }
 
-  // ── Get All Slots ──────────────────────────────────────────────
+  // Get All Slots
   static Future<Map<String, dynamic>> getAllSlots({String? search}) async {
     try {
       final uri = Uri.parse('$baseUrl/admin/slots').replace(
@@ -37,7 +37,7 @@ class AdminService {
     }
   }
 
-  // ── Get Slot By ID ─────────────────────────────────────────────
+  //  Get Slot By ID
   static Future<Map<String, dynamic>> getSlotById(int id) async {
     try {
       final response = await http.get(
@@ -54,7 +54,7 @@ class AdminService {
     }
   }
 
-  // ── Get Slot Members ───────────────────────────────────────────
+  //  Get Slot Members
   static Future<Map<String, dynamic>> getSlotMembers(int slotId) async {
     try {
       final response = await http.get(
@@ -71,7 +71,7 @@ class AdminService {
     }
   }
 
-  // ── Create Slot ────────────────────────────────────────────────
+  // Create Slot
   static Future<Map<String, dynamic>> createSlot({
     required String name,
     required String startTime,
@@ -90,7 +90,7 @@ class AdminService {
           'end_time': endTime,
           'capacity': capacity,
           'status': status,
-          'schedule_days': scheduleDays, // ← ADD
+          'schedule_days': scheduleDays,
         }),
       );
       final data = json.decode(response.body);
@@ -104,7 +104,7 @@ class AdminService {
     }
   }
 
-  // ── Update Slot ────────────────────────────────────────────────
+  //  Update Slot
   static Future<Map<String, dynamic>> updateSlot({
     required int id,
     required String name,
@@ -112,7 +112,7 @@ class AdminService {
     required String endTime,
     required int capacity,
     required String status,
-    String scheduleDays = 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', // ← ADD
+    String scheduleDays = 'Mon,Tue,Wed,Thu,Fri,Sat,Sun',
   }) async {
     try {
       final response = await http.put(
@@ -124,7 +124,7 @@ class AdminService {
           'end_time': endTime,
           'capacity': capacity,
           'status': status,
-          'schedule_days': scheduleDays, // ← ADD
+          'schedule_days': scheduleDays,
         }),
       );
       final data = json.decode(response.body);
@@ -137,7 +137,7 @@ class AdminService {
     }
   }
 
-  // ── Delete Slot ────────────────────────────────────────────────
+  //  Delete Slot
   static Future<Map<String, dynamic>> deleteSlot(int id) async {
     try {
       final response = await http.delete(

@@ -544,6 +544,14 @@ class ManagePaymentsScreen extends StatelessWidget {
                               ? 'Online payment'
                               : 'Cash payment',
                         ),
+                        const SizedBox(height: 8),
+                        _infoRow(
+                          Icons.event_outlined,
+                          payment.paymentDate != null &&
+                                  payment.paymentDate!.isNotEmpty
+                              ? 'Paid on: ${payment.paymentDate!.split('T').first}'
+                              : 'Payment date: —',
+                        ),
                       ],
                     ),
                   ),
@@ -618,6 +626,15 @@ class ManagePaymentsScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          if (payment.method == 'online' &&
+              payment.screenshot != null &&
+              payment.screenshot!.isNotEmpty)
+            TextButton.icon(
+              onPressed: () => _viewScreenshot(context, payment.screenshot!),
+              icon: const Icon(Icons.image_outlined, size: 16),
+              label: const Text('View Screenshot'),
+              style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            ),
           Row(
             children: [
               Expanded(
@@ -657,6 +674,41 @@ class ManagePaymentsScreen extends StatelessWidget {
   }
 
   // ---------- shared small widgets (matches Members screen style) ----------
+  void _viewScreenshot(BuildContext context, String screenshot) {
+    final clean = screenshot.split('/').last;
+    final url = 'http://gym.sandbox.pk/uploads/$clean';
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 100),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        ),
+        child: GestureDetector(
+          onTap: () => Get.back(),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 400),
+            child: InteractiveViewer(
+              child: Image.network(
+                url,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    size: 40,
+                    color: AppTheme.textHint,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _infoRow(IconData icon, String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

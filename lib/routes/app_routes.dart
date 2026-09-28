@@ -17,7 +17,7 @@ import '../screens/admin/admin_profile/admin_profile_screen.dart';
 import '../screens/admin/payments/manage_payments_screen.dart';
 import '../screens/admin/admin_slots_screen.dart';
 import '../screens/admin/reports/admin_reports_screen.dart';
-import '../screens/notification/notifications_screen.dart'; // ← NEW: notifications
+import '../screens/notification/notifications_screen.dart'; // ← NEW notifications
 import '../screens/admin/admin_check_in_screen.dart';
 
 // nimra

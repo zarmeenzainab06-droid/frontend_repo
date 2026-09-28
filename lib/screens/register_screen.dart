@@ -29,10 +29,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _register() async {
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
+        _passwordController.text.isEmpty ||
+        _phoneController.text.trim().isEmpty) {
       Get.snackbar(
         "Error",
         "Please fill all required fields",
+        backgroundColor: AppTheme.expiredLight,
+        colorText: AppTheme.expired,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (_selectedGender == null) {
+      Get.snackbar(
+        "Error",
+        "Please select your gender",
+        backgroundColor: AppTheme.expiredLight,
+        colorText: AppTheme.expired,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final phone = _phoneController.text.trim();
+    if (!RegExp(r'^3\d{9}$').hasMatch(phone)) {
+      Get.snackbar(
+        "Error",
+        "Enter a valid Pakistani mobile number (e.g. 3001234567)",
         backgroundColor: AppTheme.expiredLight,
         colorText: AppTheme.expired,
         snackPosition: SnackPosition.BOTTOM,
@@ -66,8 +90,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final body = {
       'name': _nameController.text.trim(),
-      'phone': '+92${_phoneController.text.trim()}',
-      'gender': (_selectedGender ?? 'male').toLowerCase(),
+      'phone': '+92$phone',
+      'gender': _selectedGender!.toLowerCase(),
       'email': _emailController.text.trim(),
       'password': _passwordController.text,
     };
@@ -125,6 +149,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 18),
 
               // Phone
+              _label('Phone Number'),
+              const SizedBox(height: 8),
               _textField(
                 controller: _phoneController,
                 hint: '3001234567',

@@ -17,7 +17,7 @@ class AdminService {
     };
   }
 
-  // ── Dashboard Stats ────────────────────────────────────────
+  // Dashboard Stats
   static Future<Map<String, dynamic>> getDashboardStats([String? month]) async {
     try {
       final uri = Uri.parse(
@@ -37,7 +37,7 @@ class AdminService {
     }
   }
 
-  // ── Recent Activity ────────────────────────────────────────
+  // Recent Activity
   static Future<Map<String, dynamic>> getRecentActivity() async {
     try {
       final response = await http.get(
@@ -54,7 +54,7 @@ class AdminService {
     }
   }
 
-  // ── All Members ────────────────────────────────────────────
+  // All Members
   static Future<Map<String, dynamic>> getAllMembers({String? search}) async {
     try {
       final uri = Uri.parse('$baseUrl/admin/members').replace(
@@ -114,7 +114,7 @@ class AdminService {
     }
   }
 
-  // ── Get Trainers ───────────────────────────────────────────
+  // Get Trainers
   static Future<Map<String, dynamic>> getTrainers() async {
     try {
       print("getAllTrainers API called");
@@ -135,7 +135,7 @@ class AdminService {
     }
   }
 
-  // ── Get Slots (for dropdowns — active only by default) ────────────
+  // Get Slots (for dropdowns — active only by default)
   static Future<Map<String, dynamic>> getSlots({bool activeOnly = true}) async {
     try {
       final uri = Uri.parse(
@@ -152,7 +152,7 @@ class AdminService {
     }
   }
 
-  // ── Get slots linked to a specific package (for member form) ──
+  // Get slots linked to a specific package (for member form)
   static Future<Map<String, dynamic>> getPackageSlots(int packageId) async {
     try {
       final response = await http.get(
@@ -169,7 +169,7 @@ class AdminService {
     }
   }
 
-  // ── Get All Packages (updated — returns slot_id + slot_name) ──────
+  // Get All Packages (updated — returns slot_id + slot_name)
   static Future<Map<String, dynamic>> getPackages({
     bool activeOnly = false,
   }) async {
@@ -188,7 +188,7 @@ class AdminService {
     }
   }
 
-  // ── Create Package (updated — sends slot_id instead of from/to time) ──
+  // Create Package (updated — sends slot_id instead of from/to time)
   static Future<Map<String, dynamic>> createPackage(
     Map<String, dynamic> data,
   ) async {
@@ -209,7 +209,7 @@ class AdminService {
     }
   }
 
-  // ── Update Package (updated — sends slot_id instead of from/to time) ──
+  // Update Package (updated — sends slot_id instead of from/to time)
   static Future<Map<String, dynamic>> updatePackage({
     required int id,
     required Map<String, dynamic> data,
@@ -230,7 +230,7 @@ class AdminService {
     }
   }
 
-  // ── Delete Package ─────────────────────────────────────────
+  // Delete Package ─
   static Future<Map<String, dynamic>> deletePackage(int id) async {
     try {
       final response = await http.delete(
@@ -247,7 +247,7 @@ class AdminService {
     }
   }
 
-  // ── Create Member ──────────────────────────────────────────
+  // Create Member ──
   static Future<Map<String, dynamic>> createMember({
     required String name,
     required String address,
@@ -286,7 +286,7 @@ class AdminService {
     }
   }
 
-  // ── Update Member ──────────────────────────────────────────
+  // Update Member ──
   static Future<Map<String, dynamic>> updateMember({
     required int userId,
     required String name,
@@ -323,10 +323,10 @@ class AdminService {
     }
   }
 
-  // ── Assign Membership ──────────────────────────────────────
+  // Assign Membership ──
   // Cash -> JSON request
   // Online -> multipart/form-data with screenshot bytes
-  // Works on web + mobile (no dart:io File used)
+  // Works on web + mobile
   static Future<Map<String, dynamic>> assignMembership({
     required int userId,
     required int packageId,
@@ -344,7 +344,7 @@ class AdminService {
       final uri = Uri.parse('$baseUrl/admin/members/$userId/membership');
 
       if (screenshotBytes != null && paymentMethod == 'online') {
-        // ── Multipart request (online payment with screenshot) ──
+        // Multipart request (online payment with screenshot) ──
         final request = http.MultipartRequest('POST', uri)
           ..headers['Authorization'] = 'Bearer $token';
 
@@ -355,7 +355,7 @@ class AdminService {
         request.fields['amount'] = amount.toString();
         request.fields['payment_method'] = paymentMethod;
         if (transactionId != null)
-          request.fields['transaction_id'] = transactionId; // ← add
+          request.fields['transaction_id'] = transactionId;
 
         // Screenshot file — fromBytes works on web + mobile
         request.files.add(
@@ -379,7 +379,7 @@ class AdminService {
           'message': data['message'] ?? 'Failed to save payment',
         };
       } else {
-        // ── JSON request (cash payment) ─────────────────────────
+        // JSON request (cash payment) ─
         final response = await http.post(
           uri,
           headers: _headers,
@@ -392,7 +392,7 @@ class AdminService {
             //send existing path so backend keeps it instead of saving null
             if (existingScreenshotPath != null)
               'existing_screenshot': existingScreenshotPath,
-            if (transactionId != null) 'transaction_id': transactionId, // ← add
+            if (transactionId != null) 'transaction_id': transactionId,
           }),
         );
 
@@ -469,7 +469,7 @@ class AdminService {
     }
   }
 
-  // ── Get Member Payment Count ───────────────────────────────
+  // Get Member Payment Count
   static Future<Map<String, dynamic>> getMemberPaymentCount(int userId) async {
     try {
       final response = await http.get(
@@ -486,7 +486,7 @@ class AdminService {
     }
   }
 
-  // ── Delete Member ──────────────────────────────────────────
+  // Delete Member
   static Future<Map<String, dynamic>> deleteMember(int userId) async {
     try {
       final response = await http.delete(
@@ -503,7 +503,7 @@ class AdminService {
     }
   }
 
-  // ── Get All Trainers ───────────────────────────────────────
+  // Get All Trainers
   static Future<Map<String, dynamic>> getAllTrainers({String? search}) async {
     try {
       final token = box.read('token'); // debug
@@ -538,7 +538,7 @@ class AdminService {
     }
   }
 
-  // ── Get Trainer By ID ─────────────────────────────────────
+  // Get Trainer By ID
   static Future<Map<String, dynamic>> getTrainerById(int id) async {
     try {
       final response = await http.get(
@@ -555,7 +555,7 @@ class AdminService {
     }
   }
 
-  // ── Create Trainer ─────────────────────────────────────────
+  // Create Trainer
   static Future<Map<String, dynamic>> createTrainer({
     required String name,
     required String email,
@@ -595,7 +595,7 @@ class AdminService {
     }
   }
 
-  // ── Update Trainer ─────────────────────────────────────────
+  // Update Trainer
   static Future<Map<String, dynamic>> updateTrainer({
     required int id,
     required String name,
@@ -636,7 +636,7 @@ class AdminService {
     }
   }
 
-  // ── Delete Trainer ─────────────────────────────────────────
+  // Delete Trainer
   static Future<Map<String, dynamic>> deleteTrainer(int id) async {
     try {
       final response = await http.delete(
@@ -653,7 +653,7 @@ class AdminService {
     }
   }
 
-  // ── Get Admin Profile ──────────────────────────────────────────
+  // Get Admin Profile
   static Future<Map<String, dynamic>> getAdminProfile() async {
     try {
       final response = await http.get(
@@ -670,11 +670,12 @@ class AdminService {
     }
   }
 
-  // ── Update Admin Profile ───────────────────────────────────────
+  // Update Admin Profile
   static Future<Map<String, dynamic>> updateAdminProfile({
     required String name,
     String? phone,
     String? gymLocation,
+    String? jazzcashNumber,
   }) async {
     try {
       final response = await http.put(
@@ -685,6 +686,8 @@ class AdminService {
           if (phone != null && phone.isNotEmpty) 'phone': phone,
           if (gymLocation != null && gymLocation.isNotEmpty)
             'gym_location': gymLocation,
+          if (jazzcashNumber != null && jazzcashNumber.isNotEmpty)
+            'jazzcash_number': jazzcashNumber,
         }),
       );
       final data = json.decode(response.body);
@@ -697,7 +700,7 @@ class AdminService {
     }
   }
 
-  // ── Change Admin Password ──────────────────────────────────────
+  // Change Admin Password
   static Future<Map<String, dynamic>> changeAdminPassword({
     required String currentPassword,
     required String newPassword,
@@ -721,7 +724,7 @@ class AdminService {
     }
   }
 
-  // ── Member Check-in ─────────────────────────────────────────
+  // Member Check-in
   static Future<Map<String, dynamic>> checkInMember(String searchQuery) async {
     try {
       final response = await http.post(
@@ -749,7 +752,7 @@ class AdminService {
     }
   }
 
-  // ── Member Check-in History (for the History dialog) for the admin can seee history
+  // Member Check-in History (for the History dialog) for the admin can seee history
   static Future<Map<String, dynamic>> getMemberCheckInHistory(
     int userId,
   ) async {
@@ -768,7 +771,7 @@ class AdminService {
     }
   }
 
-  // ── Today's Check-ins ───────────────────────────────────────
+  // Today's Check-ins
   static Future<List<dynamic>> getTodayCheckIns() async {
     try {
       final response = await http.get(

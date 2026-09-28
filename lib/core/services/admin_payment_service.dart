@@ -24,7 +24,7 @@ class PaymentService {
     return {'Authorization': 'Bearer $token'};
   }
 
-  // ── GET ALL PAYMENTS ──────────────────────────────────────────────────────
+  // GET ALL PAYMENTS
   static Future<List<PaymentModel>> getAllPayments({
     String? month,
     int? memberId,
@@ -43,7 +43,7 @@ class PaymentService {
     throw Exception('Failed to load payments: ${response.body}');
   }
 
-  // ── GET MEMBERS DROPDOWN ─────────────────────────────────────────────────
+  // GET MEMBERS DROPDOWN
   static Future<List<Map<String, dynamic>>> getMembers() async {
     final response = await http.get(
       Uri.parse('$baseUrl/admin/members?dropdown=true'),
@@ -68,7 +68,7 @@ class PaymentService {
     throw Exception('Failed to load members: ${response.body}');
   }
 
-  // ── ADD PAYMENT ───────────────────────────────────────────────────────────
+  //  ADD PAYMENT
   // Uses multipart when screenshot provided (online), JSON otherwise (cash)
   static Future<bool> addPayment(
     PaymentModel payment, {
@@ -101,7 +101,7 @@ class PaymentService {
     return response.statusCode == 201;
   }
 
-  // ── UPDATE PAYMENT ────────────────────────────────────────────────────────
+  // UPDATE PAYMENT
   static Future<bool> updatePayment(
     int id,
     PaymentModel payment, {
@@ -130,7 +130,7 @@ class PaymentService {
     return response.statusCode == 200;
   }
 
-  // ── DELETE PAYMENT ────────────────────────────────────────────────────────
+  // DELETE PAYMENT
   static Future<bool> deletePayment(int id) async {
     final response = await http.delete(
       Uri.parse('$baseUrl$_path/$id'),
@@ -139,7 +139,7 @@ class PaymentService {
     return response.statusCode == 200;
   }
 
-  // ── Add this method to PaymentService ────────────────────────────────────
+  // Add this method to PaymentService
   // FOR UPDATE STATUS
 
   static Future<bool> updateStatus(int id, String status) async {
@@ -152,7 +152,7 @@ class PaymentService {
     return response.statusCode == 200;
   }
 
-  // ── MULTIPART HELPER ──────────────────────────────────────────────────────
+  // MULTIPART HELPER
   static Future<bool> _multipartRequest({
     required String method,
     required String url,
