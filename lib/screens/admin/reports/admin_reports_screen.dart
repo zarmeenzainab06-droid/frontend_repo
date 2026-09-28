@@ -876,11 +876,7 @@ class AdminReportsScreen extends StatelessWidget {
                   Icons.cancel_rounded,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
+              const SizedBox(width: 10),
               Expanded(
                 child: _statusChip(
                   'Frozen',
@@ -888,16 +884,6 @@ class AdminReportsScreen extends StatelessWidget {
                   total,
                   const Color(0xFF3B82F6),
                   Icons.pause_circle_rounded,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _statusChip(
-                  'Pending',
-                  _getStatusCount(statuses, 'pending'),
-                  total,
-                  const Color(0xFFF59E0B),
-                  Icons.pending_rounded,
                 ),
               ),
             ],
@@ -925,7 +911,7 @@ class AdminReportsScreen extends StatelessWidget {
     final pct = total > 0 ? (count / total) * 100 : 0.0;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -937,7 +923,8 @@ class AdminReportsScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
@@ -945,39 +932,43 @@ class AdminReportsScreen extends StatelessWidget {
               color: color.withOpacity(0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 18),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$count member(s)',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
-            '${pct.toStringAsFixed(0)}%',
-            style: TextStyle(
-              fontSize: 12,
+            '$count',
+            style: const TextStyle(
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: color,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${pct.toStringAsFixed(0)}%',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
           ),
         ],

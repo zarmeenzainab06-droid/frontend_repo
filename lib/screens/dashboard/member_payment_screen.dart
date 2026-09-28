@@ -32,7 +32,7 @@ class _MemberPaymentScreenState extends State<MemberPaymentScreen> {
   XFile? _selectedImage;
   Uint8List? _screenshotBytes;
   final ImagePicker _picker = ImagePicker();
-
+  // same mounth list as in admin dashboard
   static const _monthNames = [
     'January',
     'February',

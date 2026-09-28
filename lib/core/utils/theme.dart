@@ -127,6 +127,7 @@ class AppColors {
       case 'expired':
         return AppTheme.expired;
       case 'pending':
+      case 'no_plan':
         return AppTheme.pending;
       default:
         return AppTheme.textSecondary;
@@ -140,6 +141,7 @@ class AppColors {
       case 'expired':
         return AppTheme.expiredLight;
       case 'pending':
+      case 'no_plan':
         return AppTheme.pendingLight;
       default:
         return AppTheme.background;
